@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+main {
+  @apply min-h-screen min-w-full  mx-auto gap-4 text-center;
+}
+.container {
+  @apply w-full max-w-6xl flex flex-col min-h-screen pt-28 justify-center items-center;
+}
+nav {
+  @apply bg-app-50 dark:bg-slate-900 fixed w-full z-20 top-0 left-0 shadow dark:shadow-slate-950  border border-app-200  dark:border-slate-800;
+}
+nav div:first-child {
+  @apply max-w-screen-xl flex flex-wrap items-center  justify-between mx-auto p-4 py-[0.5rem];
+}
+
+
+a:not(.getStartedButton) {
+  @apply hover:underline text-app font-bold dark:text-app-300 !important;
+  position: relative;
+}
+a.nunderline {
+  @apply hover:no-underline dark:hover:text-app-300 hover:text-app-700 text-app-900 dark:text-app-50 font-semibold !important;
+}
+a.special-uderline::after,
+a.special-uderline-active::after {
+  @apply rounded-full;
+  content: "";
+  position: absolute;
+  bottom: -5px; /* Augmentez cette valeur pour espacer la ligne du texte */
+  left: 0;
+  width: 0;
+  height: 3px;
+  background-color: currentColor;
+  transition: width 0.3s;
+}
+
+a.special-uderline:hover::after {
+  width: 100%;
+
+  height:100%;
+}
+
+a.special-uderline-active::after {
+  width: 100%;
+  transition: none;
+}
+
+a.special-uderline-active {
+  @apply text-app-700 dark:text-app-300 !important;
+}
+/* Main Menu */
+ul.main-menu {
+  @apply flex flex-col p-4 lg:p-0 mt-4 font-medium border border-slate-100 rounded-lg  md:flex-row md:space-x-8 md:mt-0 lg:border-0  dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700 text-lg;
+}
+div.main-menu {
+  @apply items-center justify-between hidden w-full md:flex md:w-auto md:order-1;
+}
+ul.main-menu li a {
+  @apply nunderline block py-2 pl-3 md:text-[1.105rem] pr-4 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-app md:p-0 md:dark:hover:text-app-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700;
+}
+/* LOGO */
+.logo {
+  @apply flex items-center nunderline  gap-x-1 md:text-base text-xs;
+}
+.logo span {
+  @apply self-center text-3xl font-semibold whitespace-nowrap dark:text-white;
+}
+.logo span span:first-child {
+  @apply text-app dark:text-app-300;
+}
+.logo span span {
+  @apply text-app-950  dark:text-app-50;
+}
+
+/* Burger Menu */
+div.burger-menu {
+  @apply -z-10 md:hidden absolute top-[4.5rem] left-0 w-full bg-app-200 dark:bg-slate-800 border-b-2 border-t-2 border-app-300;
+}
+div.burger-menu ul {
+  @apply text-base w-full text-center;
+}
+div.burger-menu ul li a {
+  @apply no-underline block w-full hover:no-underline py-4 px-2 text-base font-bold  hover:bg-app-100 lg:hover:bg-transparent lg:hover:text-app lg:p-0 lg:dark:hover:text-app-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-slate-700;
+}
