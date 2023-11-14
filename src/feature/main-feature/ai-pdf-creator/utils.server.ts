@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { getUserLog } from "@/src/query/user.query";
 
-export const createPdf = async (lang: string) => {
+export const createPdf = async (lang: string, subject: string) => {
   const user = await getUserLog();
   if (!user) {
     throw new Error("User not logged in");
@@ -11,6 +11,7 @@ export const createPdf = async (lang: string) => {
     data: {
       userId: user.id,
       lang: lang,
+      title: subject,
     },
   });
   if (!pdf) {
@@ -34,9 +35,10 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
     throw new Error(`PDF with ID ${pdfId} does not exist.`);
   }
 
+  
   // Utiliser une transaction pour faire tous les inserts
   const plans = await prisma.$transaction(
-    titles.map((title) =>
+    titles.map((title) => 
       prisma.pdfCreatorPlan.create({
         data: {
           // On supprime le niveau
@@ -53,6 +55,8 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
       })
     )
   );
+  
+ 
 
   return plans; // Renvoie les plans créés
 };
@@ -104,3 +108,5 @@ export const updatePlan = async (id: string, title: string) => {
     );
   }
 };
+
+

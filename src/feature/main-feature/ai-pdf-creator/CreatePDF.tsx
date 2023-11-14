@@ -52,6 +52,7 @@ const PdfCreator = () => {
     const lines = text.split("\n");
     const newPlan: string[] = [];
     lines.forEach((line: string) => {
+      line = line.replace("- ", "#### ");
       if (line.startsWith("# ")) {
         newPlan.push("# " + line.substring(2));
       } else if (line.startsWith("## ")) {
@@ -78,6 +79,7 @@ const PdfCreator = () => {
       setAbortController(null);
       setLoading(false);
       setResponseSubject("");
+      setCreatedPlans([])
       setPlan([]);
       setPdfId("");
       // On supprime le plan
@@ -98,7 +100,7 @@ const PdfCreator = () => {
     let buffer = "";
 
     try {
-      const response = await fetch("/api/pdfcreator", {
+      const response = await fetch("/api/pdfcreator/planCreator", {
         method: "POST",
         signal: controller.signal, // Ajout du signal au fetch
         headers: {
@@ -107,6 +109,7 @@ const PdfCreator = () => {
         body: JSON.stringify({
           prompt: subject,
           type: "plan",
+          // gpt-3.5-turbo | gpt-4-1106-preview
           model: "gpt-3.5-turbo",
           lang: lang,
         }),
@@ -121,7 +124,7 @@ const PdfCreator = () => {
         return;
       }
       // On créé le PDF
-      const pdfResponse = await createPdf(lang);
+      const pdfResponse = await createPdf(lang, subject);
       setPdfId(pdfResponse?.id || ""); // Assurez-vous que setPdfId est appelé avec un string
 
       // On stream le plan

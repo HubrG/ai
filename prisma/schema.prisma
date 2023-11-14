@@ -83,6 +83,7 @@ model pdfCreator {
   userId    String
   createdAt DateTime         @default(now())
   lang      String           @default("en")
+  title     String           @default("My PDF")
   updatedAt DateTime?        @updatedAt
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   pdfPlan   pdfCreatorPlan[]
