@@ -19,9 +19,9 @@ export const UserProfile = (props: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="lg" variant="ghost">
+        <Button variant="ghost">
           <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
-          <span className="lg:block md:hidden block">{props.user}</span>
+          <span className="lg:block md:hidden block font-bold text-base">{props.user}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">

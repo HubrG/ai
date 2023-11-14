@@ -53,22 +53,22 @@ enum UserRole {
   USER
   ADMIN
   EDITOR
-  // Ajoutez d'autres rôles au besoin
+  // ajouter d'autres rôles au besoin
 }
 
 model User {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   name           String?
-  email          String?   @unique
+  email          String?      @unique
   emailVerified  DateTime?
   image          String?
   hashedPassword String?
-  date           DateTime? @default(now())
-  role           UserRole  @default(USER)
+  date           DateTime?    @default(now())
+  role           UserRole     @default(USER)
   accounts       Account[]
   sessions       Session[]
+  pdfCreator     pdfCreator[]
 }
-
 
 model userToken {
   id        String   @id @default(cuid())
@@ -76,4 +76,34 @@ model userToken {
   token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model pdfCreator {
+  id        String           @id @default(cuid())
+  userId    String
+  createdAt DateTime         @default(now())
+  lang      String           @default("en")
+  updatedAt DateTime?        @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pdfPlan   pdfCreatorPlan[]
+}
+
+model pdfCreatorPlan {
+  id                String              @id @default(cuid())
+  pdfId             String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime?           @updatedAt
+  planTitle         String
+  planLevel         String              @default("#")
+  pdf               pdfCreator          @relation(fields: [pdfId], references: [id], onDelete: Cascade)
+  pdfCreatorContent pdfCreatorContent[]
+}
+
+model pdfCreatorContent {
+  id             String         @id @default(cuid())
+  planContent    String         @db.Text
+  planId         String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  pdfCreatorPlan pdfCreatorPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 }

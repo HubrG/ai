@@ -1,13 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const appColor = "indigo";
-const appColorRGBA = "indigo";
+const appColor = "slate";
+const appColorSecondary = "amber";
+const appColorRGBA = "slate";
 // tahiti   #22d3ee,
 // rose     #fb7185,
 // orange   #fb923c,
 // fuchsia  #d946ef,
 // indigo   #6366f1,
 // pink     #ec4899,
-// purpl    #a855f7,
+// purple    #a855f7,
 // slate    #64748b,
 // zinc     #71717a,
 // neutral  #737373,
@@ -528,16 +529,13 @@ module.exports = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
         app: colorPalettes[appColor],
+        secondary: colorPalettes[appColorSecondary],
         apprgba: colorPalettesRGBA[appColorRGBA],
+        primary: {
+          DEFAULT: colorPalettes[appColor][800],
+          foreground: colorPalettes[appColor][200],
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",

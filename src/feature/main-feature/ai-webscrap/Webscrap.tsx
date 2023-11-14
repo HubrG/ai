@@ -61,13 +61,10 @@ export default function Webscrap() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           maxLength={200}
-       
           placeholder={"https://website.com"}
         />
         {!loading ? (
-          <Button
-            className="w-full"
-            onClick={(e) => generateResponse(e)}>
+          <Button className="w-full" onClick={(e) => generateResponse(e)}>
             Générer le mail &rarr;
           </Button>
         ) : (
@@ -78,11 +75,11 @@ export default function Webscrap() {
           </button>
         )}
       </div>
-      <div className="mt-8 rounded-xl border bg-red-500 p-4 shadow-md transition hover:bg-gray-100">
+      <div className=" rounded-xl border bg-opacity-90 shadow-md transition">
         {response && (
           //   On autorise le html dans le innerHTML
           <p
-            className="mt-8 rounded-xl border bg-white p-4 text-left shadow-md transition hover:bg-gray-100"
+            className=" rounded-xl  p-4 text-left overflow-y-auto max-h-[70vh] shadow-md transition"
             dangerouslySetInnerHTML={createMarkup(response)}
           />
         )}

@@ -3,7 +3,47 @@
 @tailwind utilities;
 
 @layer base {
+  
   :root {
+    --color-app1: theme("colors.app.50");
+    --color-app2: theme("colors.app.100");
+    --color-app3: theme("colors.app.200");
+    --color-app4: theme("colors.app.300");
+    --color-app5: theme("colors.app.400");
+    --color-app6: theme("colors.app.500");
+    --color-app7: theme("colors.app.600");
+    --color-app8: theme("colors.app.700");
+    --color-app9: theme("colors.app.800");
+    --color-app10: theme("colors.app.900");
+    --color-app11: theme("colors.app.950");
+
+    --color-secondary1: theme("colors.secondary.50");
+    --color-secondary2: theme("colors.secondary.100");
+    --color-secondary3: theme("colors.secondary.200");
+    --color-secondary4: theme("colors.secondary.300");
+    --color-secondary5: theme("colors.secondary.400");
+    --color-secondary6: theme("colors.secondary.500");
+    --color-secondary7: theme("colors.secondary.600");
+    --color-secondary8: theme("colors.secondary.700");
+    --color-secondary9: theme("colors.secondary.800");
+    --color-secondary10: theme("colors.secondary.900");
+    --color-secondary11: theme("colors.secondary.950");
+
+    --color-apprgba1: theme("colors.apprgba.50");
+    --color-apprgba2: theme("colors.apprgba.100");
+    --color-apprgba3: theme("colors.apprgba.200");
+    --color-apprgba4: theme("colors.apprgba.300");
+    --color-apprgba5: theme("colors.apprgba.400");
+    --color-apprgba6: theme("colors.apprgba.500");
+    --color-apprgba7: theme("colors.apprgba.600");
+    --color-apprgba8: theme("colors.apprgba.700");
+    --color-apprgba9: theme("colors.apprgba.800");
+    --color-apprgba10: theme("colors.apprgba.900");
+    --color-apprgba11: theme("colors.apprgba.950");
+
+  
+
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -16,8 +56,8 @@
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: hls(210 40% 96.1%);
+    --secondary-foreground: hls(222.2 47.4% 11.2%);
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -36,6 +76,62 @@
   }
 
   .dark {
+
+    --color-app1: theme("colors.app.950");
+    --color-app2: theme("colors.app.900");
+    --color-app3: theme("colors.app.800");
+    --color-app4: theme("colors.app.700");
+    --color-app5: theme("colors.app.600");
+    --color-app6: theme("colors.app.500");
+    --color-app7: theme("colors.app.400");
+    --color-app8: theme("colors.app.300");
+    --color-app9: theme("colors.app.200");
+    --color-app10: theme("colors.app.100");
+    --color-app11: theme("colors.app.50");
+
+  
+
+    --color-secondary1: theme("colors.secondary.950");
+    --color-secondary2: theme("colors.secondary.900");
+    --color-secondary3: theme("colors.secondary.800");
+    --color-secondary4: theme("colors.secondary.700");
+    --color-secondary5: theme("colors.secondary.600");
+    --color-secondary6: theme("colors.secondary.500");
+    --color-secondary7: theme("colors.secondary.400");
+    --color-secondary8: theme("colors.secondary.300");
+    --color-secondary9: theme("colors.secondary.200");
+    --color-secondary10: theme("colors.secondary.100");
+    --color-secondary11: theme("colors.secondary.50");
+
+  
+    --color-apprgba1: theme("colors.apprgba.950");
+    --color-apprgba2: theme("colors.apprgba.900");
+    --color-apprgba3: theme("colors.apprgba.800");
+    --color-apprgba4: theme("colors.apprgba.700");
+    --color-apprgba5: theme("colors.apprgba.600");
+    --color-apprgba6: theme("colors.apprgba.500");
+    --color-apprgba7: theme("colors.apprgba.400");
+    --color-apprgba8: theme("colors.apprgba.300");
+    --color-apprgba9: theme("colors.apprgba.200");
+    --color-apprgba10: theme("colors.apprgba.100");
+    --color-apprgba11: theme("colors.apprgba.50");
+
+
+    --color-app-hsl-50 : hsl(210, 1.59%, 98.82%);
+    --color-app-hsl-100 : hsl(210, 3.21%, 97.65%);
+    --color-app-hsl-200 : hsl(214.29, 5.83%, 94.12%);
+    --color-app-hsl-300 : hsl(212.73, 9.78%, 88.24%);
+    --color-app-hsl-400 : hsl(215, 19.57%, 72.16%);
+    --color-app-hsl-500 : hsl(215.38, 28.06%, 54.51%);
+    --color-app-hsl-600 : hsl(215.29, 32.38%, 41.18%);
+    --color-app-hsl-700 : hsl(215.29, 40%, 33.33%);
+    --color-app-hsl-800 : hsl(217.24, 49.15%, 23.14%);
+    --color-app-hsl-900 : hsl(222.22, 64.29%, 16.47%);
+    --color-app-hsl-950 : hsl(228.57, 91.30%, 9.02%);
+   
+
+
+
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -45,11 +141,10 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%; */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+   
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -64,6 +159,11 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+}
+
+.dark .text-secondary {
+  @apply text-secondary-500 !important;
+
 }
 
 @layer base {
@@ -81,14 +181,14 @@ main {
   @apply w-full max-w-6xl flex flex-col min-h-screen pt-28 justify-center items-center;
 }
 nav {
-  @apply bg-app-50 dark:bg-slate-900 fixed w-full z-20 top-0 left-0 shadow dark:shadow-slate-950  border border-app-200  dark:border-slate-800;
+  @apply bg-app-50 dark:bg-app-900 fixed w-full z-20 top-0 left-0 shadow-lg dark:shadow-none dark:shadow-slate-950  border border-app-200  dark:border-slate-800;
 }
 nav div:first-child {
   @apply max-w-screen-xl flex flex-wrap items-center  justify-between mx-auto p-4 py-[0.5rem];
 }
 
 
-a:not(.getStartedButton) {
+a {
   @apply hover:underline text-app font-bold dark:text-app-300 !important;
   position: relative;
 }
@@ -110,8 +210,6 @@ a.special-uderline-active::after {
 
 a.special-uderline:hover::after {
   width: 100%;
-
-  height:100%;
 }
 
 a.special-uderline-active::after {
@@ -124,27 +222,23 @@ a.special-uderline-active {
 }
 /* Main Menu */
 ul.main-menu {
-  @apply flex flex-col p-4 lg:p-0 mt-4 font-medium border border-slate-100 rounded-lg  md:flex-row md:space-x-8 md:mt-0 lg:border-0  dark:bg-slate-800 md:dark:bg-slate-900 dark:border-slate-700 text-lg;
+  @apply flex flex-col p-4 lg:p-0 mt-4 font-medium border border-slate-100 rounded-lg  md:flex-row md:space-x-8 md:mt-0 lg:border-0   dark:border-slate-700 text-base;
 }
 div.main-menu {
   @apply items-center justify-between hidden w-full md:flex md:w-auto md:order-1;
 }
 ul.main-menu li a {
-  @apply nunderline block py-2 pl-3 md:text-[1.105rem] pr-4 rounded hover:bg-slate-100 md:hover:bg-transparent md:hover:text-app md:p-0 md:dark:hover:text-app-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-slate-700;
+  @apply nunderline block py-2 pl-3  pr-4 rounded   md:hover:text-app md:p-0 md:dark:hover:text-app-500 dark:text-white  dark:hover:text-white   dark:border-slate-700;
 }
 /* LOGO */
 .logo {
-  @apply flex items-center nunderline  gap-x-1 md:text-base text-xs;
+  @apply flex font-bold items-center nunderline  gap-x-1 md:text-base text-xs;
 }
 .logo span {
-  @apply self-center text-3xl font-semibold whitespace-nowrap dark:text-white;
+  @apply self-center text-3xl whitespace-nowrap dark:text-white;
 }
-.logo span span:first-child {
-  @apply text-app dark:text-app-300;
-}
-.logo span span {
-  @apply text-app-950  dark:text-app-50;
-}
+
+
 
 /* Burger Menu */
 div.burger-menu {
@@ -155,4 +249,46 @@ div.burger-menu ul {
 }
 div.burger-menu ul li a {
   @apply no-underline block w-full hover:no-underline py-4 px-2 text-base font-bold  hover:bg-app-100 lg:hover:bg-transparent lg:hover:text-app lg:p-0 lg:dark:hover:text-app-500 dark:text-white dark:hover:bg-slate-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-slate-700;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply my-[1.63rem];
+}
+h1.title-page {
+  @apply text-center  mb-14 !important;
+}
+h1 {
+  @apply md:text-4xl text-3xl font-bold text-app-900 dark:text-app-400;
+}
+
+h2 {
+  @apply md:text-2xl text-xl font-bold text-app-900 dark:text-app-300;
+}
+
+h3 {
+  @apply md:text-xl text-lg font-bold text-app-800;
+}
+
+h4 {
+  @apply md:text-lg text-base font-bold text-app-800;
+}
+
+h5 {
+  @apply md:text-base text-sm font-bold text-app-800;
+}
+
+h6 {
+  @apply md:text-sm text-sm font-bold text-app-800;
+}
+
+p {
+  @apply md:text-[1.05rem]  text-base  my-1 text-app-950;
+}
+ul.ul {
+  @apply list-disc list-inside mt-4 mb-4;
 }

@@ -59,7 +59,7 @@ export default function RootLayout({
               shadow={false}
             />
           </ToastProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="system-ui" enableSystem>
             <Navbar />
             <main>
               <div className="container">{children}</div>
