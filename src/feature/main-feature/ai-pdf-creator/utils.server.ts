@@ -27,7 +27,6 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
     throw new Error("User not logged in");
   }
 
-  // Vérifier que le pdfId existe dans la table correspondante
   const pdfExists = await prisma.pdfCreator.findUnique({
     where: { id: pdfId },
   });
@@ -35,31 +34,49 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
     throw new Error(`PDF with ID ${pdfId} does not exist.`);
   }
 
-  
-  // Utiliser une transaction pour faire tous les inserts
+  let firstTitleForPdf: string | null = null;
+
   const plans = await prisma.$transaction(
-    titles.map((title) => 
-      prisma.pdfCreatorPlan.create({
+    titles.map((title) => {
+      const match = title.match(/^(#+)\s/); // Capture les dièses au début du titre
+      const planLevel = match ? match[1] : 'Other'; // Utilise le nombre de dièses ou 'Other'
+
+      if (planLevel === '#' && firstTitleForPdf === null) {
+        firstTitleForPdf = title.replace(/^#\s/, "").trim();
+      }
+
+      return prisma.pdfCreatorPlan.create({
         data: {
-          // On supprime le niveau
-          planTitle: title.replace(/^(#+|-)/, "").trim(),
+          planTitle: title.replace(/^(#+\s)/, "").trim(),
           pdfId: pdfId,
-          // On récupère le niveau du plan: #, ##, ###, -, etc.
-          planLevel: title.match(/^(#+|-)/)?.[0] || "#",
+          planLevel: planLevel,
         },
         select: {
-          id: true, // Assurez-vous de sélectionner l'ID
+          id: true,
           planTitle: true,
           planLevel: true,
         },
-      })
-    )
-  );
-  
- 
+      });
 
-  return plans; // Renvoie les plans créés
+
+    })
+  );
+
+  if (firstTitleForPdf) {
+    await prisma.pdfCreator.update({
+      where: {
+        id: pdfId,
+      },
+      data: {
+        title: firstTitleForPdf,
+      },
+    });
+  }
+
+  return plans;
 };
+
+
 
 export const deletePlan = async (id: string) => {
   const user = await getUserLog();
@@ -110,3 +127,24 @@ export const updatePlan = async (id: string, title: string) => {
 };
 
 
+export const getPdfPlanAndContent = async (pdfId: string) => {
+  const pdf = await prisma.pdfCreator.findUnique({
+    where: {
+      id: pdfId,
+    },
+    include: {
+      pdfPlan: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        include: {
+          pdfCreatorContent: true,
+        },
+      },
+    },
+  });
+  if (!pdf) {
+    throw new Error("Pdf not found");
+  }
+  return pdf;
+}

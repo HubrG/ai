@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader } from "@/components/ui/loader";
@@ -7,21 +7,24 @@ import Showdown from "showdown";
 import {
   createPdf,
   createPdfPlan,
+  getPdfPlanAndContent,
   deletePlan,
   updatePlan,
 } from "./utils.server";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { pdfCreatorContent } from "@prisma/client";
+import { Textarea } from "@/components/ui/textarea";
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
   id: string;
   planTitle: string;
   planLevel?: string;
+}
+interface ApiResponse {
+  content: string; // Assurez-vous que cela correspond à la structure de votre réponse d'API
+}
+interface ChapterContents {
+  [title: string]: string;
 }
 
 // NOTE: Operations
@@ -32,21 +35,43 @@ interface Plan {
 
 const PdfCreator = () => {
   const [subject, setSubject] = useState("");
+  const [generatePlanDone, setGeneratePlanDone] = useState<boolean>(false);
   const [plan, setPlan] = useState<string[]>([]);
   const [lang, setLang] = useState<string>("fr");
-  const [chapterContent, setChapterContent] = useState({});
+  const [chapterContent, setChapterContent] = useState<ChapterContents>({});
   const [loading, setLoading] = useState(false);
   const [pdfId, setPdfId] = useState<string>("");
-  const [selectedPlanContent, setSelectedPlanContent] = useState("");
   const [responseSubject, setResponseSubject] = useState<string>("");
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
   const [createdPlans, setCreatedPlans] = useState<Plan[]>([]); // état pour stocker les plans créés
   const converter = new Showdown.Converter();
-
   const markdownToHtml = (markdown: string) => {
     return converter.makeHtml(markdown);
   };
+  const [displayPdf, setDisplayPdf] = useState<any>([]);
+
+  const fetchPdf = async () => {
+    try {
+      const pdfCreatorObject = await getPdfPlanAndContent(
+        "clozqvy9c02rn8zlojt373f7p"
+      );
+      if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
+        setDisplayPdf(pdfCreatorObject.pdfPlan);
+      } else {
+        // Gérer le cas où pdfPlan n'est pas disponible
+        console.error("No pdfPlan found in the response");
+      }
+    } catch (error) {
+      console.error("Error fetching planos:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPdf();
+  }, []);
+
+  // console.log(planos);
 
   const parseTitles = (text: string) => {
     const lines = text.split("\n");
@@ -79,7 +104,7 @@ const PdfCreator = () => {
       setAbortController(null);
       setLoading(false);
       setResponseSubject("");
-      setCreatedPlans([])
+      setCreatedPlans([]);
       setPlan([]);
       setPdfId("");
       // On supprime le plan
@@ -131,20 +156,19 @@ const PdfCreator = () => {
       const reader = data.getReader();
       const decoder = new TextDecoder();
       let done = false;
+
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         if (value && pdfResponse.id) {
           buffer += decoder.decode(value, { stream: true });
-
           // Si nous avons reçu un saut de ligne, on traite le buffer
           if (buffer.includes("\n")) {
             // On sépare le buffer en lignes complètes et le reste du buffer
             let [completeLines, ...rest] = buffer.split("\n");
             buffer = rest.join("\n"); // Reconstruisez le buffer avec le reste
 
-            // On traite les lignes complètes ici
-            console.log(pdfResponse.id);
             if (completeLines && pdfResponse.id !== undefined) {
+              // On traite les lignes complètes ici
               const titlesToAdd = parseTitles(completeLines + "\n");
               if (titlesToAdd.length > 0) {
                 const newPlans = await createPdfPlan(
@@ -160,8 +184,13 @@ const PdfCreator = () => {
         }
         done = doneReading;
       }
+      // Juste après la boucle while, ce qui signifie que le flux est terminé
+      if (done) {
+        setGeneratePlanDone(true);
+        // Autres logiques si nécessaire
+      }
       if (buffer) {
-        await handleNewPlanTitles(buffer);
+        // await handleNewPlanTitles(buffer);
       }
     } catch (error) {
       if (error instanceof Error && error.name !== "AbortError") {
@@ -169,7 +198,8 @@ const PdfCreator = () => {
       }
     } finally {
       if (buffer) {
-        await handleNewPlanTitles(buffer);
+        // await handleNewPlanTitles(buffer);
+        // On fait un appel à l'autre API pour générer le contenu des chapitres
       }
       setLoading(false);
     }
@@ -177,6 +207,7 @@ const PdfCreator = () => {
 
   useEffect(() => {
     if (!loading && responseSubject && pdfId !== "") {
+      console.log("ok");
       // On s'assure que l'appel de fonction est correct :
       createPdfPlan(parseTitles(responseSubject), pdfId).then((newPlans) => {
         setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
@@ -192,19 +223,57 @@ const PdfCreator = () => {
     deletePlan(pdfId);
   };
 
-  const handleNewPlanTitles = async (titlesChunk: string) => {
-    const titles = parseTitles(titlesChunk);
-    if (titles.length > 0 && pdfId !== "") {
-      const newPlans = await createPdfPlan(titles, pdfId);
-      // On s'assure que newPlans contient bien les données et qu'elles sont au format attendu :
-      setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
-    }
-  };
+  // Exemple de fonction pour appeler votre autre API
+  const callYourOtherAPI = useCallback(
+    async (title: string, pdfId: string) => {
+      try {
+        const response = await fetch("/api/pdfcreator/contentCreator", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title, lang, model: "gpt-3.5-turbo", pdfId }),
+        });
+        if (!response.ok) {
+          throw new Error(`API call failed: ${response.statusText}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error calling other API:", error);
+        return null;
+      }
+    },
+    [lang]
+  );
 
-  const generateChapter = (chapterIndex: number) => {
-    // Appel à l'API ChatGPT pour générer le contenu du chapitre
-    // setChapterContent({...chapterContent, [chapterIndex]: responseFromChatGPT});
-  };
+  useEffect(() => {
+    if (generatePlanDone) {
+      setLoading(true);
+      const apiCalls = createdPlans.map((plan) =>
+        callYourOtherAPI(plan.planTitle, plan.id).then((apiResponse) => {
+          if (apiResponse) {
+            const newContent = apiResponse.planContent; // Vérifiez que c'est le format correct
+            setChapterContent((prevContent) => ({
+              ...prevContent,
+              [plan.planTitle]: newContent,
+            }));
+          }
+        })
+      );
+
+      Promise.all(apiCalls)
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error in one of the API calls:", error);
+          setLoading(false);
+        });
+
+      setGeneratePlanDone(false); // Réinitialisez si nécessaire
+    }
+  }, [generatePlanDone, createdPlans, callYourOtherAPI]);
+
   const handleUpdatePlanTitle = (planId: string, newTitle: string) => {
     const upPlan = updatePlan(planId, newTitle);
     if (upPlan !== null) {
@@ -241,34 +310,61 @@ const PdfCreator = () => {
       <div className="rounded-xl border bg-opacity-90 shadow-md transition grid grid-cols-2 gap-x-2 items-start">
         <div className="row-span-3">
           {createdPlans.map((plan) => (
-            <div className="flex flex-row" key={plan.id}>
-              <span>{plan.planLevel}</span>
-              <Input
-                key={plan.id}
-                id={`title-${plan.id}`}
-                placeholder={`Titre`}
-                defaultValue={plan.planTitle}
-                onChange={(e) => {
-                  handleUpdatePlanTitle(plan.id, e.currentTarget.value);
-                }}
-              />
+            <div className="flex flex-col gap-1" key={plan.id}>
+              <div className="flex flex-row">
+                <span>{plan.planLevel}</span>
+                <Input
+                  key={plan.id}
+                  id={`title-${plan.id}`}
+                  placeholder={`Titre`}
+                  defaultValue={plan.planTitle}
+                  onChange={(e) => {
+                    handleUpdatePlanTitle(plan.id, e.currentTarget.value);
+                  }}
+                />
+              </div>
+              <div>
+                {chapterContent[plan.planTitle] && (
+                  <Textarea value={chapterContent[plan.planTitle]} readOnly />
+                )}
+              </div>
             </div>
           ))}
         </div>
         <div>
           {/* On converti tout en markdown */}
-          {createdPlans.map((plan) => (
-            <div key={plan.id}>
-              {/* <h1>{converter.makeHtml(plan.planLevel + " " + plan.planTitle)}</h1> */}
-              <article
-                className="text-left"
-                dangerouslySetInnerHTML={{
-                  __html: markdownToHtml(plan.planLevel + " " + plan.planTitle),
-                }}
-              />
+          <article>
+            {createdPlans.map((plan) => (
+              <div key={plan.id}>
+                <div
+                  className="text-left"
+                  dangerouslySetInnerHTML={{
+                    __html: markdownToHtml(
+                      plan.planLevel + " " + plan.planTitle
+                    ),
+                  }}
+                />
+                {/* Ajout du contenu du plan si disponible */}
+                {chapterContent[plan.planTitle] && (
+                  <div
+                    className="text-left"
+                    dangerouslySetInnerHTML={{
+                      __html: markdownToHtml(chapterContent[plan.planTitle]),
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </article>
+        </div>
+        {/* <div>
+          {Object.entries(chapterContent).map(([title, content]) => (
+            <div key={title}>
+              <h3>{title}</h3>
+              <p>{content}</p>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );

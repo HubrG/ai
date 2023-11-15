@@ -81,10 +81,11 @@ export async function POST(req: Request): Promise<Response> {
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
-    max_tokens: 1000,
+    max_tokens: 100,
     stream: true,
     n: 1,
   };
+
 
   const stream = await OpenAIStream(payload);
   console.log(stream);
