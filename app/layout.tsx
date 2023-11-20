@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 const ToastProvider = dynamic(() => import("@/src/toastify/ToastProvider"));
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   session,
 }: {
@@ -53,17 +53,20 @@ export default function RootLayout({
               crawlSpeed={200}
               height={2}
               crawl={true}
-              showSpinner={true}
+              showSpinner={true} 
               easing="ease"
               speed={200}
               shadow={false}
             />
           </ToastProvider>
-          <ThemeProvider attribute="class" defaultTheme="system-ui" enableSystem>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system-ui"
+            enableSystem>
             <Navbar />
-            <main>
-              <div className="container">{children}</div>
-            </main>
+              <main>
+                <div className="container">{children}</div>
+              </main>
           </ThemeProvider>
         </body>
       </Provider>

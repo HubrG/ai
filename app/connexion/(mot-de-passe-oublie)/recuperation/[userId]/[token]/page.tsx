@@ -1,10 +1,10 @@
 import NotFound from '@/app/not-found'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { RetrievePwdTokenForm } from '@/src/feature/layout/auth/RetrievePwdTokenForm'
-import { checkTokenAndUser } from '@/src/feature/layout/auth/utils.server'
+import { RetrievePwdTokenForm } from '@/src/feature/auth/RetrievePwdTokenForm'
+import { checkTokenAndUser } from '@/src/feature/auth/utils.server'
 import React, { Suspense } from 'react'
-import { Meta } from "@/src/feature/layout/metadata/Metadata";
+import { Meta } from "@/src/metadata/Metadata";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

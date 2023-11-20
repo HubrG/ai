@@ -39,9 +39,9 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
   const plans = await prisma.$transaction(
     titles.map((title) => {
       const match = title.match(/^(#+)\s/); // Capture les dièses au début du titre
-      const planLevel = match ? match[1] : 'Other'; // Utilise le nombre de dièses ou 'Other'
+      const planLevel = match ? match[1] : "Other"; // Utilise le nombre de dièses ou 'Other'
 
-      if (planLevel === '#' && firstTitleForPdf === null) {
+      if (planLevel === "#" && firstTitleForPdf === null) {
         firstTitleForPdf = title.replace(/^#\s/, "").trim();
       }
 
@@ -57,8 +57,6 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
           planLevel: true,
         },
       });
-
-
     })
   );
 
@@ -75,8 +73,6 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
 
   return plans;
 };
-
-
 
 export const deletePlan = async (id: string) => {
   const user = await getUserLog();
@@ -126,6 +122,43 @@ export const updatePlan = async (id: string, title: string) => {
   }
 };
 
+export const updateContent = async (id: string, content: string) => {
+  const user = await getUserLog();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+
+  // On récupère le contenu pour vérifier l'appartenance
+  const contentToEdit = await prisma.pdfCreatorPlan.findUnique({
+    where: {
+      id: id,
+    },
+    include: {
+      pdfCreatorContent: true,
+      pdf: true,
+    },
+  });
+
+  // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
+  if (contentToEdit && contentToEdit.pdf.userId === user.id) {
+    console.log("ok")
+    // Si c'est le cas, on met à jour le contenu
+    const updatedContent = await prisma.pdfCreatorContent.update({
+      where: {
+        id: contentToEdit.pdfCreatorContent[0].id,
+      },
+      data: {
+        planContent: content,
+      },
+    });
+    console.log(updatedContent)
+    return updatedContent;
+  } else {
+    throw new Error(
+      "Content not found or user does not have permission to update this content."
+    );
+  }
+};
 
 export const getPdfPlanAndContent = async (pdfId: string) => {
   const pdf = await prisma.pdfCreator.findUnique({
@@ -147,4 +180,4 @@ export const getPdfPlanAndContent = async (pdfId: string) => {
     throw new Error("Pdf not found");
   }
   return pdf;
-}
+};

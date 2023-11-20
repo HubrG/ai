@@ -1,6 +1,4 @@
 import Webscrap from "@/src/feature/main-feature/ai-webscrap/Webscrap";
-import Image from "next/image";
-import { Button } from "flowbite-react";
 import PdfCreator from "@/src/feature/main-feature/ai-pdf-creator/CreatePDF";
 
 export default function Home() {

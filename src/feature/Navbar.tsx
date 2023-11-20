@@ -1,4 +1,3 @@
-import { getAuthSession } from "@/lib/auth";
 import { LoginButton } from "./header/auth/LoginButton";
 import { UserProfile } from "./header/auth/UserProfile";
 import { Button } from "@/components/ui/button";
@@ -10,9 +9,11 @@ import BurgerMenu from "@/src/feature/header/BurgerMenu";
 import { Suspense } from "react";
 import { ThemeToggle } from "../theme/ThemeToggle";
 import { faCube } from "@fortawesome/pro-duotone-svg-icons";
+import { getUserLog } from "@/src/query/user.query";
 
 export const Navbar = async () => {
-  const session = await getAuthSession();
+
+  const user = await getUserLog();
   //  Construction du menu
   const prefix = "/";
   const links = [
@@ -57,10 +58,9 @@ export const Navbar = async () => {
               </Link>
               <div className="md:block hidden">
                 <Suspense fallback={<FontAwesomeIcon icon={faSpinner} />}>
-                  {session?.user?.name && session.user.role ? (
+                  {user ? (
                     <UserProfile
-                      user={session.user.name}
-                      role={session.user.role}
+                      user={user}
                     />
                   ) : (
                     <LoginButton />
@@ -69,7 +69,7 @@ export const Navbar = async () => {
               </div>
               <ThemeToggle />
             </div>{" "}
-            <BurgerMenu links={links} user={session?.user} />
+            <BurgerMenu links={links} user={user} />
           </div>
           <MainMenu links={links} />
         </div>

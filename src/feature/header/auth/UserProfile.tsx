@@ -6,22 +6,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { DropdownMenuItemLogout } from "./LogoutButton";
+import { DropdownMenuItemLogout } from "./LogoutButton"; 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTools, faUser, faBasketShopping } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faTools,
+  faUser,
+  faBasketShopping,
+} from "@fortawesome/pro-solid-svg-icons";
 import { Separator } from "@/components/ui/separator";
+import { User } from "@prisma/client";
 
 interface MenuProps {
-  user: string;
-  role: string;
+  user: User;
 }
-export const UserProfile = (props: MenuProps) => {
+
+
+
+export const UserProfile = ({ user }: MenuProps) => {
+  console.log(user);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
-          <span className="lg:block md:hidden block font-bold text-base">{props.user}</span>
+        <Button variant="ghost" className="flex flex-row items-center gap-2">
+          <span className="flex flex-row items-center gap-2">
+            <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
+            <span className="lg:block md:hidden block font-bold text-base">
+              {user.name}
+            </span>
+          </span>
+          <span>
+            <span className="lg:block md:hidden block font-bold text-base">
+              Token restants : {user.tokenRemaining}
+            </span>
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
@@ -38,8 +55,8 @@ export const UserProfile = (props: MenuProps) => {
             Mes commandes
           </Link>
         </DropdownMenuItem>
-        <Separator className="my-2" />        
-        {props.role === "ADMIN" && (
+        <Separator className="my-2" />
+        {user.role === "ADMIN" && (
           <>
             <DropdownMenuItem className="w-full" asChild>
               <Link prefetch={false} href="/admin" className="nunderline">

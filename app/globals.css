@@ -257,38 +257,101 @@ h3,
 h4,
 h5,
 h6 {
-  @apply my-[1.63rem];
+  @apply my-[1.63rem] dark:text-app-300;
 }
 h1.title-page {
   @apply text-center  mb-14 !important;
 }
 h1 {
-  @apply md:text-4xl text-3xl font-bold text-app-900 dark:text-app-400;
+  @apply md:text-4xl text-3xl font-bold;
 }
 
 h2 {
-  @apply md:text-2xl text-xl font-bold text-app-900 dark:text-app-300;
+  @apply md:text-2xl text-xl font-bold;
 }
 
 h3 {
-  @apply md:text-xl text-lg font-bold text-app-800;
+  @apply md:text-xl text-lg font-bold ;
 }
 
 h4 {
-  @apply md:text-lg text-base font-bold text-app-800;
+  @apply md:text-lg text-base font-bold;
 }
 
 h5 {
-  @apply md:text-base text-sm font-bold text-app-800;
+  @apply md:text-base text-sm font-bold;
 }
 
 h6 {
-  @apply md:text-sm text-sm font-bold text-app-800;
+  @apply md:text-sm text-sm font-bold;
 }
 
 p {
-  @apply md:text-[1.05rem]  text-base  my-1 text-app-950;
+  @apply md:text-[1.05rem]  text-base  my-1 text-app-950 dark:text-app-400;
 }
 ul.ul {
   @apply list-disc list-inside mt-4 mb-4;
+}
+article p {
+  @apply my-4 text-justify;
+
+}
+article em,
+article i {
+  @apply italic;
+}
+article strong,
+article b {
+  @apply font-bold;
+}
+article del {
+  @apply line-through;
+}
+article blockquote {
+  @apply border-l-4 border-app-300 bg-app-50 rounded py-2 pl-4 italic my-4;
+}
+article ul {
+  @apply list-disc list-inside mt-4 mb-4;
+}
+article ol {
+  @apply list-decimal list-outside mt-1 mb-1 pl-5;
+}
+
+article li {
+  @apply mb-2.5 text-app-950 dark:text-app-400;
+}
+
+article li p {
+  @apply inline;
+}
+
+/* article ol li {
+  @apply flex flex-row;
+} */
+
+article a {
+  @apply text-app-700;
+}
+article img {
+  @apply max-w-full h-auto my-4;
+}
+article pre {
+  @apply bg-gray-100 p-4 rounded mt-4 mb-4;
+}
+article code {
+  @apply text-sm bg-gray-100 rounded p-1;
+}
+
+article hr {
+  @apply border-t border-gray-300 my-8;
+}
+article table {
+  @apply w-full border-collapse my-4;
+}
+article th,
+article td {
+  @apply border border-gray-300 px-4 py-2;
+}
+article .task-list-item {
+  @apply list-none list-inside;
 }

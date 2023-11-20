@@ -1,4 +1,6 @@
 // Import des utilitaires pour le parsing d'événements SSE (Server-Sent Events)
+import spendTokens from "@/src/function/ai/spendTokens";
+import tokenCount from "@/src/function/ai/tokenCount";
 import {
   createParser,
   ParsedEvent,
@@ -45,7 +47,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
-
+  let totalTokens = 0;
   // Création d'un stream lisible à partir de la réponse HTTP
   const stream = new ReadableStream({
     async start(controller) {
@@ -53,15 +55,25 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
       function onParse(event: ParsedEvent | ReconnectInterval) {
         if (event.type === "event") {
           const data = event.data;
+          // console.log(data);
+
           // Vérifie si le signal de fin de stream est reçu
           if (data === "[DONE]") {
+           
+            // On dépense le nombre de tokens
+            spendTokens({ tokenCount: totalTokens, output: true, GPTModel: payload.model }); 
+            // Ferme le stream
             controller.close();
             return;
           }
           try {
             // Tente de parser la donnée JSON reçue
             const json = JSON.parse(data);
+            // console.log(json)
             const text = json.choices[0].delta?.content || "";
+            // On compte le nombre de tokens
+            totalTokens = tokenCount(text) + totalTokens;
+
             // Ignore les deux premiers sauts de ligne qui sont considérés comme préfixes
             if (counter < 2 && (text.match(/\n/) || []).length) {
               return;

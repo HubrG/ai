@@ -22,3 +22,8 @@ declare module 'lodash'
 declare module 'react-lazyload'
 
 declare module "@/utils/openAIStream"
+
+declare module "tiktoken"
+declare module "@dqbd/tiktoken"
+
+declare module "isomorphic-fetch"

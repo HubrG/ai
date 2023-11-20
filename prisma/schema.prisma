@@ -65,9 +65,34 @@ model User {
   hashedPassword String?
   date           DateTime?    @default(now())
   role           UserRole     @default(USER)
+  tokenRemaining Int          @default(150000)
   accounts       Account[]
   sessions       Session[]
   pdfCreator     pdfCreator[]
+  tokenSpent     tokenSpent[]
+}
+
+model tokenSpent {
+  id         String       @id @default(cuid())
+  userId     String
+  token      Int
+  GPTModelId String
+  input      Boolean      @default(false)
+  output     Boolean      @default(false)
+  type       String       @default("input")
+  createdAt  DateTime     @default(now())
+  cost       Float        @default(0.00)
+  GPTModel   tokenPricing @relation(fields: [GPTModelId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model tokenPricing {
+  id               String       @id @default(cuid())
+  GPTModel         String
+  priceFor1kInput  Float        @default(0.01)
+  priceFor1kOutput Float        @default(0.03)
+  createdAt        DateTime     @default(now())
+  tokenSpent       tokenSpent[]
 }
 
 model userToken {
