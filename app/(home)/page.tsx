@@ -1,7 +1,7 @@
 import Webscrap from "@/src/feature/main-feature/ai-webscrap/Webscrap";
-import PdfCreator from "@/src/feature/main-feature/ai-pdf-creator/CreatePDF";
 
-export default function Home() {
+export default async function Home() {
+
   return (
     <>
       <div className="flex flex-col gap-y-10 w-full">
@@ -13,10 +13,7 @@ export default function Home() {
           </p>
           <Webscrap />
         </div>
-        <div>
-          <h2 className="my-4 text-6xl font-bold">Create PDF</h2>
-          <PdfCreator />
-        </div>
+        
       </div>
     </>
   );

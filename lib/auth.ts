@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
+import { User } from "@prisma/client";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -26,7 +27,7 @@ export const authOptions: AuthOptions = {
         email: {
           label: "Adresse email",
           type: "text",
-          placeholder: "hubrgiorgi@gmail.com",
+          placeholder: "contact@fastuff.com",
         },
         password: { label: "Password", type: "password" },
       },
@@ -47,11 +48,12 @@ export const authOptions: AuthOptions = {
             name: true,
             hashedPassword: true,
             role: true,
+            tokenRemaining: true,
           },
-        })) as any;
+        })) as User;
 
         if (
-          user &&
+          user && user.hashedPassword &&
           (await bcrypt.compare(credentials.password, user.hashedPassword))
         ) {
           return user;
@@ -71,21 +73,18 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.userId = user.id; // Assumant que user.id existe
         token.role = (user as any).role;
+        token.tokenRemaining = (user as any).tokenRemaining;
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (token.userId) {
-        const user = { ...session.user, id: token.userId, role:token.role };
+        const user = { ...session.user, id: token.userId, role:token.role, tokenRemaining:token.tokenRemaining };
         const newSession = { ...session, user };
         return newSession;
       }
       return session;
     },
-    // async signIn({ user, account, profile, email, credentials }) {
-    //     console.log(user, account, profile, email, credentials);
-    //     return true;
-    // }
   },
   pages: {
     signIn: "/connexion",

@@ -48,23 +48,32 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
     body: JSON.stringify(payload),
   });
   let totalTokens = 0;
+  let tokensRemaining = 0;
   // Création d'un stream lisible à partir de la réponse HTTP
   const stream = new ReadableStream({
     async start(controller) {
       // Fonction de callback pour gérer les événements SSE parsés
-      function onParse(event: ParsedEvent | ReconnectInterval) {
+      async function onParse(event: ParsedEvent | ReconnectInterval) {
         if (event.type === "event") {
           const data = event.data;
           // console.log(data);
 
           // Vérifie si le signal de fin de stream est reçu
           if (data === "[DONE]") {
-           
             // On dépense le nombre de tokens
-            spendTokens({ tokenCount: totalTokens, output: true, GPTModel: payload.model }); 
-            // Ferme le stream
+            // Mise à jour des tokens restants
+            const tokenCount = await spendTokens({
+              tokenCount: totalTokens,
+              output: true,
+              GPTModel: payload.model,
+            });
+            if (tokenCount !== undefined) {
+              tokensRemaining = tokenCount;
+            }
+            // console.log("Tokens remaining: ", tokensRemaining);
+
+            // Fermeture du stream
             controller.close();
-            return;
           }
           try {
             // Tente de parser la donnée JSON reçue
@@ -99,6 +108,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
     },
   });
 
-  // Retourne le stream pour utilisation ultérieure
-  return stream;
+  // Retourne le stream pour utilisation ultérieure et on renvoie le nombre de tokens
+  // console.log("CACA ", tokensRemaining);
+  return { stream, tokensRemaining };
 }

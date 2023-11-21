@@ -4,7 +4,21 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost', 'res.cloudinary.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+    // domains: ["localhost", "res.cloudinary.com", "www.referenseo.com", "daisyui.com", "res.cloudinary.com"],
   },
   // webpack: (config, { isServer }) => {
   //   config.experiments = {

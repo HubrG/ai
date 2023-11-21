@@ -66,6 +66,8 @@ model User {
   date           DateTime?    @default(now())
   role           UserRole     @default(USER)
   tokenRemaining Int          @default(150000)
+  tokenByMonth   Int          @default(150000)
+  refilledAt     DateTime?    @default(now())
   accounts       Account[]
   sessions       Session[]
   pdfCreator     pdfCreator[]

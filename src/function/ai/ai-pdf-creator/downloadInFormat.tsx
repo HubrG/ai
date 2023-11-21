@@ -95,45 +95,72 @@ export const downloadHtml = (htmlContent: string, filename: string) => {
 
 function processMarkdownElement(markdownText: string) {
   // Crée un TextRun avec la couleur noire par défaut
-  const createTextRun = (text:string, style = {}) => {
+  const createTextRun = (text: string, style = {}) => {
     return new TextRun({
       text: text,
       color: "000000", // Noir
       ...style,
     });
   };
-
-  const getHeadingLevel = (level: number): HeadingLevel => {
+  const getHeadingLevel = (level: 1 | 2 | 3 | 4 | 5 | 6): HeadingLevel => {
     switch (level) {
-      case 1: return HeadingLevel.HEADING_1;
-      case 2: return HeadingLevel.HEADING_2;
-      case 3: return HeadingLevel.HEADING_3;
-      case 4: return HeadingLevel.HEADING_4;
-      case 5: return HeadingLevel.HEADING_5;
-      case 6: return HeadingLevel.HEADING_6;
-      default: return HeadingLevel.HEADING_1; // ou une autre valeur par défaut
+      case 1:
+        return HeadingLevel.HEADING_1;
+      case 2:
+        return HeadingLevel.HEADING_2;
+      case 3:
+        return HeadingLevel.HEADING_3;
+      case 4:
+        return HeadingLevel.HEADING_4;
+      case 5:
+        return HeadingLevel.HEADING_5;
+      case 6:
+        return HeadingLevel.HEADING_6;
+      default:
+        return HeadingLevel.HEADING_1;
     }
   };
   // Traite chaque segment de texte Markdown
-  const processSegment = (segment:string) => {
+  const processSegment = (segment: string) => {
     // En-têtes
     if (/^ *#{1,6} /.test(segment)) {
       const match = segment.match(/^ *#+/);
       if (match) {
         const level = match[0].trim().length;
-        return new Paragraph({
-          children: [createTextRun(segment.replace(/^ *#+/, ''))],
-          heading: getHeadingLevel(level),
-        });
+        const text = segment.replace(/^ *#+ */, ""); // Supprime les # et les espaces avant le texte de l'en-tête
+
+        // Vous pouvez ajouter ici des styles supplémentaires si nécessaire
+        let headingStyle = {};
+        switch (level) {
+          case 1:
+            headingStyle = { bold: true, size: 54 }; // Exemple de style pour un en-tête de niveau 1
+            break;
+          case 2:
+            headingStyle = { bold: true, size: 48 }; // Exemple de style pour un en-tête de niveau 2
+            break;
+          case 3:
+            headingStyle = { bold: true, size: 42 }; // Exemple de style pour un en-tête de niveau 3
+            break;
+          case 4:
+            headingStyle = { bold: true, size: 36 }; // Exemple de style pour un en-tête de niveau 4
+            break;
+          // Ajoutez des cas pour les niveaux 3 à 6 si nécessaire
+        }
+
+        return createTextRun(text, headingStyle);
       }
     }
     // Texte en gras
     else if (segment.startsWith("**")) {
-      return createTextRun(segment.substring(2, segment.length - 2), { bold: true });
+      return createTextRun(segment.substring(2, segment.length - 2), {
+        bold: true,
+      });
     }
     // Texte en italique
     else if (segment.startsWith("*")) {
-      return createTextRun(segment.substring(1, segment.length - 1), { italics: true });
+      return createTextRun(segment.substring(1, segment.length - 1), {
+        italics: true,
+      });
     }
     // Liste à puces
     else if (segment.startsWith("- ")) {
@@ -176,25 +203,35 @@ function processMarkdownElement(markdownText: string) {
     }
     // Texte normal
     else {
-      return createTextRun(segment);
+      return createTextRun(segment, {
+        color: "000000", // Noir
+        size: 28,
+        //times New roman
+        font: "Times",
+      });
     }
   };
 
   // Découpage du texte en segments et traitement de chaque segment
-  const segments = markdownText.split(/(\n|#{1,6} .*|\*\*.*?\*\*|\*.*?\*|\- .*|\> .*|```.*?```|\[.*?\]\(.*?\))/);
-  const children = segments.map(segment => processSegment(segment));
+  const segments = markdownText.split(
+    /(\n|#{1,6} .*|\*\*.*?\*\*|\*.*?\*|\- .*|\> .*|```.*?```|\[.*?\]\(.*?\))/
+  );
+  const children = segments.map((segment) => processSegment(segment));
 
   return new Paragraph({
     children: children as [],
   });
 }
 
-
 export const downloadDocx = async (allContent: string, fileName: string) => {
   let markdownContent = converter.makeMarkdown(allContent);
   markdownContent = markdownContent.replace(/\\/g, "");
+  markdownContent = markdownContent.replace(/\\./g, "");
+  markdownContent = markdownContent.replace("<!-", "");
   // Convertir le contenu Markdown en éléments DOCX
+  console.log(markdownContent);
   const docElements = markdownContent.split("\n").map(processMarkdownElement);
+  console.log(docElements);
 
   // Filtrer les éléments undefined
   const filteredDocElements = docElements.filter(

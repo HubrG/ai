@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  
   :root {
     --color-app1: theme("colors.app.50");
     --color-app2: theme("colors.app.100");
@@ -41,9 +40,6 @@
     --color-apprgba10: theme("colors.apprgba.900");
     --color-apprgba11: theme("colors.apprgba.950");
 
-  
-
-
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -76,7 +72,6 @@
   }
 
   .dark {
-
     --color-app1: theme("colors.app.950");
     --color-app2: theme("colors.app.900");
     --color-app3: theme("colors.app.800");
@@ -88,8 +83,6 @@
     --color-app9: theme("colors.app.200");
     --color-app10: theme("colors.app.100");
     --color-app11: theme("colors.app.50");
-
-  
 
     --color-secondary1: theme("colors.secondary.950");
     --color-secondary2: theme("colors.secondary.900");
@@ -103,7 +96,6 @@
     --color-secondary10: theme("colors.secondary.100");
     --color-secondary11: theme("colors.secondary.50");
 
-  
     --color-apprgba1: theme("colors.apprgba.950");
     --color-apprgba2: theme("colors.apprgba.900");
     --color-apprgba3: theme("colors.apprgba.800");
@@ -116,21 +108,17 @@
     --color-apprgba10: theme("colors.apprgba.100");
     --color-apprgba11: theme("colors.apprgba.50");
 
-
-    --color-app-hsl-50 : hsl(210, 1.59%, 98.82%);
-    --color-app-hsl-100 : hsl(210, 3.21%, 97.65%);
-    --color-app-hsl-200 : hsl(214.29, 5.83%, 94.12%);
-    --color-app-hsl-300 : hsl(212.73, 9.78%, 88.24%);
-    --color-app-hsl-400 : hsl(215, 19.57%, 72.16%);
-    --color-app-hsl-500 : hsl(215.38, 28.06%, 54.51%);
-    --color-app-hsl-600 : hsl(215.29, 32.38%, 41.18%);
-    --color-app-hsl-700 : hsl(215.29, 40%, 33.33%);
-    --color-app-hsl-800 : hsl(217.24, 49.15%, 23.14%);
-    --color-app-hsl-900 : hsl(222.22, 64.29%, 16.47%);
-    --color-app-hsl-950 : hsl(228.57, 91.30%, 9.02%);
-   
-
-
+    --color-app-hsl-50: hsl(210, 1.59%, 98.82%);
+    --color-app-hsl-100: hsl(210, 3.21%, 97.65%);
+    --color-app-hsl-200: hsl(214.29, 5.83%, 94.12%);
+    --color-app-hsl-300: hsl(212.73, 9.78%, 88.24%);
+    --color-app-hsl-400: hsl(215, 19.57%, 72.16%);
+    --color-app-hsl-500: hsl(215.38, 28.06%, 54.51%);
+    --color-app-hsl-600: hsl(215.29, 32.38%, 41.18%);
+    --color-app-hsl-700: hsl(215.29, 40%, 33.33%);
+    --color-app-hsl-800: hsl(217.24, 49.15%, 23.14%);
+    --color-app-hsl-900: hsl(222.22, 64.29%, 16.47%);
+    --color-app-hsl-950: hsl(228.57, 91.3%, 9.02%);
 
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -143,8 +131,6 @@
 
     /* --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%; */
-
-   
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
@@ -163,7 +149,6 @@
 
 .dark .text-secondary {
   @apply text-secondary-500 !important;
-
 }
 
 @layer base {
@@ -175,18 +160,17 @@
   }
 }
 main {
-  @apply min-h-screen min-w-full  mx-auto gap-4 text-center;
+  @apply min-h-screen min-w-full  mx-auto gap-4 text-center bg-app-100 dark:bg-app-950 ;
 }
 .container {
   @apply w-full max-w-6xl flex flex-col min-h-screen pt-28 justify-center items-center;
 }
 nav {
-  @apply bg-app-50 dark:bg-app-900 fixed w-full z-20 top-0 left-0 shadow-lg dark:shadow-none dark:shadow-slate-950  border border-app-200  dark:border-slate-800;
+  @apply bg-app-50 dark:bg-app-900 fixed w-full z-20 top-0 left-0  border-b dark:border-app-800  dark:shadow-app-900  ;
 }
-nav div:first-child {
+nav div:first-child:not(.userNavbarDiv > *) {
   @apply max-w-screen-xl flex flex-wrap items-center  justify-between mx-auto p-4 py-[0.5rem];
 }
-
 
 a {
   @apply hover:underline text-app font-bold dark:text-app-300 !important;
@@ -238,8 +222,6 @@ ul.main-menu li a {
   @apply self-center text-3xl whitespace-nowrap dark:text-white;
 }
 
-
-
 /* Burger Menu */
 div.burger-menu {
   @apply -z-10 md:hidden absolute top-[4.5rem] left-0 w-full bg-app-200 dark:bg-slate-800 border-b-2 border-t-2 border-app-300;
@@ -271,7 +253,7 @@ h2 {
 }
 
 h3 {
-  @apply md:text-xl text-lg font-bold ;
+  @apply md:text-xl text-lg font-bold;
 }
 
 h4 {
@@ -294,7 +276,6 @@ ul.ul {
 }
 article p {
   @apply my-4 text-justify;
-
 }
 article em,
 article i {
@@ -354,4 +335,78 @@ article td {
 }
 article .task-list-item {
   @apply list-none list-inside;
+}
+
+div.progressTokenVoid {
+  @apply w-full  bg-app-200 absolute z-10 rounded-full h-2 p-0 -mt-1 dark:bg-app-700 !important;
+}
+div.progressToken {
+  @apply bg-secondary-500 h-2 p-0 z-20 rounded-full absolute -mt-1 !important;
+  transition: width 2s ease-in-out; /* 0.5s est la durée de la transition */
+}
+.userNavbarDiv {
+  @apply p-0 m-0 px-0 py-0 my-0 !important;
+}
+.userNavbarDiv div {
+  @apply p-3;
+}
+.shadcnButtonSize-default {
+  @apply h-10 px-4 py-2;
+}
+.shadcnButton {
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+.shadcnButton-default {
+  @apply bg-primary h-10 px-4 py-2 text-primary-foreground hover:bg-primary/80 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+.shadcnButton-outline {
+  @apply inline-flex h-10 px-4 py-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50  hover:bg-accent hover:text-accent-foreground ;
+}
+.shadcnButton-ghost {
+  @apply shadcnButton hover:bg-accent hover:text-accent-foreground;
+}
+
+/*  */
+.downloadPdfButton {
+  @apply shadcnButton-ghost shadcnButtonSize-default w-full justify-start cursor-pointer  flex flex-row items-center gap-x-2 !important;
+}
+.downloadPdfButton svg {
+  @apply w-5 h-5 mr-2;
+}
+/* NOTE : TOOLTIP */
+
+.tooltip {
+  @apply bg-app-200 dark:bg-app-700 rounded-md dark:text-app-50 text-app-800 text-sm px-2 py-1 z-50 max-w-screen-sm !important;
+}
+
+
+/** Types variant **/
+.dark {
+  background: var(--rt-color-dark);
+  color: var(--rt-color-white);
+}
+
+.light {
+  background-color: var(--rt-color-white);
+  color: var(--rt-color-dark);
+}
+
+.success {
+  background-color: var(--rt-color-success);
+  color: var(--rt-color-white);
+}
+
+.warning {
+  background-color: var(--rt-color-warning);
+  color: var(--rt-color-white);
+}
+
+.error {
+  background-color: var(--rt-color-error);
+  color: var(--rt-color-white);
+}
+
+.info {
+  background-color: var(--rt-color-info);
+  color: var(--rt-color-white);
 }

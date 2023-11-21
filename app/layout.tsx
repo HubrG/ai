@@ -3,15 +3,16 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 import "react-toastify/dist/ReactToastify.css";
 import Provider from "@/context/Provider";
 import { ThemeProvider } from "@/src/theme/ThemeProvider";
-import { clsx } from "clsx";
 import NextTopLoader from "nextjs-toploader";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Session } from "next-auth";
 import dynamic from "next/dynamic";
 import { Navbar } from "@/src/feature/Navbar";
-const inter = Inter({ subsets: ["latin"] });
 import { Bitter, Caveat, Nunito } from "next/font/google";
+import { GlobalContextProvider } from "./Context/store";
+
+const inter = Inter({ subsets: ["latin"] });
 
 const sans = Nunito({
   subsets: ["latin"],
@@ -37,6 +38,8 @@ export default async function RootLayout({
   children: React.ReactNode;
   session: Session;
 }) {
+  // const setUser = useUserStore(state => state.setUser);
+
   return (
     <html
       lang="en"
@@ -53,7 +56,7 @@ export default async function RootLayout({
               crawlSpeed={200}
               height={2}
               crawl={true}
-              showSpinner={true} 
+              showSpinner={true}
               easing="ease"
               speed={200}
               shadow={false}
@@ -63,10 +66,12 @@ export default async function RootLayout({
             attribute="class"
             defaultTheme="system-ui"
             enableSystem>
-            <Navbar />
+            <GlobalContextProvider>
+              <Navbar />
               <main>
                 <div className="container">{children}</div>
               </main>
+            </GlobalContextProvider>
           </ThemeProvider>
         </body>
       </Provider>

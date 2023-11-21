@@ -15,7 +15,8 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  if (!getUserLog()) {
+  const user = await getUserLog();
+  if (!user) {
     return new Response("User not logged in", { status: 401 });
   }
   const { title, model, lang, pdfId, maxTokens, plan } = (await req.json()) as {
@@ -140,17 +141,23 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("No content returned", { status: 400 });
   }
   // On dépense le nombre de tokens
-  spendTokens({
+  let totalTokens = 0;
+  const inputToken = await spendTokens({
     tokenCount: response.usage.prompt_tokens,
     input: true,
     GPTModel: model,
   });
-  spendTokens({
+  const outputTokens = await spendTokens({
     tokenCount: response.usage.completion_tokens,
     output: true,
     GPTModel: model,
   });
-
+  if (!inputToken || !outputTokens) {
+    // console.log("⛔ " + title + " : erreur lors de la dépense des tokens");
+    return new Response("Error spending tokens", { status: 400 });
+  }
+  totalTokens = outputTokens;
+// console.log(totalTokens)
   // console.log(
   //   "✅ " + title + " : appel de l'API GPT terminé, on peut continuer"
   // );
@@ -170,11 +177,13 @@ export async function POST(req: Request): Promise<Response> {
 
   if (pdfContent) {
     // console.log("🏁  " + title + " : contenu ajouté en BDD, terminé");
+    // console.log(totalTokens)
     return new Response(
       JSON.stringify({
         id: pdfContent.id,
         planId: pdfContent.planId,
         planContent: pdfContent.planContent,
+        tokenRemaining: totalTokens,
       }),
       { status: 200 }
     );

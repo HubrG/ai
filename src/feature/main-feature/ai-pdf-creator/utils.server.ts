@@ -1,15 +1,26 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { getUserLog } from "@/src/query/user.query";
+import { User } from "@prisma/client";
 
-export const createPdf = async (lang: string, subject: string) => {
-  const user = await getUserLog();
+type createPdfProps = {
+  lang: string;
+  subject: string;
+  user?: User;
+}
+export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
+  let userLog;
   if (!user) {
+    userLog = await getUserLog();
+  } else {
+    userLog = user;
+  }
+  if (!userLog) {
     throw new Error("User not logged in");
   }
   const pdf = await prisma.pdfCreator.create({
     data: {
-      userId: user.id,
+      userId: userLog.id,
       lang: lang,
       title: subject,
     },
@@ -141,7 +152,6 @@ export const updateContent = async (id: string, content: string) => {
 
   // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
   if (contentToEdit && contentToEdit.pdf.userId === user.id) {
-    console.log("ok")
     // Si c'est le cas, on met à jour le contenu
     const updatedContent = await prisma.pdfCreatorContent.update({
       where: {
@@ -181,3 +191,35 @@ export const getPdfPlanAndContent = async (pdfId: string) => {
   }
   return pdf;
 };
+
+export const retrieveTokenRemaining = async () => {
+  const user = await getUserLog();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+  const tokenRemaining = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+    },
+    select: {
+      tokenRemaining: true,
+    },
+  });
+  if (!tokenRemaining) {
+    throw new Error("Token remaining not found");
+  }
+  return tokenRemaining;
+}
+
+
+export const getPdf = async (id: string) => {
+  const pdf = await prisma.pdfCreator.findUnique({
+    where: {
+      id: id,
+    },
+  });
+  if (!pdf) {
+   return false;
+  }
+  return pdf;
+}

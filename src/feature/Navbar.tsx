@@ -2,17 +2,15 @@ import { LoginButton } from "./header/auth/LoginButton";
 import { UserProfile } from "./header/auth/UserProfile";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBrainCircuit, faSpinner } from "@fortawesome/pro-solid-svg-icons";
+import { faBrainCircuit } from "@fortawesome/pro-solid-svg-icons";
 import Link from "next/link";
 import MainMenu from "@/src/feature/header/MainMenu";
 import BurgerMenu from "@/src/feature/header/BurgerMenu";
-import { Suspense } from "react";
 import { ThemeToggle } from "../theme/ThemeToggle";
 import { faCube } from "@fortawesome/pro-duotone-svg-icons";
 import { getUserLog } from "@/src/query/user.query";
 
 export const Navbar = async () => {
-
   const user = await getUserLog();
   //  Construction du menu
   const prefix = "/";
@@ -33,7 +31,7 @@ export const Navbar = async () => {
             <span className="sm:text-xs flex flex-row">
               <span className="mr-1">
                 <FontAwesomeIcon
-                  className="text-secondary mr-1"
+                  className="mr-1"
                   icon={faBrainCircuit}
                 />
               </span>
@@ -57,15 +55,7 @@ export const Navbar = async () => {
                 </Button>
               </Link>
               <div className="md:block hidden">
-                <Suspense fallback={<FontAwesomeIcon icon={faSpinner} />}>
-                  {user ? (
-                    <UserProfile
-                      user={user}
-                    />
-                  ) : (
-                    <LoginButton />
-                  )}
-                </Suspense>
+                  {user ? <UserProfile userInfo={user} /> : <LoginButton />}
               </div>
               <ThemeToggle />
             </div>{" "}
