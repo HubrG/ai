@@ -1,25 +1,31 @@
-const path = require('path');
+const path = require("path");
 // const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require("webpack");
 
 const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
       {
-        protocol: 'http',
-        hostname: 'res.cloudinary.com',
+        protocol: "http",
+        hostname: "res.cloudinary.com",
       },
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
     ],
     // domains: ["localhost", "res.cloudinary.com", "www.referenseo.com", "daisyui.com", "res.cloudinary.com"],
   },
+  webpack: (config) => {
+    config.externals = [...config.externals, "bcrypt"];
+    return config;
+  },
+
   // webpack: (config, { isServer }) => {
   //   config.experiments = {
   //     asyncWebAssembly: true,

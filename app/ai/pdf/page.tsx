@@ -3,6 +3,7 @@ import { getPdfs } from "@/src/query/pdf.query";
 import NotFound from "@/app/not-found";
 import { CreateNewPdfButton } from "@/src/feature/main-feature/ai-pdf-creator/components/CreateNewPdfButton";
 import Link from "next/link";
+import { pdfCreator } from "@prisma/client";
 
 export default async function GeneratePDF() {
   const user = await getUserLog();
@@ -23,7 +24,7 @@ export default async function GeneratePDF() {
             <ul className="text-left">
               {pdfs &&
                 pdfs.map(
-                  (pdf) =>
+                  (pdf:pdfCreator) =>
                     pdf.title && (
                       <li key={pdf.id}>
                         <Link href={`/ai/pdf/${pdf.id}`}>

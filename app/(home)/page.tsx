@@ -1,4 +1,4 @@
-import Webscrap from "@/src/feature/main-feature/ai-webscrap/Webscrap";
+// import Webscrap from "@/src/feature/main-feature/ai-webscrap/Webscrap";
 
 export default async function Home() {
 
@@ -11,7 +11,7 @@ export default async function Home() {
             Ask a question.
             <span className="text-red-400">(Max. 200 characters)</span>
           </p>
-          <Webscrap />
+          {/* <Webscrap /> */}
         </div>
         
       </div>

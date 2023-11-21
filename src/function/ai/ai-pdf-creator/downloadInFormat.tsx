@@ -5,9 +5,9 @@ import {
   Document,
   TextRun,
   HeadingLevel,
-  Bookmark,
   Packer,
   ExternalHyperlink,
+  AlignmentType,
   Paragraph,
 } from "docx";
 import { saveAs } from "file-saver";
@@ -206,8 +206,8 @@ function processMarkdownElement(markdownText: string) {
       return createTextRun(segment, {
         color: "000000", // Noir
         size: 28,
-        //times New roman
         font: "Times",
+        alignment: AlignmentType.JUSTIFIED,
       });
     }
   };
@@ -220,6 +220,7 @@ function processMarkdownElement(markdownText: string) {
 
   return new Paragraph({
     children: children as [],
+    alignment: AlignmentType.JUSTIFIED,
   });
 }
 

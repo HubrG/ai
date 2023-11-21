@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    
     "typeRoots": ["./node_modules/@types", "./types"],
     "plugins": [
       {
@@ -21,8 +22,11 @@
     ],
     "baseUrl": ".",  // Ajout de la propriété baseUrl
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["./*"],
+      "crypto": [
+        "node_modules/crypto-js"
+      ],
+    },
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

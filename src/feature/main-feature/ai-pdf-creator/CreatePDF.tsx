@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useGlobalContext } from "@/app/Context/store";
 import DownloadButton from "./components/DownloadButton";
+import { User } from '@prisma/client';
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
@@ -124,7 +125,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         setCreatedPlans(pdfCreatorObject.pdfPlan);
         // On prépare le contenu des chapitres
         const contentObject: ChapterContents = {}; // Utilisation du type défini
-        pdfCreatorObject.pdfPlan.forEach((plan) => {
+        pdfCreatorObject.pdfPlan.forEach((plan: any) => {
           if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
             // Utiliser le premier élément de pdfCreatorContent ou une logique pour choisir le contenu
             contentObject[plan.id] = plan.pdfCreatorContent[0].planContent;
