@@ -9,6 +9,7 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 // export const runtime = "edge";
+export const maxDuration = 300; // Durée maximale de 5 minutes
 
 export async function POST(req: Request): Promise<Response> {
   const user = await getUserLog();
