@@ -11,7 +11,7 @@ type Props = {
 export const CreateNewPdfButton = ({ user }: Props) => {
   const router = useRouter();
   const handleCreatePdf = async () => {
-    const create = await createPdf({ lang: "fr", subject: "", user: user });
+    const create = await createPdf({ lang: "en", subject: "", user: user });
     if (create) router.push(`/ai/pdf/${create.id}`);
   };
   return (

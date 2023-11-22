@@ -1,0 +1,35 @@
+export type Tones =
+    | "assertive"
+    | "friendly"
+    | "professional"
+    | "energetic"
+    | "calm"
+    | "inspirational"
+    | "witty"
+    | "sincere"
+    | "bold"
+    | "scholarly"
+    | "casual"
+    | "formal"
+    | "passionate"
+    | "straightforward"
+    | "playful";
+
+export type TonesValues =
+    | "Assertive and confident"
+    | "Friendly and approachable"
+    | "Professional and authoritative"
+    | "Energetic and enthusiastic"
+    | "Calm and soothing"
+    | "Inspirational and uplifting"
+    | "Witty and humorous"
+    | "Sincere and empathetic"
+    | "Bold and daring"
+    | "Scholarly and analytical"
+    | "Casual and conversational"
+    | "Formal and respectful"
+    | "Passionate and persuasive"
+    | "Straightforward and no-nonsense"
+    | "Playful and lighthearted"
+
+

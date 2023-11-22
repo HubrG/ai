@@ -223,3 +223,25 @@ export const getPdf = async (id: string) => {
   }
   return pdf;
 }
+export const updatePdfSettings = async (id: string, lang: string, tone: string, personality: string, length:string, subject:string ) => {
+  const user = await getUserLog();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+  const pdf = await prisma.pdfCreator.update({
+    where: {
+      id: id,
+    },
+    data: {
+      length: length,
+      personality: personality,
+      tone: tone,
+      lang: lang,
+      subject: subject
+    },
+  });
+  if (!pdf) {
+    throw new Error("Pdf not found");
+  }
+  return pdf;
+}

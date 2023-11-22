@@ -4,146 +4,111 @@
 
 @layer base {
   :root {
-    --color-app1: theme("colors.app.50");
-    --color-app2: theme("colors.app.100");
-    --color-app3: theme("colors.app.200");
-    --color-app4: theme("colors.app.300");
-    --color-app5: theme("colors.app.400");
-    --color-app6: theme("colors.app.500");
-    --color-app7: theme("colors.app.600");
-    --color-app8: theme("colors.app.700");
-    --color-app9: theme("colors.app.800");
-    --color-app10: theme("colors.app.900");
-    --color-app11: theme("colors.app.950");
+    --color-app-50: theme("colors.app.50");
+    --color-app-100: theme("colors.app.100");
+    --color-app-200: theme("colors.app.200");
+    --color-app-300: theme("colors.app.300");
+    --color-app-400: theme("colors.app.400");
+    --color-app-500: theme("colors.app.500");
+    --color-app-600: theme("colors.app.600");
+    --color-app-700: theme("colors.app.700");
+    --color-app-800: theme("colors.app.800");
+    --color-app-900: theme("colors.app.900");
+    --color-app-950: theme("colors.app.950");
 
-    --color-secondary1: theme("colors.secondary.50");
-    --color-secondary2: theme("colors.secondary.100");
-    --color-secondary3: theme("colors.secondary.200");
-    --color-secondary4: theme("colors.secondary.300");
-    --color-secondary5: theme("colors.secondary.400");
-    --color-secondary6: theme("colors.secondary.500");
-    --color-secondary7: theme("colors.secondary.600");
-    --color-secondary8: theme("colors.secondary.700");
-    --color-secondary9: theme("colors.secondary.800");
-    --color-secondary10: theme("colors.secondary.900");
-    --color-secondary11: theme("colors.secondary.950");
+   
+    --color-secondary-50: theme("colors.secondary.50");
+    --color-secondary-100: theme("colors.secondary.100");
+    --color-secondary-200: theme("colors.secondary.200");
+    --color-secondary-300: theme("colors.secondary.300");
+    --color-secondary-400: theme("colors.secondary.400");
+    --color-secondary-500: theme("colors.secondary.500");
+    --color-secondary-600: theme("colors.secondary.600");
+    --color-secondary-700: theme("colors.secondary.700");
+    --color-secondary-800: theme("colors.secondary.800");
+    --color-secondary-900: theme("colors.secondary.900");
+    --color-secondary-950: theme("colors.secondary.950");
 
-    --color-apprgba1: theme("colors.apprgba.50");
-    --color-apprgba2: theme("colors.apprgba.100");
-    --color-apprgba3: theme("colors.apprgba.200");
-    --color-apprgba4: theme("colors.apprgba.300");
-    --color-apprgba5: theme("colors.apprgba.400");
-    --color-apprgba6: theme("colors.apprgba.500");
-    --color-apprgba7: theme("colors.apprgba.600");
-    --color-apprgba8: theme("colors.apprgba.700");
-    --color-apprgba9: theme("colors.apprgba.800");
-    --color-apprgba10: theme("colors.apprgba.900");
-    --color-apprgba11: theme("colors.apprgba.950");
+    
 
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --color-apprgba-50: theme("colors.apprgba.50");
+    --color-apprgba-100: theme("colors.apprgba.100");
+    --color-apprgba-200: theme("colors.apprgba.200");
+    --color-apprgba-300: theme("colors.apprgba.300");
+    --color-apprgba-400: theme("colors.apprgba.400");
+    --color-apprgba-500: theme("colors.apprgba.500");
+    --color-apprgba-600: theme("colors.apprgba.600");
+    --color-apprgba-700: theme("colors.apprgba.700");
+    --color-apprgba-800: theme("colors.apprgba.800");
+    --color-apprgba-900: theme("colors.apprgba.900");
+    --color-apprgba-950: theme("colors.apprgba.950");
+    
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --color-app-hsl-50: theme("colors.apphsl.50");
+    --color-app-hsl-100: theme("colors.apphsl.100");
+    --color-app-hsl-200: theme("colors.apphsl.200");
+    --color-app-hsl-300: theme("colors.apphsl.300");
+    --color-app-hsl-400: theme("colors.apphsl.400");
+    --color-app-hsl-500: theme("colors.apphsl.500");
+    --color-app-hsl-600: theme("colors.apphsl.600");
+    --color-app-hsl-700: theme("colors.apphsl.700");
+    --color-app-hsl-800: theme("colors.apphsl.800");
+    --color-app-hsl-900: theme("colors.apphsl.900");
+    --color-app-hsl-950: theme("colors.apphsl.950");
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+   --background: var(--color-app-hsl-50);
+    --foreground: var(--color-app-hsl-900);
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --card: var(--color-app-hsl-50);
+    --card-foreground: var(--color-app-hsl-900);
 
-    --secondary: hls(210 40% 96.1%);
-    --secondary-foreground: hls(222.2 47.4% 11.2%);
+    --popover: var(--color-app-hsl-50);
+    --popover-foreground: var(--color-app-hsl-900);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --primary: var(--color-app-hsl-100);
+    --primary-foreground: var(--color-app-hsl-900);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: var(--color-app-hsl-50);
+    --muted-foreground: var(--color-app-hsl-900);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: var(--color-app-hsl-100);
+    --accent-foreground: var(--color-app-hsl-900);
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: var(--color-app-hsl-50);
+    --destructive-foreground: var(--color-app-hsl-900);
+
+    --border: var(--color-app-hsl-50);
+    --input: var(--color-app-hsl-200);
+    --ring: var(--color-app-hsl-200);
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --color-app1: theme("colors.app.950");
-    --color-app2: theme("colors.app.900");
-    --color-app3: theme("colors.app.800");
-    --color-app4: theme("colors.app.700");
-    --color-app5: theme("colors.app.600");
-    --color-app6: theme("colors.app.500");
-    --color-app7: theme("colors.app.400");
-    --color-app8: theme("colors.app.300");
-    --color-app9: theme("colors.app.200");
-    --color-app10: theme("colors.app.100");
-    --color-app11: theme("colors.app.50");
+    --background: var(--color-app-hsl-800);
+    --foreground: var(--color-app-hsl-200);
 
-    --color-secondary1: theme("colors.secondary.950");
-    --color-secondary2: theme("colors.secondary.900");
-    --color-secondary3: theme("colors.secondary.800");
-    --color-secondary4: theme("colors.secondary.700");
-    --color-secondary5: theme("colors.secondary.600");
-    --color-secondary6: theme("colors.secondary.500");
-    --color-secondary7: theme("colors.secondary.400");
-    --color-secondary8: theme("colors.secondary.300");
-    --color-secondary9: theme("colors.secondary.200");
-    --color-secondary10: theme("colors.secondary.100");
-    --color-secondary11: theme("colors.secondary.50");
+    --card: var(--color-app-hsl-700);
+    --card-foreground: var(--color-app-hsl-200);
 
-    --color-apprgba1: theme("colors.apprgba.950");
-    --color-apprgba2: theme("colors.apprgba.900");
-    --color-apprgba3: theme("colors.apprgba.800");
-    --color-apprgba4: theme("colors.apprgba.700");
-    --color-apprgba5: theme("colors.apprgba.600");
-    --color-apprgba6: theme("colors.apprgba.500");
-    --color-apprgba7: theme("colors.apprgba.400");
-    --color-apprgba8: theme("colors.apprgba.300");
-    --color-apprgba9: theme("colors.apprgba.200");
-    --color-apprgba10: theme("colors.apprgba.100");
-    --color-apprgba11: theme("colors.apprgba.50");
+    --popover: var(--color-app-hsl-800);
+    --popover-foreground: var(--color-app-hsl-200);
 
-    --color-app-hsl-50: hsl(210, 1.59%, 98.82%);
-    --color-app-hsl-100: hsl(210, 3.21%, 97.65%);
-    --color-app-hsl-200: hsl(214.29, 5.83%, 94.12%);
-    --color-app-hsl-300: hsl(212.73, 9.78%, 88.24%);
-    --color-app-hsl-400: hsl(215, 19.57%, 72.16%);
-    --color-app-hsl-500: hsl(215.38, 28.06%, 54.51%);
-    --color-app-hsl-600: hsl(215.29, 32.38%, 41.18%);
-    --color-app-hsl-700: hsl(215.29, 40%, 33.33%);
-    --color-app-hsl-800: hsl(217.24, 49.15%, 23.14%);
-    --color-app-hsl-900: hsl(222.22, 64.29%, 16.47%);
-    --color-app-hsl-950: hsl(228.57, 91.3%, 9.02%);
+    --primary: var(--color-app-hsl-800);
+    --primary-foreground: var(--color-app-hsl-200);
 
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --muted: var(--color-app-hsl-700);
+    --muted-foreground: var(--color-app-hsl-200);
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --accent: var(--color-app-hsl-700);
+    --accent-foreground: var(--color-app-hsl-200);
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --destructive: var(--color-app-hsl-800);
+    --destructive-foreground: var(--color-app-hsl-200);
 
-    /* --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%; */
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: var(--color-app-hsl-800);
+    --input: var(--color-app-hsl-950);
+    --ring: var(--color-app-hsl-950);
   }
 }
 
@@ -160,13 +125,13 @@
   }
 }
 main {
-  @apply min-h-screen min-w-full  mx-auto gap-4 text-center bg-app-100 dark:bg-app-950 ;
+  @apply min-h-screen min-w-full  mx-auto gap-4 text-center bg-app-100 dark:bg-app-950;
 }
 .container {
   @apply w-full max-w-6xl flex flex-col min-h-screen pt-28 justify-center items-center;
 }
 nav {
-  @apply bg-app-50 dark:bg-app-900 fixed w-full z-20 top-0 left-0  border-b dark:border-app-800  dark:shadow-app-900  ;
+  @apply bg-app-50 dark:bg-app-900 fixed w-full z-20 top-0 left-0  border-b dark:border-app-800 border-app-200  dark:shadow-app-900;
 }
 nav div:first-child:not(.userNavbarDiv > *) {
   @apply max-w-screen-xl flex flex-wrap items-center  justify-between mx-auto p-4 py-[0.5rem];
@@ -360,7 +325,7 @@ div.progressToken {
   @apply bg-primary h-10 px-4 py-2 text-primary-foreground hover:bg-primary/80 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
 }
 .shadcnButton-outline {
-  @apply inline-flex h-10 px-4 py-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50  hover:bg-accent hover:text-accent-foreground ;
+  @apply inline-flex h-10 px-4 py-2 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50  hover:bg-accent hover:text-accent-foreground;
 }
 .shadcnButton-ghost {
   @apply shadcnButton hover:bg-accent hover:text-accent-foreground;
@@ -368,7 +333,7 @@ div.progressToken {
 
 /*  */
 .downloadPdfButton {
-  @apply shadcnButton-ghost shadcnButtonSize-default w-full justify-start cursor-pointer  flex flex-row items-center gap-x-2 !important;
+  @apply shadcnButton-ghost shadcnButtonSize-default  w-full justify-start cursor-pointer  flex flex-row items-center gap-x-2 !important;
 }
 .downloadPdfButton svg {
   @apply w-5 h-5 mr-2;
@@ -378,7 +343,6 @@ div.progressToken {
 .tooltip {
   @apply bg-app-200 dark:bg-app-700 rounded-md dark:text-app-50 text-app-800 text-sm px-2 py-1 z-50 max-w-screen-sm !important;
 }
-
 
 /** Types variant **/
 .dark {
@@ -410,3 +374,12 @@ div.progressToken {
   background-color: var(--rt-color-info);
   color: var(--rt-color-white);
 }
+
+label {
+  @apply flex flex-row justify-between items-center px-1 font-bold cursor-pointer !important;
+}
+.infoForm {
+  @apply text-left text-xs opacity-70;
+}
+
+/*  */

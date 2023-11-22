@@ -10,12 +10,27 @@ import {
   updatePlan,
   updateContent,
   retrieveTokenRemaining,
+  updatePdfSettings,
 } from "./utils.server";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useGlobalContext } from "@/app/Context/store";
 import DownloadButton from "./components/DownloadButton";
-import { User } from '@prisma/client';
+import { languageList } from "@/src/list/ai/languagesList";
+import { SelectLang } from "../components/SelectLang";
+import { SelectTone } from "../components/SelectTone";
+import { SelectPersonality } from "../components/SelectPersonality";
+import { SelectLength } from "../components/SelectLength";
+import { Label } from "@/components/ui/label";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLanguage } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faMusic,
+  faPodiumStar,
+  faRuler,
+  faWandMagicSparkles,
+} from "@fortawesome/pro-duotone-svg-icons";
+import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
@@ -35,26 +50,41 @@ type PdfCreatorProps = {
 
 // const gptModel = "gpt-4-1106-preview";
 const gptModel = "gpt-3.5-turbo";
-const maxTokens = 400;
+const maxTokens = 500;
 //
+
 const PdfCreator = ({ params }: PdfCreatorProps) => {
   const pdfId = params.id;
+  const router = useRouter();
+  const [activateAutomaticContent, setActivateAutomaticContent] =
+    useState<boolean>(true);
   const [abortControllers, setAbortControllers] = useState<AbortController[]>(
     []
   );
-  const [activateAutomaticContent, setActivateAutomaticContent] =
-    useState<boolean>(false);
   const { user, setUser } = useGlobalContext();
   const [subject, setSubject] = useState("");
   const [generatePlanDone, setGeneratePlanDone] = useState<boolean>(false);
   const [allContent, setAllContent] = useState<string>("");
-  const [lang, setLang] = useState<string>("fr");
   const [chapterContent, setChapterContent] = useState<ChapterContents>({});
   const [loading, setLoading] = useState(false);
   const [responseSubject, setResponseSubject] = useState<string>("");
   const [regenerate, setRegenerate] = useState<boolean>(false);
-  const [whatInProgress, setWhatInProgress] = useState<string>(""); // "plan" | "content" | ""
-  const [createdPlans, setCreatedPlans] = useState<Plan[]>([]); // état pour stocker les plans créés
+  const [whatInProgress, setWhatInProgress] = useState<string>("");
+  const [createdPlans, setCreatedPlans] = useState<Plan[]>([]);
+  //
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
+    "en"
+  );
+  const [selectedTone, setSelectedTone] = useState("energetic");
+  const [selectedPersonality, setSelectedPersonality] = useState("deep");
+  const [selectedLength, setSelectedLength] = useState("medium");
+  const [selectedToneValue, setSelectedToneValue] = useState(
+    "Energetic and enthusiastic"
+  );
+  const [selectedPersonalityValue, setSelectedPersonalityValue] =
+    useState("Deep Thinker");
+  const [selectedLengthValue, setSelectedLengthValue] = useState("Medium");
+  //
   const converter = useMemo(() => {
     return new Showdown.Converter();
   }, []);
@@ -81,7 +111,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       ...prevContent,
       [planId]: newValue,
     }));
-    // Logique existante pour la mise à jour du contenu du plan dans la base de données ou autre
     const upContent = updateContent(planId, newValue);
     if (upContent !== null) {
       console.log("Content updated");
@@ -114,7 +143,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     },
     [converter]
   );
-  const router = useRouter();
 
   // NOTE: Fetch PDF's
   const fetchPdf = useCallback(async () => {
@@ -133,6 +161,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         });
         // On met à jour l'état chapterContent avec les contenus récupérés
         setChapterContent(contentObject);
+        setSelectedLanguage(pdfCreatorObject.lang as LanguageCode);
+        setSelectedTone(pdfCreatorObject.tone);
+        setSelectedPersonality(pdfCreatorObject.personality);
+        setSelectedLength(pdfCreatorObject.length);
+        setSubject(pdfCreatorObject.subject);
+        // On met à jour la langue
+        return pdfCreatorObject;
       } else {
         console.error("No pdfPlan found in the response");
       }
@@ -174,14 +209,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const handleCancel = () => {
     abortControllers.forEach((controller) => controller.abort()); // Annuler tous les processus en cours
     setAbortControllers([]); // Réinitialiser les contrôleurs
-
-    // Votre logique existante pour réinitialiser l'état
-    router.refresh();
+    //
     setLoading(false);
     setResponseSubject("");
     setCreatedPlans([]);
     setChapterContent({});
     setAllContent("");
+    router.refresh();
   };
 
   const regeneratePlan = async () => {
@@ -208,13 +242,25 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           type: "plan",
           maxTokens: maxTokens,
           model: gptModel,
-          lang: lang,
+          lang: selectedLanguage,
+          tone: selectedToneValue,
+          length: selectedLengthValue,
+          personality: selectedPersonalityValue,
         }),
       });
+      // On met à jour les states lang, tone, length, personality en BDD
 
       if (!response.ok) {
         throw new Error(response.statusText);
       }
+      updatePdfSettings(
+        pdfId,
+        selectedLanguage,
+        selectedTone,
+        selectedPersonality,
+        selectedLength,
+        subject
+      );
       // Mise à jour du contexte avec le nombre de tokens restants
       updateContextTokenRemaining();
 
@@ -260,7 +306,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
-          // Handle abort scenario, possibly clean up the reader if needed
           console.log("Fetch aborted:", error.message);
         } else {
           console.error("Fetch failed:", error.message);
@@ -268,7 +313,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       }
     } finally {
       setLoading(false);
-      // Any other cleanup if necessary
     }
   };
 
@@ -285,12 +329,15 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            title,
-            lang,
+            title: title,
             model: gptModel,
+            lang: selectedLanguage,
+            pdfId: pdfId,
             maxTokens: maxTokens,
-            pdfId,
             plan: createdPlans,
+            personality: selectedPersonalityValue,
+            length: selectedLengthValue,
+            tone: selectedToneValue,
           }),
         });
         if (!response.ok) {
@@ -303,7 +350,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         return null;
       }
     },
-    [lang, createdPlans]
+    [
+      selectedLanguage,
+      createdPlans,
+      selectedToneValue,
+      selectedLengthValue,
+      selectedPersonalityValue,
+    ]
   );
 
   useEffect(() => {
@@ -347,12 +400,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               [plan.id]: newContent, // Utilisez l'ID du plan comme clé
             }));
             // On met à jour le nombre de tokens restants
-            updateContextTokenRemaining();
           }
         })
       );
       Promise.all(apiCalls)
         .then(() => {
+          updateContextTokenRemaining();
           setLoading(false);
           setWhatInProgress("");
           setGeneratePlanDone(false);
@@ -360,6 +413,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         })
         .catch((error) => {
           console.error("Error in one of the API calls:", error);
+          updateContextTokenRemaining();
           setLoading(false);
           setWhatInProgress("");
           setGeneratePlanDone(false);
@@ -374,49 +428,133 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     updateContextTokenRemaining,
   ]);
 
+  type LanguageCode = keyof typeof languageList;
+
+  const handleLanguageChange = async (language: LanguageCode) => {
+    setSelectedLanguage(language);
+  };
+
+  const handleToneChange = (toneKey: string, toneValue: string) => {
+    console.log(toneKey, toneValue);
+    setSelectedTone(toneKey);
+    setSelectedToneValue(toneValue);
+  };
+
+  const handlePersonalityChange = (
+    personalityKey: string,
+    personalityValue: string
+  ) => {
+    setSelectedPersonality(personalityKey);
+    setSelectedPersonalityValue(personalityValue);
+  };
+
+  const handleLengthChange = (lengthKey: string, lengthValue: string) => {
+    console.log(lengthKey, lengthValue);
+    setSelectedLength(lengthKey);
+    setSelectedLengthValue(lengthValue);
+  };
+
   return (
     <div className="min-h-screen  flex md:flex-row flex-col w-full gap-5">
-      <div className="md:w-1/3 w-full sticky top-20">
-        <div className="flex flex-col gap-x-2 items-center">
-          <Input
-            disabled={loading}
-            placeholder="Sujet du PDF"
-            value={subject}
-            onChange={(e) => setSubject(e.currentTarget.value)}
-          />
-          <Input
-            placeholder="Langue"
-            value={lang}
-            onChange={(e) => setLang(e.currentTarget.value)}
-          />
-        </div>
-        <div className="flex flex-row gap-x-2">
-          <Button
-            onClick={!regenerate ? generatePlan : regeneratePlan}
-            disabled={loading}>
-            {loading && <Loader />}{" "}
-            {loading && whatInProgress === ""
-              ? "Génération du PDF"
-              : loading && whatInProgress === "plan"
-                ? "Génération du plan..."
-                : loading && whatInProgress === "content"
-                  ? "Génération du contenu..."
-                  : !regenerate
-                    ? "Générer le PDF"
-                    : "Recommencer"}
-          </Button>
-          {loading && (
-            <Button onClick={handleCancel}>Annuler la Demande</Button>
-          )}
-          {!loading && responseSubject && (
-            <Button onClick={handleTryAgain}>Recommencer</Button>
-          )}
+      <div className="md:w-3/12 w-full sticky top-20">
+        <div className="flex flex-col items-center gap-5">
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label
+              htmlFor="subject"
+              className="flex flex-row justify-between items-center">
+              Subject of your PDF
+            </Label>
+            <Input
+              id="subject"
+              disabled={loading}
+              placeholder="Your subject, any..."
+              value={subject}
+              onChange={(e) => setSubject(e.currentTarget.value)}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="language">
+              <span>Language</span>
+              <FontAwesomeIcon icon={faLanguage} className="font-ligth" />{" "}
+            </Label>
+            <SelectLang
+              id="language"
+              onLanguageChange={handleLanguageChange}
+              selectedLangInit={selectedLanguage}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label
+              htmlFor="tone"
+              className="flex flex-row justify-between items-center px-1">
+              <span>The tone</span>
+              <FontAwesomeIcon icon={faMusic} className="font-ligth" />
+            </Label>
+            <SelectTone
+              id="tone"
+              onToneChange={handleToneChange}
+              selectedToneInit={selectedTone}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label
+              htmlFor="personality"
+              className="flex flex-row justify-between items-center px-1">
+              <span>The personality</span>
+              <FontAwesomeIcon icon={faPodiumStar} className="font-ligth" />
+            </Label>
+            <SelectPersonality
+              id="personality"
+              onPersonalityChange={handlePersonalityChange}
+              selectedPersonalityInit={selectedPersonality}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label
+              htmlFor="length"
+              className="flex flex-row justify-between items-center px-1">
+              <span>The length</span>
+              <FontAwesomeIcon icon={faRuler} className="font-ligth" />
+            </Label>
+            <SelectLength
+              id="length"
+              onLengthChange={handleLengthChange}
+              selectedLengthInit={selectedLength}
+            />
+          </div>
+          <div className="flex w-full flex-row gap-x-2">
+            <Button
+              className="w-full"
+              onClick={!regenerate ? generatePlan : regeneratePlan}
+              disabled={loading}>
+              {loading && <Loader />}{" "}
+              {loading && whatInProgress === ""
+                ? "Génération du PDF"
+                : loading && whatInProgress === "plan"
+                  ? "Génération du plan..."
+                  : loading && whatInProgress === "content"
+                    ? "Génération du contenu..."
+                    : !regenerate
+                      ? "Générer le PDF"
+                      : "Recommencer"}
+            </Button>
+            {loading && (
+              <Button onClick={handleCancel}>Annuler la Demande</Button>
+            )}
+            {!loading && responseSubject && (
+              <Button onClick={handleTryAgain}>Recommencer</Button>
+            )}
+          </div>
         </div>
       </div>
-      <div className="md:w-2/3 w-full sticky top-20 ">
-        <div className="rounded-xl border bg-opacity-90 border-app-300 dark:border-app-950 shadow transition grid grid-cols-1 gap-x-2 items-start">
-          <div className="rounded-t-xl p-2 py-3 mb-2 flex flex-row gap-x-2 dark:bg-app-700 bg-app-200 items-center">
-            <DownloadButton allContent={allContent} subject={subject} />
+      <div className="md:w-9/12 w-full sticky top-20 ">
+        <div className="rounded-xl border bg-opacity-90  border-app-300 dark:border-app-950 shadow transition grid grid-cols-1 gap-x-2 items-start">
+          <div className="rounded-t-xl p-2 py-3 mb-2 flex flex-row gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-app-300 dark:border-app-900">
+            <DownloadButton
+              allContent={allContent}
+              subject={subject}
+              disabled={createdPlans.length === 0}
+            />
           </div>
           <div className="row-span-3 hidden">
             {createdPlans.map((plan) => (
@@ -445,25 +583,41 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               </div>
             ))}
           </div>
-          <div className="px-10 py-5 -mt-2 overflow-y-auto rounded-b-xl max-h-[83vh] bg-app-50 dark:bg-app-800">
+          <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[83vh] bg-app-50 dark:bg-app-800">
             <article className="">
+              {createdPlans.length === 0 && (
+                <div className="text-center w-full border-2 p-5 border-app-200 bg-white dark:bg-app-800 my-5 rounded-lg border-dashed dark:border-app-900 ">
+                  <p className="text-center ">
+                    <span className="opacity-70">
+                    Fill out the form and widen your eyes...
+                    </span>{" "}
+                    🤩
+                  </p>
+                </div>
+              )}
               {createdPlans.map((plan) => (
-                <div key={plan.id}>
-                  <div
-                    className="text-left"
-                    dangerouslySetInnerHTML={{
-                      __html: markdownToHtml(
-                        plan.planLevel + " " + plan.planTitle
-                      ),
-                    }}
-                  />
-                  {chapterContent[plan.id] && (
+                <div key={plan.id} className="space-y-4">
+                  <div className="relative">
                     <div
                       className="text-left"
                       dangerouslySetInnerHTML={{
-                        __html: markdownToHtml(chapterContent[plan.id]),
+                        __html: markdownToHtml(
+                          plan.planLevel + " " + plan.planTitle
+                        ),
                       }}
                     />
+                    <EditPartOfPdfButton />
+                  </div>
+                  {chapterContent[plan.id] && (
+                    <div className="relative group">
+                      <div
+                        className="text-left"
+                        dangerouslySetInnerHTML={{
+                          __html: markdownToHtml(chapterContent[plan.id]),
+                        }}
+                      />
+                      <EditPartOfPdfButton />
+                    </div>
                   )}
                 </div>
               ))}

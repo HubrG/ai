@@ -1,8 +1,13 @@
 import { OpenAIStream, OpenAIStreamPayload } from "@/lib/openAIStream";
-import languageString from "@/src/function/ai/languages";
+import { Lang } from "@/src/@types/ai-options/lang";
+import { Length } from "@/src/@types/ai-options/length";
+import { personalitiesValues } from "@/src/@types/ai-options/personality";
+import { TonesValues } from "@/src/@types/ai-options/tone";
+import languageString from "@/src/list/ai/languagesList";
 import spendTokens from "@/src/function/ai/spendTokens";
 import tokenCount from "@/src/function/ai/tokenCount";
 import { getUserLog } from "@/src/query/user.query";
+import { GPTModels } from "@/src/@types/ai-options/GPTModel";
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing env var from OpenAI");
@@ -16,29 +21,17 @@ export async function POST(req: Request): Promise<Response> {
   if (!user) {
     return new Response("User not logged in", { status: 401 });
   }
-  const { prompt, model, type, lang, maxTokens } = (await req.json()) as {
-    prompt?: string;
-    maxTokens: number;
-    model: "gpt-3.5-turbo" | "gpt-4-1106-preview";
-    type?: "plan" | "content";
-    // langues : french (fr), english (en), german (de), italian (it), spanish (es), portuguese (pt), russian (ru), swedish (sv), turkish (tr), chinese (zh), japanese (ja), korean (ko), indonesian (id), hindi (hi)
-    lang?:
-      | "fr"
-      | "en"
-      | "de"
-      | "it"
-      | "es"
-      | "pt"
-      | "ru"
-      | "sv"
-      | "tr"
-      | "zh"
-      | "ja"
-      | "ko"
-      | "id"
-      | "hi";
-  };
-
+  const { prompt, model, type, lang, maxTokens, tone, personality, length } =
+    (await req.json()) as {
+      prompt?: string;
+      maxTokens: number;
+      model: GPTModels;
+      type?: "plan" | "content";
+      tone?: TonesValues;
+      length?: Length;
+      personality?: personalitiesValues;
+      lang?: Lang;
+    };
   //
   let promptSystem = "";
   let promptUser = "";
@@ -47,10 +40,6 @@ export async function POST(req: Request): Promise<Response> {
   if (!prompt) {
     return new Response("No prompt in the request", { status: 400 });
   }
-  // Gestion du prompt
-  let tone = "assertive and confident"; // Other examples: "friendly", "professional", "energetic", etc.
-  let personality = "Provocative Guru and deep"; // Change the personality as needed
-  let length = "short"; // Options: "short", "medium", "long", or specific section/word count
 
   if (type === "plan") {
     if (model === "gpt-4-1106-preview") {
@@ -70,7 +59,7 @@ export async function POST(req: Request): Promise<Response> {
 - My responses are direct and to the point, embodying the ${tone} and ${personality} of my chosen approach.
 
 **Length**:
-- The plan should be ${length}. A 'short' plan may include 3-5 main sections, a 'medium' plan 6-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
+- The plan should be ${length}. A 'short' plan may include 3 main sections, a 'medium' plan 3-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
 
 **Personalization**:
 - My tone is didactic yet ${tone}, tailored to engage and energize beginners in PDF creation and marketing in the manner of a ${personality}.
@@ -81,43 +70,38 @@ export async function POST(req: Request): Promise<Response> {
 - The structure of titles and subtitles must be progressive for SEO effectiveness, and each title should grab attention and reflect the ${personality} and ${tone} tone.
 - The first title of any document or section is always an H1 heading to establish the topic clearly.`;
     } else {
-      // promptSystem = `Role and Goal: As a specialist in PDF creation for marketing, my aim is to teach beginners in a clear, simple, yet engaging manner. Guidelines: My responses are informed by facts from knowledge documents and web searches. Each major chapter includes a 'hack' section with unique, effective practices for success. Additionally, I craft catchy, fun titles using terms like 'like a pro', 'be the best', and 'the secret of geniuses in [subject]', aiming to engage the reader with the promise of exceptional, unique knowledge that positions them as top in their field. Clarification: I may request clarification for unclear requests to ensure accuracy and relevance. My approach is direct, didactic, and I strictly AND ONLY use raw Markdown format.
-      // \nExample of strict format (I have to respect this format, create a plan with Title, sub-titles, sub-sub-titles, etc. NO "-") :
-      // \n# Great title, imaginative, catchy, fun, engaging, etc.
-      // \n## Subtitle
-      // \n### sub-subtitle etc.
-      // \nVERY VERY IMPORTANT: Titles and subtitles must be progressive, that is, I cannot put #### after a ##, because it is not good for SEO.
-      // \n\nImportant Constraints: I respond in Markdown code block format, delivering concise, focused information. I avoid unnecessary commentary above and bellow the plan, and do not repeat the user's question like "of course ! this is the plan blablabla...." ONLY THE PLAN, NOThing else. Personalization: I maintain a direct, didactic tone, making content accessible and engaging for beginners.`;
-      promptSystem = `**Role and Goal**: As a specialist in PDF creation with a focus on sales and marketing, my aim is to educate beginners. My teaching style is clear, simple, engaging, and fun, with an emphasis on delivering actionable knowledge in the field of PDF creation.
+      promptSystem = `**Role and Goal**: As a specialist in PDF creation with a focus on sales and marketing, I aim to educate beginners with a clear, simple, engaging, and fun teaching style, emphasizing actionable knowledge in the field of PDF creation.
 
-**Personality**: I am adopting the personality of ${personality}, which will inform the style and approach of my responses.
+**Personality**: Adopting the personality of ${personality} informs the style and approach of my responses, making them resonate with the audience in a unique way.
 
 **Guidelines**:
-- My responses, influenced by the personality of ${personality}, are based on factual information, yet delivered with a ${tone} tone.
-- Titles are crafted to be captivating, using phrases that align with the ${personality} style, engaging readers with the promise of exceptional, unique knowledge.
-- When necessary, I will ask for clarifications on unclear requests to ensure accuracy, always with the confidence and expertise expected from ${personality}.
-  
+- Responses are factual, yet delivered with a ${tone} tone that matches the ${personality} personality.
+- Titles and subtitles are captivating and align with the chosen ${personality} style, without any additional descriptors or parentheses.
+- Clarifications will be sought for unclear requests to ensure accuracy and maintain the confidence and expertise expected from the ${personality} personality.
+
 **Format**:
-- I strictly adhere to raw Markdown format. My responses are structured with a hierarchy of titles and subtitles that mirror the ${personality}'s characteristic style.
-- It is crucial to follow a proper heading hierarchy. After a # (H1) title, the next level must be ## (H2), then ### (H3), followed by #### (H4), without skipping any levels. For instance:
-  # Chapter Title (H1)
-  ## Section Title (H2)
-  ### Subsection Title (H3)
-  #### Subsubsection Title (H4)
-- My responses are direct and to the point, embodying the ${tone} and ${personality} of my chosen approach.
+- Strict adherence to the raw Markdown format is followed, with a structured hierarchy that does not skip levels or include headings in parentheses.
+- The content begins with an H1 heading, followed by H2, H3, and so on, in a strictly sequential manner. For example:
+  - # H1 Chapter Title 
+  - ## H2 Section Title 
+  - ### H3 Subsection Title 
+  - #### H4 Subsubsection Title
+- Direct and to-the-point responses embody the chosen ${tone} and ${personality}.
 
 **Length**:
-- The plan should be ${length}. A 'short' plan may include 3-5 main sections, a 'medium' plan 6-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
+- The plan should be ${length}. A 'short' plan may include 3 main sections, a 'medium' plan 3-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
 
 **Personalization**:
-- My tone is didactic yet ${tone}, tailored to engage and energize beginners in PDF creation and marketing in the manner of a ${personality}.
-- I present myself as a confident expert, unafraid to challenge norms and push boundaries in the style of ${personality}.
+- A didactic yet ${tone} tone is maintained, engaging beginners in PDF creation and marketing in the manner of a ${personality}.
 
 **Important Constraints**:
-- My content includes only the content in the Markdown format, delivered with the ${tone} and flair of the ${personality}.
-- The structure of titles and subtitles must be progressive for SEO effectiveness, and each title should grab attention and reflect the ${personality} and ${tone} tone.`;
+- Content is limited to Markdown format, with no additional commentary outside the structure of titles and subtitles.
+- SEO-effective, progressive structure is essential, with each title designed to capture attention and embody the ${personality} and ${tone}.
+
+**Note to AI**: Do not include descriptors like 'Chapter' or 'Section' nor any parentheses after the title text. Maintain a clear and progressive heading structure without jumping levels (H2 just before H4...forbidden ; H2 to H3 and H3 to H4...authorized !) or repeating hash marks.`;
     }
-    promptUser = `Create a ${length} structure for a PDF in ${language} on the subject: "${prompt}". The content should be presented with a ${tone} tone, embodying the style of a ${personality}. Ensuring a clear and progressive structure suitable for SEO. Remember, the content should be engaging, informative, and reflect the unique approach of the ${personality} personality.`;
+    promptUser = `Create a detailed and ${length} structure for a PDF in ${language} on the subject: "${prompt}". The content should embody a ${tone} tone and ${personality} style, ensuring a clear and SEO-friendly structure. Focus on making the content engaging and informative, reflecting the unique approach of the ${personality} personality. Remember, maintain a strict heading hierarchy without skipping levels (H2 to H3, H3 to H4, etc.), and avoid adding descriptors or parentheses after titles.
+    `;
   }
 
   //

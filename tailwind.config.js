@@ -1,7 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 const appColor = "slate";
-const appColorSecondary = "amber";
+const appColorSecondary = "fuchsia";
 const appColorRGBA = "slate";
+const appColorhsl = "slate";
 // tahiti   #22d3ee,
 // rose     #fb7185,
 // orange   #fb923c,
@@ -19,6 +20,50 @@ const appColorRGBA = "slate";
 // lime     #84cc16,
 // green    #22c55e,
 // emerald  #10b981
+const colorPaletteshsl = {
+  slate: {
+    50: "hsl(210, 40%, 98%)",
+    100: "hsl(210, 40%, 96%)",
+    200: "hsl(214, 32%, 91%)",
+    300: "hsl(213, 27%, 84%)",
+    400: "hsl(215, 20%, 65%)",
+    500: "hsl(215, 16%, 47%)",
+    600: "hsl(215, 19%, 35%)",
+    700: "hsl(215, 25%, 27%)",
+    800: "hsl(217, 33%, 17%)",
+    900: "hsl(222, 47%, 11%)",
+    950: "hsl(229, 84%, 5%)",
+    DEFAULT: "hsl(215, 16%, 47%)",
+  },
+  zinc: {
+    50: "hsl(0, 0%, 98%)",
+    100: "hsl(0, 0%, 96%)",
+    200: "hsl(0, 0%, 90%)",
+    300: "hsl(0, 0%, 80%)",
+    400: "hsl(240, 5%, 65%)",
+    500: "hsl(240, 4%, 46%)",
+    600: "hsl(240, 5%, 34%)",
+    700: "hsl(240, 5%, 26%)",
+    800: "hsl(240, 4%, 16%)",
+    900: "hsl(240, 6%, 10%)",
+    950: "hsl(240, 10%, 4%)",
+    DEFAULT: "hsl(240, 4%, 46%)",
+  },
+  fuchsia: {
+    50: "hsl(289, 100%, 98%)",
+    100: "hsl(287, 100%, 95%)",
+    200: "hsl(288, 96%, 91%)",
+    300: "hsl(291, 93%, 83%)",
+    400: "hsl(292, 91%, 73%)",
+    500: "hsl(292, 84%, 61%)",
+    600: "hsl(293, 69%, 49%)",
+    700: "hsl(295, 72%, 40%)",
+    800: "hsl(295, 70%, 33%)",
+    900: "hsl(297, 64%, 28%)",
+    950: "hsl(297, 90%, 16%)",
+    DEFAULT: "hsl(292, 84%, 61%)",
+  },
+};
 const colorPalettes = {
   tahiti: {
     50: "#e0f7fa",
@@ -259,7 +304,6 @@ const colorPalettes = {
     DEFAULT: "#059669",
   },
 };
-
 const colorPalettesRGBA = {
   tahiti: {
     50: "rgba(224, 247, 250, 1)",
@@ -503,12 +547,12 @@ const colorPalettesRGBA = {
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-    'node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}',
-	],
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+    "node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}",
+  ],
   theme: {
     container: {
       center: true,
@@ -524,37 +568,38 @@ module.exports = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         app: colorPalettes[appColor],
         secondary: colorPalettes[appColorSecondary],
         apprgba: colorPalettesRGBA[appColorRGBA],
+        apphsl: colorPaletteshsl[appColorhsl],
         primary: {
           DEFAULT: colorPalettes[appColor][800],
           foreground: colorPalettes[appColor][200],
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
       },
       borderRadius: {
@@ -578,6 +623,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require('flowbite/plugin')],
-
-}
+  plugins: [require("tailwindcss-animate"), require("flowbite/plugin")],
+};

@@ -25,20 +25,22 @@ const converter = new Showdown.Converter();
 export default function DownloadButton({
   allContent,
   subject,
+  disabled,
 }: {
   allContent: string;
   subject: string;
+  disabled?: boolean;
 }) {
   return (
     <Popover>
-      <PopoverTrigger>
-        <div className="shadcnButton-default bg-opacity-30">
+      <PopoverTrigger disabled={disabled ? true : false}>
+        <div className={`shadcnButton-default bg-opacity-30 ${disabled ? "opacity-30 hover:bg-opacity-50" : ""}`} >
           <FontAwesomeIcon icon={faDownload} />
         </div>
       </PopoverTrigger>
       <PopoverContent>
         <div
-          className="downloadPdfButton"
+          className={`downloadPdfButton `}
           onClick={() => downloadPdf(allContent, "Fastuff-" + subject)}>
           <FontAwesomeIcon icon={faFilePdf} />
           <span>
