@@ -14,7 +14,6 @@ import { SelectLang } from "../../components/SelectLang";
 import { SelectModelGPT } from "../../components/SelectGPTModel";
 import { SelectPersonality } from "../../components/SelectPersonality";
 import { SelectLength } from "../../components/SelectLength";
-import { useRouter } from "next/navigation";
 
 type EditPartOfPdfButtonProps = {
   type: "plan" | "content";
@@ -129,7 +128,7 @@ export const EditPartOfPdfButton = ({
           personalityValue: selectedPersonalityValue,
           plan: aggregatedPlan,
           subject: subject,
-          lengthValue: selectedLengthValue,
+          length: selectedLengthValue,
           pdfId: pdfId,
           planLevel: planLevel ? planLevel : "",
           idRef: idRef ? idRef : ""

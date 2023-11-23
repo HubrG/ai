@@ -12,6 +12,7 @@ import {
   updateContent,
   retrieveTokenRemaining,
   updatePdfSettings,
+  updatePlanIsSelected,
 } from "./utils.server";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,11 @@ import { SelectPersonality } from "../components/SelectPersonality";
 import { SelectLength } from "../components/SelectLength";
 import { Label } from "@/components/ui/label";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLanguage } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faCircleChevronLeft,
+  faCircleChevronRight,
+  faLanguage,
+} from "@fortawesome/pro-solid-svg-icons";
 import {
   faInfoCircle,
   faMusic,
@@ -90,6 +95,9 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [whatInProgress, setWhatInProgress] = useState<string>("");
   const [createdPlans, setCreatedPlans] = useState<Plan[]>([]);
   const [gptModel, setGptModel] = useState<string>("gpt-3.5-turbo");
+  const [plansWithAllVersions, setPlansWithAllVersions] =
+    useState<PlansWithAllVersions>({});
+
   //
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     "en"
@@ -166,23 +174,42 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const fetchPdf = useCallback(async () => {
     try {
       const pdfCreatorObject = await getPdfPlanAndContent(params.id);
-      console.log(pdfCreatorObject)
+  
       if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
         const plansWithAllVersions: PlansWithAllVersions = {};
-
+        const contentsWithAllVersions: {[key: string]: any} = {};
+  
         pdfCreatorObject.pdfPlan.forEach((plan: Plan) => {
-          const key = plan.idRef || plan.id;
-          if (!plansWithAllVersions[key]) {
-            plansWithAllVersions[key] = {
+          const planKey = plan.idRef || plan.id;
+          if (!plansWithAllVersions[planKey]) {
+            plansWithAllVersions[planKey] = {
               allVersions: [],
               activeVersion: null,
             };
           }
-          plansWithAllVersions[key].allVersions.push(plan);
+          plansWithAllVersions[planKey].allVersions.push(plan);
           if (plan.isSelected) {
-            plansWithAllVersions[key].activeVersion = plan;
+            plansWithAllVersions[planKey].activeVersion = plan;
+          }
+  
+          // Traiter le contenu de chaque plan
+          if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
+            plan.pdfCreatorContent.forEach((content: any) => {
+              if (!contentsWithAllVersions[planKey]) {
+                contentsWithAllVersions[planKey] = {
+                  allVersions: [],
+                  activeVersion: null,
+                };
+              }
+              contentsWithAllVersions[planKey].allVersions.push(content);
+              if (content.isSelected) {
+                contentsWithAllVersions[planKey].activeVersion = content;
+              }
+            });
           }
         });
+
+        setPlansWithAllVersions(plansWithAllVersions);
 
         // Transformer en tableau de Plan[] contenant seulement les versions actives
         const activePlans = Object.values(plansWithAllVersions)
@@ -190,13 +217,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           .filter((plan) => plan !== null) as Plan[];
 
         setCreatedPlans(activePlans);
-        // Mise à jour des points originaux avec leurs versions modifiées si elles existent
-        // const updatedPlans = originalPoints.map(plan => {
-        //   return modifiedPointsMap.get(plan.id) || plan;
-        // });
-
-        // setCreatedPlans(updatedPlans);
-
         // On prépare le contenu des chapitres
         const contentObject: ChapterContents = {}; // Utilisation du type défini
         pdfCreatorObject.pdfPlan.forEach((plan: any) => {
@@ -227,7 +247,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       console.error("Error fetching plans:", error);
     }
   }, [params.id]);
-
 
   useEffect(() => {
     if (params.id) {
@@ -542,7 +561,53 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     fetchPdf();
   };
 
-  console.log(createdPlans)
+  const navigatePlanVersion = async (
+    planKey: string,
+    direction: "prev" | "next"
+  ) => {
+    const planVersions = plansWithAllVersions[planKey].allVersions;
+    const activeVersionIndex = planVersions.findIndex(
+      (plan) => plan.isSelected
+    );
+
+    let newActiveIndex = activeVersionIndex;
+    if (direction === "prev" && activeVersionIndex > 0) {
+      newActiveIndex -= 1;
+    } else if (
+      direction === "next" &&
+      activeVersionIndex < planVersions.length - 1
+    ) {
+      newActiveIndex += 1;
+    }
+    // On récupère l'ID et on l'envoie en BDD
+    const newId = planVersions[newActiveIndex].id;
+    const up = await updatePlanIsSelected(
+      newId,
+      planVersions[newActiveIndex].idRef || ""
+    );
+    console.log(up);
+
+    const newActiveVersion = planVersions[newActiveIndex];
+
+    // Mettre à jour l'état local
+    const updatedPlansWithAllVersions = { ...plansWithAllVersions };
+    updatedPlansWithAllVersions[planKey].allVersions.forEach((plan) => {
+      plan.isSelected = plan.id === newActiveVersion.id;
+    });
+    updatedPlansWithAllVersions[planKey].activeVersion = newActiveVersion;
+    setPlansWithAllVersions(updatedPlansWithAllVersions);
+
+    // Mettre à jour l'état createdPlans
+    const updatedCreatedPlans = createdPlans.map((plan) =>
+      plan.idRef === planKey || plan.id === planKey ? newActiveVersion : plan
+    );
+    setCreatedPlans(updatedCreatedPlans);
+    // Mettre à jour la base de données si nécessaire
+    // Envoyez une requête pour mettre à jour isSelected pour newActiveVersion
+    // et potentiellement désélectionner l'ancienne version active
+  };
+
+  // console.log(plansWithAllVersions);
   return (
     <div className="flex md:flex-row items-start flex-col w-full gap-5">
       <div className="md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg ">
@@ -720,67 +785,127 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                   </p>
                 </div>
               )}
-              {createdPlans.map((plan) => (
-                <div key={plan.id} className="space-y-4">
-                  <div className="relative">
-                    <div
-                      className="text-left"
-                      dangerouslySetInnerHTML={{
-                        __html: markdownToHtml(
-                          plan.planLevel + " " + plan.planTitle
-                        ),
-                      }}
-                    />
-                    <EditPartOfPdfButton
-                      type="plan"
-                      id={plan.id}
-                      toneInit={!plan.tone ? selectedToneValue : (toneToKey(plan.tone) || selectedToneValue)}
-                      lengthInit={selectedLength}
-                      personalityInit={!plan.personality ? selectedPersonality : (personalityToKey(plan.personality) || selectedPersonality)}
-                      gptModelInit={gptModel}
-                      langInit={plan.lang ? plan.lang : selectedLanguage}
-                      lengthValueInit=""
-                      toneValueInit={selectedToneValue}
-                      personalityValueInit={selectedPersonalityValue}
-                      valueInit={plan.planTitle}
-                      plan={createdPlans}
-                      subject={subject}
-                      pdfId={pdfId}
-                      planLevel={plan.planLevel}
-                      idRef={plan.idRef}
-                      onRefresh={handleRefresh}
-                    />
-                  </div>
-                  {((chapterContent[plan.idRef as string]) || chapterContent[plan.id as string]) && (
-                    <div className="relative group">
+              {createdPlans.map((plan) => {
+                // Calculs pour la navigation entre les versions
+                
+                const planKey = plan.idRef || plan.id;
+                const totalVersions =
+                  plansWithAllVersions[planKey]?.allVersions.length || 0;
+                const activeVersionIndex =
+                  plansWithAllVersions[planKey]?.allVersions.findIndex(
+                    (p) => p.isSelected
+                  ) || 0;
+                
+                  
+
+                return (
+                  <div key={plan.id} className="space-y-4">
+                    <div className="relative">
                       <div
                         className="text-left"
                         dangerouslySetInnerHTML={{
-                          __html: markdownToHtml(chapterContent[plan.idRef as string] ? chapterContent[plan.idRef as string] : chapterContent[plan.id]),
+                          __html: markdownToHtml(
+                            plan.planLevel + " " + plan.planTitle
+                          ),
                         }}
                       />
+                      <div className="flex flex-col absolute -right-14 top-0">
+                        <div className="flex flex-row gap-0.5">
+                          <FontAwesomeIcon
+                            icon={faCircleChevronLeft}
+                            onClick={() => navigatePlanVersion(planKey, "prev")}
+                            className={`
+                            select-none	
+                            ${
+                              activeVersionIndex <= 0
+                                ? "opacity-50"
+                                : "opacity-80 hover:opacity-100 cursor-pointer"
+                            }`}
+                          />
+                          <FontAwesomeIcon
+                            icon={faCircleChevronRight}
+                            onClick={() => navigatePlanVersion(planKey, "next")}
+                            className={`
+                            select-none	
+                            ${
+                              activeVersionIndex >= totalVersions - 1
+                                ? "opacity-50"
+                                : "opacity-80 hover:opacity-100 cursor-pointer"
+                            }`}
+                          />
+                        </div>
+                        {totalVersions > 1 && (
+                          <p className="py-0 my-1 text-xs text-center">
+                            v.{activeVersionIndex + 1}/{totalVersions}
+                          </p>
+                        )}
+                      </div>
+
                       <EditPartOfPdfButton
-                        type="content"
+                        type="plan"
                         id={plan.id}
-                        toneInit={selectedTone}
+                        toneInit={
+                          !plan.tone
+                            ? selectedTone
+                            : toneToKey(plan.tone) || selectedTone
+                        }
                         lengthInit={selectedLength}
-                        personalityInit={selectedPersonality}
+                        personalityInit={
+                          !plan.personality
+                            ? selectedPersonality
+                            : personalityToKey(plan.personality) ||
+                              selectedPersonality
+                        }
                         gptModelInit={gptModel}
-                        langInit={selectedLanguage}
+                        langInit={plan.lang ? plan.lang : selectedLanguage}
                         lengthValueInit={selectedLengthValue}
                         toneValueInit={selectedToneValue}
                         personalityValueInit={selectedPersonalityValue}
-                        valueInit={chapterContent[plan.id]}
+                        valueInit={plan.planTitle}
                         plan={createdPlans}
                         subject={subject}
                         pdfId={pdfId}
+                        planLevel={plan.planLevel}
                         idRef={plan.idRef}
                         onRefresh={handleRefresh}
                       />
                     </div>
-                  )}
-                </div>
-              ))}
+                    {(chapterContent[plan.idRef as string] ||
+                      chapterContent[plan.id as string]) && (
+                      <div className="relative group">
+                        <div
+                          className="text-left"
+                          dangerouslySetInnerHTML={{
+                            __html: markdownToHtml(
+                              chapterContent[plan.idRef as string]
+                                ? chapterContent[plan.idRef as string]
+                                : chapterContent[plan.id]
+                            ),
+                          }}
+                        />
+                        <EditPartOfPdfButton
+                          type="content"
+                          id={plan.id}
+                          toneInit={selectedTone}
+                          lengthInit={selectedLength}
+                          personalityInit={selectedPersonality}
+                          gptModelInit={gptModel}
+                          langInit={selectedLanguage}
+                          lengthValueInit={selectedLengthValue}
+                          toneValueInit={selectedToneValue}
+                          personalityValueInit={selectedPersonalityValue}
+                          valueInit={chapterContent[plan.id]}
+                          plan={createdPlans}
+                          subject={subject}
+                          pdfId={pdfId}
+                          idRef={plan.idRef}
+                          onRefresh={handleRefresh}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </article>
           </div>
         </div>

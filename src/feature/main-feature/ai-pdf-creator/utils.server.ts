@@ -29,7 +29,7 @@ export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
       userId: userLog.id,
       lang: lang,
       title: subject,
-      gptModelId: model.id
+      gptModelId: model.id,
     },
   });
   if (!pdf) {
@@ -38,7 +38,15 @@ export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
   return pdf;
 };
 
-export const createPdfPlan = async (titles: string[], pdfId: string, gptModel:string, selectedLanguage:string, selectedLength:string, selectedPersonality:string, selectedTone:string) => {
+export const createPdfPlan = async (
+  titles: string[],
+  pdfId: string,
+  gptModel: string,
+  selectedLanguage: string,
+  selectedLength: string,
+  selectedPersonality: string,
+  selectedTone: string
+) => {
   console.log(titles);
   const user = await getUserLog();
   if (!user) {
@@ -192,7 +200,7 @@ export const getPdfPlanAndContent = async (pdfId: string) => {
   const pdfBase = await prisma.pdfCreator.findUnique({
     where: {
       id: pdfId,
-    }
+    },
   });
   if (!pdfBase) {
     throw new Error("Pdf not found");
@@ -285,4 +293,40 @@ export const updatePdfSettings = async (
     throw new Error("Pdf not found");
   }
   return pdf;
+};
+
+export const updatePlanIsSelected = async (id: string, idRef: string) => {
+  const user = await getUserLog();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+
+  const planSelected = await prisma.pdfCreatorPlan.update({
+    where: {
+      id: id,
+    },
+    data: {
+      isSelected: true,
+    },
+  });
+  if (!planSelected) {
+    throw new Error("Plan not found");
+  }
+  // On passe tout en false, sauf le plan sélectionné
+  const plansUpdated = await prisma.pdfCreatorPlan.updateMany({
+    where: {
+      OR: [{ id: idRef }, { idRef: idRef ? idRef : id }],
+      NOT: {
+        id: planSelected.id,
+      },
+    },
+    data: {
+      isSelected: false,
+    },
+  });
+  if (!plansUpdated) {
+    throw new Error("Plan not found");
+  }
+
+  return planSelected;
 };
