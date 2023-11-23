@@ -8,6 +8,7 @@ import { Length } from "@/src/@types/ai-options/length";
 import { personalitiesValues } from "@/src/@types/ai-options/personality";
 import { TonesValues } from "@/src/@types/ai-options/tone";
 import { GPTModels } from "@/src/@types/ai-options/GPTModel";
+import { getModelId } from "@/src/query/gptModel.query";
 
 const openai = new OpenAI({
   apiKey: process.env.API_KEY_GPT,
@@ -50,6 +51,7 @@ export async function POST(req: Request): Promise<Response> {
   const planTitle = plan.map((item) => item.planTitle).join("\n\n");
   //
   const language = languageString(lang ? lang : "en");
+
 
   if (!title) {
     return new Response("No prompt in the request", { status: 230 });
@@ -157,11 +159,19 @@ Create content for the topic '${title}' as part of our PDF plan. The content sho
   if (!response.choices[0].message.content) {
     return new Response("No content returned", { status: 400 });
   }
+  // On recherche le model ID de GPT
+  const modelId = await getModelId(model);
   // On ajoute en BDD sur la table pdfCreatorContent
   const pdfContent = await prisma.pdfCreatorContent.create({
     data: {
       planId: pdfId,
       planContent: response.choices[0].message.content ?? "",
+      lang: lang,
+      gptModelId: modelId?.id,
+      length: length,
+      personality: personality,
+      tone: tone,
+      isSelected: true,
     },
   });
 

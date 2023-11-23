@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { languageList } from "@/src/list/ai/languagesList";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,12 +26,17 @@ export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLan
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(selectedLangInit);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleLanguageSelect = (code: LanguageCode) => {
+  const handleLanguageSelect = useCallback((code: LanguageCode) => {
     setSelectedLanguage(code);
     setOpen(false);
     onLanguageChange(code);
-  };
+  }, [setSelectedLanguage, setOpen, onLanguageChange]);
+  
+  useEffect(() => {
+    handleLanguageSelect(selectedLangInit as LanguageCode);
+  }, [selectedLangInit, handleLanguageSelect]);
 
+  
   const filteredLanguages = Object.entries(languageList).filter(([code, { name }]) =>
     name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -47,10 +52,10 @@ export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLan
         >
           <span className="w-full flex flex-row gap-2 items-center">
             <span>
-              {selectedLanguage ? languageList[selectedLanguage].flag : ""}
+              {selectedLangInit ? languageList[selectedLangInit].flag : selectedLanguage ? languageList[selectedLanguage].flag : ""}
             </span>
             <span>
-              {selectedLanguage ? languageList[selectedLanguage].name : "Select language..."}
+              {selectedLangInit ? languageList[selectedLangInit].name  : selectedLanguage ? languageList[selectedLanguage].name : "Select language..."}
             </span>
           </span>
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -59,8 +64,10 @@ export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLan
       <PopoverContent className="w-full p-0 max-h-[50vh] overflow-y-auto">
         <Command>
           <CommandInput
+            defaultValue={selectedLangInit ? languageList[selectedLangInit].name : ""}
             placeholder="Search language..."
             className="h-8 my-2"
+            // On récupèr le code de la langue sélectionnée
             value={searchTerm}
             onValueChange={setSearchTerm}
           />

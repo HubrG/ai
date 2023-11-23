@@ -330,3 +330,36 @@ export const updatePlanIsSelected = async (id: string, idRef: string) => {
 
   return planSelected;
 };
+
+
+export const updateContentIsSelected = async (id: string, planId:string) => {
+  // On met à jour le contenu sélectionné et on met en false tous les autres
+  const contentSelected = await prisma.pdfCreatorContent.update({
+    where: {
+      id: id,
+    },
+    data: {
+      isSelected: true,
+    },
+  });
+  if (!contentSelected) {
+    throw new Error("Content not found");
+  }
+  // On passe tout en false, sauf le contenu sélectionné
+  const contentsUpdated = await prisma.pdfCreatorContent.updateMany({
+    where: {
+      planId: contentSelected.planId,
+      NOT: {
+        id: contentSelected.id,
+      },
+    },
+    data: {
+      isSelected: false,
+    },
+  });
+  if (!contentsUpdated) {
+    throw new Error("Content not found");
+  }
+  return contentSelected;
+  
+}

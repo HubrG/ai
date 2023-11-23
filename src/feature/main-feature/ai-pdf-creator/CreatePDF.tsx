@@ -13,6 +13,7 @@ import {
   retrieveTokenRemaining,
   updatePdfSettings,
   updatePlanIsSelected,
+  updateContentIsSelected,
 } from "./utils.server";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
@@ -41,6 +42,8 @@ import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
 import { SelectModelGPT } from "../components/SelectGPTModel";
 import { personalityToKey } from "@/src/list/ai/personalitiesList";
 import { toneToKey } from "@/src/list/ai/tonesList";
+import { Separator } from "@/components/ui/separator";
+import { lengthToKey } from "@/src/list/ai/lengthList";
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
@@ -65,15 +68,43 @@ interface PlansWithAllVersions {
     activeVersion: Plan | null;
   };
 }
+type LanguageCode = keyof typeof languageList;
+
 interface ChapterContents {
-  [title: string]: string;
+  [key: string]: ChapterContentItem;
+}
+interface ChapterContentItem {
+  content: string;
+  lang?: LanguageCode; // Vous pouvez ajouter d'autres propriétés si nécessaire
 }
 
+type ContentType = {
+  // ...définition de vos propriétés de contenu ici
+  isSelected: boolean;
+  id: string;
+  idRef: string;
+  planContent: string;
+  createdAt?: string; // Assurez-vous que c'est le bon type
+  lang?: string;
+  tone?: string;
+  length?: string;
+  personality?: string;
+  gptModel?: any;
+};
+type ContentsWithAllVersions = {
+  allVersions: ContentType[];
+  activeVersion: ContentType | null;
+};
+
+// Définissez le type pour l'ensemble de l'état 'contentsWithAllVersions'
+type ContentsWithAllVersionsState = {
+  [key: string]: ContentsWithAllVersions;
+};
 type PdfCreatorProps = {
   params: { id: string };
 };
 
-const maxTokens = 200;
+const maxTokens = 50;
 //
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
@@ -97,6 +128,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [gptModel, setGptModel] = useState<string>("gpt-3.5-turbo");
   const [plansWithAllVersions, setPlansWithAllVersions] =
     useState<PlansWithAllVersions>({});
+  const [contentsWithAllVersions, setContentsWithAllVersions] =
+    useState<ContentsWithAllVersionsState>({});
 
   //
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
@@ -134,10 +167,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   };
 
   const handleUpdateContent = (planId: string, newValue: string) => {
-    setChapterContent((prevContent) => ({
-      ...prevContent,
-      [planId]: newValue,
-    }));
+      setChapterContent((prevContent) => ({
+        ...prevContent,
+        [planId]: { content: newValue },
+      }));
     const upContent = updateContent(planId, newValue);
     if (upContent !== null) {
       console.log("Content updated");
@@ -174,11 +207,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const fetchPdf = useCallback(async () => {
     try {
       const pdfCreatorObject = await getPdfPlanAndContent(params.id);
-  
+
       if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
         const plansWithAllVersions: PlansWithAllVersions = {};
-        const contentsWithAllVersions: {[key: string]: any} = {};
-  
+        const contentsWithAllVersions: { [key: string]: any } = {};
+
         pdfCreatorObject.pdfPlan.forEach((plan: Plan) => {
           const planKey = plan.idRef || plan.id;
           if (!plansWithAllVersions[planKey]) {
@@ -191,10 +224,17 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           if (plan.isSelected) {
             plansWithAllVersions[planKey].activeVersion = plan;
           }
-  
+
           // Traiter le contenu de chaque plan
           if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
-            plan.pdfCreatorContent.forEach((content: any) => {
+            // Trier le contenu par createdAt
+            const sortedContent = plan.pdfCreatorContent.sort(
+              (a: any, b: any) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+            );
+
+            sortedContent.forEach((content: any) => {
               if (!contentsWithAllVersions[planKey]) {
                 contentsWithAllVersions[planKey] = {
                   allVersions: [],
@@ -210,6 +250,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         });
 
         setPlansWithAllVersions(plansWithAllVersions);
+        setContentsWithAllVersions(contentsWithAllVersions);
 
         // Transformer en tableau de Plan[] contenant seulement les versions actives
         const activePlans = Object.values(plansWithAllVersions)
@@ -218,13 +259,16 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
         setCreatedPlans(activePlans);
         // On prépare le contenu des chapitres
-        const contentObject: ChapterContents = {}; // Utilisation du type défini
+        const contentObject: ChapterContents = {};
         pdfCreatorObject.pdfPlan.forEach((plan: any) => {
           if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
-            // Utiliser le premier élément de pdfCreatorContent ou une logique pour choisir le contenu
-            contentObject[plan.id] = plan.pdfCreatorContent[0].planContent;
+            contentObject[plan.id] = {
+              content: plan.pdfCreatorContent[0].planContent,
+              lang: plan.lang, // Assurez-vous que la propriété 'lang' est disponible ici
+            };
           }
         });
+
         // On met à jour l'état chapterContent avec les contenus récupérés
         setChapterContent(contentObject);
         setSelectedLanguage(pdfCreatorObject.lang as LanguageCode);
@@ -480,7 +524,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       );
       const chapterHtml =
         plan.id in chapterContent
-          ? markdownToHtml(chapterContent[plan.id])
+          ? markdownToHtml(chapterContent[plan.id].content)
           : "";
       return accumulator + planTitleHtml + chapterHtml;
     }, "");
@@ -494,18 +538,42 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       const apiCalls = createdPlans.map((plan) =>
         generateContent(plan.planTitle, plan.id).then((apiResponse) => {
           if (apiResponse) {
-            const newContent = apiResponse.planContent; // Assurez-vous que c'est le format correct
+            const newContent = apiResponse.planContent;
+
             setChapterContent((prevContent) => ({
               ...prevContent,
-              [plan.id]: newContent, // Utilisez l'ID du plan comme clé
+              [plan.id]: {
+                content: newContent, // Ou une autre valeur
+              },
             }));
-            // On met à jour le nombre de tokens restants
+
+            const contentsWithAllVersions: ContentsWithAllVersions = {
+              allVersions: [
+                {
+                  isSelected: true,
+                  id: apiResponse.id,
+                  idRef: apiResponse.idRef,
+                  planContent: newContent,
+                },
+              ],
+              activeVersion: {
+                isSelected: true,
+                id: apiResponse.id,
+                idRef: apiResponse.idRef,
+                planContent: newContent,
+              },
+            };
+
+            setContentsWithAllVersions((prev) => ({
+              ...prev,
+              [plan.id]: contentsWithAllVersions,
+            }));
           }
         })
       );
+
       Promise.all(apiCalls)
         .then(() => {
-          updateContextTokenRemaining();
           setLoading(false);
           setWhatInProgress("");
           setGeneratePlanDone(false);
@@ -513,7 +581,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         })
         .catch((error) => {
           console.error("Error in one of the API calls:", error);
-          updateContextTokenRemaining();
           setLoading(false);
           setWhatInProgress("");
           setGeneratePlanDone(false);
@@ -525,10 +592,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     createdPlans,
     generateContent,
     activateAutomaticContent,
-    updateContextTokenRemaining,
   ]);
 
-  type LanguageCode = keyof typeof languageList;
 
   const handleLanguageChange = async (language: LanguageCode) => {
     setSelectedLanguage(language);
@@ -559,6 +624,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
   const handleRefresh = () => {
     fetchPdf();
+    updateContextTokenRemaining();
+
   };
 
   const navigatePlanVersion = async (
@@ -585,7 +652,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       newId,
       planVersions[newActiveIndex].idRef || ""
     );
-    console.log(up);
 
     const newActiveVersion = planVersions[newActiveIndex];
 
@@ -602,12 +668,55 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       plan.idRef === planKey || plan.id === planKey ? newActiveVersion : plan
     );
     setCreatedPlans(updatedCreatedPlans);
-    // Mettre à jour la base de données si nécessaire
-    // Envoyez une requête pour mettre à jour isSelected pour newActiveVersion
-    // et potentiellement désélectionner l'ancienne version active
   };
 
-  // console.log(plansWithAllVersions);
+  const navigateContentVersion = async (
+    contentKey: string,
+    planId: string,
+    direction: "prev" | "next"
+  ) => {
+    const totalVersions =
+      contentsWithAllVersions[contentKey]?.allVersions.length || 0;
+    let activeVersionIndex =
+      contentsWithAllVersions[contentKey]?.allVersions.findIndex(
+        (p: ContentType) => p.isSelected
+      ) || 0;
+
+    if (direction === "prev" && activeVersionIndex > 0) {
+      activeVersionIndex--;
+    } else if (direction === "next" && activeVersionIndex < totalVersions - 1) {
+      activeVersionIndex++;
+    }
+
+    // Mettre à jour les versions pour refléter quelle version est actuellement sélectionnée
+    const updatedVersions = contentsWithAllVersions[
+      contentKey
+    ]?.allVersions.map((content: ContentType, index: number) => ({
+      ...content,
+      isSelected: index === activeVersionIndex,
+    }));
+
+    // On récupère l'ID et on l'envoie en BDD
+    const newId = updatedVersions[activeVersionIndex].id;
+    const up = await updateContentIsSelected(newId, planId);
+
+    // Mettre à jour le state
+    setContentsWithAllVersions((prev) => {
+      return {
+        ...prev,
+        [contentKey]: {
+          allVersions: updatedVersions,
+          activeVersion: updatedVersions[activeVersionIndex],
+        },
+      };
+    });
+
+   
+
+    // Mettre à jour en base de données si nécessaire
+    // ...
+  };
+
   return (
     <div className="flex md:flex-row items-start flex-col w-full gap-5">
       <div className="md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg ">
@@ -745,6 +854,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               subject={subject}
               disabled={createdPlans.length === 0}
             />
+            <div>Nombre de mots</div>
+            <div>Tokens dépensés</div>
+            <div>Temps de lect</div>
+            {/* FIXME: pouvoir modifier un titre / content en tapant dans une input */}
+            {/* FIXME: gérér "All content" qui déconne, et ne se met pas à jour */}
           </div>
           <div className="row-span-3 hidden">
             {createdPlans.map((plan) => (
@@ -763,7 +877,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                 <div>
                   {chapterContent[plan.id] && (
                     <Textarea
-                      value={chapterContent[plan.id]}
+                      value={chapterContent[plan.id].content}
                       onChange={(e) =>
                         handleUpdateContent(plan.id, e.currentTarget.value)
                       }
@@ -787,7 +901,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               )}
               {createdPlans.map((plan) => {
                 // Calculs pour la navigation entre les versions
-                
                 const planKey = plan.idRef || plan.id;
                 const totalVersions =
                   plansWithAllVersions[planKey]?.allVersions.length || 0;
@@ -795,115 +908,182 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                   plansWithAllVersions[planKey]?.allVersions.findIndex(
                     (p) => p.isSelected
                   ) || 0;
-                
-                  
 
+                const contentKey = plan.idRef || plan.id;
+                const totalContentVersions =
+                  contentsWithAllVersions[contentKey]?.allVersions.length || 0;
+                const activeContentVersionIndex =
+                  contentsWithAllVersions[contentKey]?.allVersions.findIndex(
+                    (content) => content.isSelected
+                  ) || 0;
+
+                const activeContent =
+                  contentsWithAllVersions[contentKey]?.activeVersion;
                 return (
-                  <div key={plan.id} className="space-y-4">
-                    <div className="relative">
-                      <div
-                        className="text-left"
-                        dangerouslySetInnerHTML={{
-                          __html: markdownToHtml(
-                            plan.planLevel + " " + plan.planTitle
-                          ),
-                        }}
-                      />
-                      <div className="flex flex-col absolute -right-14 top-0">
-                        <div className="flex flex-row gap-0.5">
-                          <FontAwesomeIcon
-                            icon={faCircleChevronLeft}
-                            onClick={() => navigatePlanVersion(planKey, "prev")}
-                            className={`
+                  <>
+                    <div key={plan.id} className="space-y-4">
+                      <div className="relative">
+                        <div
+                          className="text-left"
+                          dangerouslySetInnerHTML={{
+                            __html: markdownToHtml(
+                              plan.planLevel + " " + plan.planTitle
+                            ),
+                          }}
+                        />
+                        <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
+                          <div className="flex flex-row gap-0.5">
+                            <FontAwesomeIcon
+                              icon={faCircleChevronLeft}
+                              onClick={() =>
+                                navigatePlanVersion(planKey, "prev")
+                              }
+                              className={`
                             select-none	
                             ${
                               activeVersionIndex <= 0
                                 ? "opacity-50"
                                 : "opacity-80 hover:opacity-100 cursor-pointer"
                             }`}
-                          />
-                          <FontAwesomeIcon
-                            icon={faCircleChevronRight}
-                            onClick={() => navigatePlanVersion(planKey, "next")}
-                            className={`
+                            />
+                            <FontAwesomeIcon
+                              icon={faCircleChevronRight}
+                              onClick={() =>
+                                navigatePlanVersion(planKey, "next")
+                              }
+                              className={`
                             select-none	
                             ${
                               activeVersionIndex >= totalVersions - 1
                                 ? "opacity-50"
                                 : "opacity-80 hover:opacity-100 cursor-pointer"
                             }`}
-                          />
+                            />
+                          </div>
+                          {totalVersions > 1 && (
+                            <p className="py-0 my-1 text-xs text-center">
+                              v.{activeVersionIndex + 1}/{totalVersions}
+                            </p>
+                          )}
                         </div>
-                        {totalVersions > 1 && (
-                          <p className="py-0 my-1 text-xs text-center">
-                            v.{activeVersionIndex + 1}/{totalVersions}
-                          </p>
-                        )}
-                      </div>
 
-                      <EditPartOfPdfButton
-                        type="plan"
-                        id={plan.id}
-                        toneInit={
-                          !plan.tone
-                            ? selectedTone
-                            : toneToKey(plan.tone) || selectedTone
-                        }
-                        lengthInit={selectedLength}
-                        personalityInit={
-                          !plan.personality
-                            ? selectedPersonality
-                            : personalityToKey(plan.personality) ||
-                              selectedPersonality
-                        }
-                        gptModelInit={gptModel}
-                        langInit={plan.lang ? plan.lang : selectedLanguage}
-                        lengthValueInit={selectedLengthValue}
-                        toneValueInit={selectedToneValue}
-                        personalityValueInit={selectedPersonalityValue}
-                        valueInit={plan.planTitle}
-                        plan={createdPlans}
-                        subject={subject}
-                        pdfId={pdfId}
-                        planLevel={plan.planLevel}
-                        idRef={plan.idRef}
-                        onRefresh={handleRefresh}
-                      />
-                    </div>
-                    {(chapterContent[plan.idRef as string] ||
-                      chapterContent[plan.id as string]) && (
-                      <div className="relative group">
-                        <div
-                          className="text-left"
-                          dangerouslySetInnerHTML={{
-                            __html: markdownToHtml(
-                              chapterContent[plan.idRef as string]
-                                ? chapterContent[plan.idRef as string]
-                                : chapterContent[plan.id]
-                            ),
-                          }}
-                        />
                         <EditPartOfPdfButton
-                          type="content"
+                          type="plan"
                           id={plan.id}
-                          toneInit={selectedTone}
+                          toneInit={
+                            !plan.tone
+                              ? selectedTone
+                              : toneToKey(plan.tone) || selectedTone
+                          }
                           lengthInit={selectedLength}
-                          personalityInit={selectedPersonality}
+                          personalityInit={
+                            !plan.personality
+                              ? selectedPersonality
+                              : personalityToKey(plan.personality) ||
+                                selectedPersonality
+                          }
                           gptModelInit={gptModel}
-                          langInit={selectedLanguage}
+                          langInit={plan.lang ? plan.lang : selectedLanguage}
                           lengthValueInit={selectedLengthValue}
                           toneValueInit={selectedToneValue}
                           personalityValueInit={selectedPersonalityValue}
-                          valueInit={chapterContent[plan.id]}
+                          valueInit={plan.planTitle}
                           plan={createdPlans}
                           subject={subject}
                           pdfId={pdfId}
+                          planLevel={plan.planLevel}
                           idRef={plan.idRef}
                           onRefresh={handleRefresh}
                         />
                       </div>
-                    )}
-                  </div>
+                      {(chapterContent[plan.idRef as string] ||
+                        chapterContent[plan.id as string]) && (
+                        <div className="relative group">
+                          {activeContent && (
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: markdownToHtml(
+                                  activeContent.planContent
+                                ),
+                              }}
+                            />
+                          )}
+                          {/* Boutons pour naviguer entre les versions du contenu */}
+                          <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
+                            <div className="flex flex-row gap-0.5">
+                              <FontAwesomeIcon
+                                icon={faCircleChevronLeft}
+                                onClick={() =>
+                                  navigateContentVersion(
+                                    contentKey,
+                                    plan.id,
+                                    "prev"
+                                  )
+                                }
+                                className={`select-none ${
+                                  activeContentVersionIndex <= 0
+                                    ? "opacity-50"
+                                    : "opacity-80 hover:opacity-100 cursor-pointer"
+                                }`}
+                              />
+                              <FontAwesomeIcon
+                                icon={faCircleChevronRight}
+                                onClick={() =>
+                                  navigateContentVersion(
+                                    contentKey,
+                                    plan.id,
+                                    "next"
+                                  )
+                                }
+                                className={`select-none ${
+                                  activeContentVersionIndex >=
+                                  totalContentVersions - 1
+                                    ? "opacity-50"
+                                    : "opacity-80 hover:opacity-100 cursor-pointer"
+                                }`}
+                              />
+                            </div>
+                            {totalContentVersions > 1 && (
+                              <p className="py-0 my-1 text-xs text-center">
+                                v.{activeContentVersionIndex + 1}/
+                                {totalContentVersions}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <EditPartOfPdfButton
+                            type="content"
+                            id={plan.id}
+                            toneInit={
+                              !activeContent?.tone
+                                ? selectedTone
+                                : toneToKey(activeContent.tone) || selectedTone
+                            }
+                            lengthInit={!activeContent?.length ? selectedLength : lengthToKey(activeContent.length) ?? selectedLength}
+                            personalityInit={
+                              !activeContent?.personality
+                                ? selectedPersonality
+                                : personalityToKey(activeContent.personality) ||
+                                  selectedPersonality
+                            }
+                            gptModelInit={gptModel}
+                            langInit={!activeContent?.lang ? selectedLanguage : activeContent.lang}
+                            lengthValueInit={selectedLengthValue}
+                            toneValueInit={selectedToneValue}
+                            personalityValueInit={selectedPersonalityValue}
+                            valueInit={activeContent?.planContent || ""}
+                            plan={createdPlans}
+                            subject={subject}
+                            pdfId={pdfId}
+                            planLevel={plan.planLevel}
+                            idRef={plan.idRef}
+                            onRefresh={handleRefresh}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <Separator />
+                  </>
                 );
               })}
             </article>

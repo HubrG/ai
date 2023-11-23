@@ -4,6 +4,7 @@ import { Lang } from "@/src/@types/ai-options/lang";
 import { Length } from "@/src/@types/ai-options/length";
 import { personalitiesValues } from "@/src/@types/ai-options/personality";
 import { TonesValues } from "@/src/@types/ai-options/tone";
+import spendTokens from "@/src/function/ai/spendTokens";
 import languageString from "@/src/list/ai/languagesList";
 import { getModelId } from "@/src/query/gptModel.query";
 import { getUserLog } from "@/src/query/user.query";
@@ -98,26 +99,27 @@ export async function POST(req: Request): Promise<Response> {
     }
     const planTitle = planId.planTitle;
     // On créé le prompt
-    promptSystem = `**Role and Goal**: As an AI content enhancer for the PDF titled '${subject}', my specific task is to refine the content detailed in '${value}'. This task involves enriching and clarifying the content, focusing solely on the substance without reintroducing or referencing the title '${planTitle}'.
+    promptSystem = `**Role and Goal**: As an expert in content creation for the PDF titled '${subject}', my task is to elaborate on the specific point '${planTitle}'. I will provide in-depth, focused content without reintroducing the title.
 
-    **Personality and Style**: Aligning with the ${personalityValue} personality, I will apply a ${toneValue} tone. The goal is to enrich the content with engaging and relevant details, emphasizing key points in *italics* and **bold** without repeating the title.
+    **Personality and Style**: In line with the ${personalityValue} personality, my writing is ${toneValue}. I engage readers with a detailed narrative and comprehensive explanations, emphasizing key concepts in *italics* and **bold**.
     
-    **Language and Format**: The revisions will be in ${language}, maintaining Markdown formatting. Emphasis will be on improving the content's quality, not on its title.
+    **Language and Format**: The content is in ${language} and strictly adheres to Markdown formatting. Key points and terms are highlighted in *italics* and **bold** for emphasis. No Markdown headers or titles are used.
     
-    **Content Revision Guidelines**:
-    - Focus exclusively on enhancing '${value}', avoiding any repetition or mention of the title '${planTitle}'.
-    - The content’s depth and complexity should correspond with the ${length} setting, ensuring appropriate elaboration.
+    **Content Creation Guidelines**:
+    - I provide substantial information directly related to '${planTitle}', avoiding any repetition of the title.
+    - The content's depth aligns with the ${length} setting ('short', 'medium', 'long'), ensuring appropriate detail and complexity.
     
-    **Contextual Consideration**:
-    - The revised content must seamlessly fit within the overall context of the plan but should not reiterate the title.
-    - Here's the complete plan for context:
-    ${plan}
+    **Contextual Integration**:
+    - This content is an integral part of all parts, designed to enhance the overall narrative and understanding.
+    - Here, all the plan :
+    ${planTitle}
     
     **Important Notes**:
-    - The aim is to improve '${value}' in terms of clarity and engagement, focusing on the content itself rather than its title.
-    - The revision should offer in-depth insights and enhancements pertinent to the specific content, not the title.
+    - My writing, reflecting the ${personalityValue} style, maintains a consistent ${toneValue} and focuses on substance.
+    - Directly engaging with '${planTitle}', I offer valuable insights and detailed content that enriches the reader's experience.  
     `;
-    promptUser = `Please enhance the content section: '${value}'. The revision should strictly focus on the content itself, in ${language} (STRICTLY IN ${language}), and reflect a ${toneValue} tone and ${personalityValue} style. Aim to improve clarity and depth, using *italics* and **bold** for emphasis where appropriate. Avoid referencing or repeating the title '${planTitle}'. The focus should be on enriching the content within the context of the overall plan, '${subject}'.
+    promptUser = `
+    Create content for the topic '${planTitle}' as part of our PDF plan. The content should be in ${language} STRICTLY, embodying the ${toneValue} tone and ${personalityValue} style. Focus directly on the subject matter, highlighting key points in *italics* and **bold**. Avoid reiterating the title. Ensure the content is appropriate for the ${length} ('short', 'medium', 'long') and enriches the reader's understanding of '${planTitle}'.
     `;
     const response = await openai.chat.completions.create({
       model: gptModel,
@@ -134,10 +136,31 @@ export async function POST(req: Request): Promise<Response> {
       max_tokens: 100,
       temperature: 1,
     });
-    console.log("response: ", response.choices[0].message.content);
-    if (!response.choices[0].message.content) {
+
+    if (!response.choices[0].message.content || !response.usage) {
       return new Response("No response from OpenAI", { status: 400 });
     }
+
+    // On dépense le nombre de tokens
+    let totalTokens = 0;
+    const inputToken = await spendTokens({
+      tokenCount: response.usage.prompt_tokens,
+      input: true,
+      GPTModel: gptModel,
+    });
+    const outputTokens = await spendTokens({
+      tokenCount: response.usage.completion_tokens,
+      output: true,
+      GPTModel: gptModel,
+    });
+    if (!inputToken || !outputTokens) {
+      return new Response("Error spending tokens", { status: 400 });
+    }
+    totalTokens = outputTokens;
+    if (!response.choices[0].message.content) {
+      return new Response("No content returned", { status: 400 });
+    }
+
     // On ajoute le contenu dans la BDD (pdfCreatorContent) (sans update)
     const contentCreated = await prisma.pdfCreatorContent.create({
       data: {
@@ -158,9 +181,7 @@ export async function POST(req: Request): Promise<Response> {
     // On met en false les contenus précédent, sauf celui qui vient d'être créé
     const contentUpdated = await prisma.pdfCreatorContent.updateMany({
       where: {
-        OR: [
-          { planId: contentCreated.planId },
-        ],
+        OR: [{ planId: contentCreated.planId }],
         NOT: {
           id: contentCreated.id,
         },

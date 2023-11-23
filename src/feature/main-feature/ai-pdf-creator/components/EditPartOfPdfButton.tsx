@@ -111,7 +111,7 @@ export const EditPartOfPdfButton = ({
 
 
   const update = async () => {
-    console.log(lengthValueInit, selectedLengthValue)
+
     try {
       const response = await fetch("/api/pdfcreator/updateContent", {
         method: "POST",
@@ -146,8 +146,28 @@ export const EditPartOfPdfButton = ({
     }
   };
 
+  useEffect(() => {
+    setSelectedLanguage(langInit as LanguageCode);
+    setSelectedTone(toneInit);
+    setSelectedPersonality(personalityInit);
+    setSelectedLength(lengthInit);
+    setSelectedToneValue(toneValueInit);
+    setSelectedPersonalityValue(personalityValueInit);
+    setSelectedLengthValue(lengthValueInit);
+    setGptModel(gptModelInit);
+  }, [
+    langInit,
+    toneInit,
+    personalityInit,
+    lengthInit,
+    toneValueInit,
+    personalityValueInit,
+    lengthValueInit,
+    gptModelInit,
+  ]);
+
   return (
-    <div className="absolute right-full top-0 rounded-lg cursor-pointer dark:text-app-400 text-app-400 hover:text-app-500  dark:hover:text-app-300 px-3 pt-0.5">
+    <div className="absolute right-full top-1 rounded-lg cursor-pointer dark:text-app-400 text-app-400 hover:text-app-500  dark:hover:text-app-300 px-3 pt-0.5">
       <Popover>
         <PopoverTrigger asChild>
           <FontAwesomeIcon icon={faWandMagicSparkles} />
