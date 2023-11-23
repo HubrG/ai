@@ -14,4 +14,8 @@ export const tonesList = {
     passionate: "Passionate and persuasive",
     straightforward: "Straightforward and no-nonsense",
     playful: "Playful and lighthearted",
-  } as const;
+} as const;
+  
+export const toneToKey = (personality: string) => {
+    return Object.keys(tonesList).find(key => tonesList[key as keyof typeof tonesList] === personality)
+}

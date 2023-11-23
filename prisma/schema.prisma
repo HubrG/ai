@@ -89,12 +89,15 @@ model tokenSpent {
 }
 
 model tokenPricing {
-  id               String       @id @default(cuid())
-  GPTModel         String
-  priceFor1kInput  Float        @default(0.01)
-  priceFor1kOutput Float        @default(0.03)
-  createdAt        DateTime     @default(now())
-  tokenSpent       tokenSpent[]
+  id                String              @id @default(cuid())
+  GPTModel          String
+  priceFor1kInput   Float               @default(0.01)
+  priceFor1kOutput  Float               @default(0.03)
+  createdAt         DateTime            @default(now())
+  tokenSpent        tokenSpent[]
+  gptModel          pdfCreator[]
+  pdfCreatorPlan    pdfCreatorPlan[]
+  pdfCreatorContent pdfCreatorContent[]
 }
 
 model userToken {
@@ -106,40 +109,56 @@ model userToken {
 }
 
 model pdfCreator {
-  id          String           @id @default(cuid())
-  userId      String
-  createdAt   DateTime         @default(now())
-  lang        String           @default("en")
-  title       String           @default("My PDF")
-  subject     String           @default("")
-  updatedAt   DateTime?        @updatedAt
-  length      String           @default("")
-  personality String           @default("")
-  tone        String           @default("")
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pdfPlan     pdfCreatorPlan[]
+  id               String           @id @default(cuid())
+  userId           String
+  createdAt        DateTime         @default(now())
+  lang             String           @default("en")
+  title            String           @default("My PDF")
+  subject          String           @default("")
+  updatedAt        DateTime?        @updatedAt
+  length           String           @default("")
+  automaticContent Boolean          @default(true)
+  personality      String           @default("")
+  tone             String           @default("")
+  gptModelId       String?
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gptModel         tokenPricing?    @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
+  pdfPlan          pdfCreatorPlan[]
 }
 
 model pdfCreatorPlan {
-  id         String    @id @default(cuid())
-  pdfId      String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime? @updatedAt
-  planTitle  String
-  planLevel  String    @default("#")
-  version    Int       @default(0)
-  isSelected Boolean   @default(true)
+  id                String              @id @default(cuid())
+  idRef             String              @default("")
+  pdfId             String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime?           @updatedAt
+  planTitle         String
+  planLevel         String              @default("#")
+  tone              String              @default("")
+  personality       String              @default("")
+  length            String              @default("")
+  lang              String              @default("en")
+  version           Int                 @default(0)
+  gptModelId        String?
+  isSelected        Boolean             @default(true)
   pdf               pdfCreator          @relation(fields: [pdfId], references: [id], onDelete: Cascade)
+  gptModel          tokenPricing?       @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
   pdfCreatorContent pdfCreatorContent[]
 }
 
 model pdfCreatorContent {
   id             String         @id @default(cuid())
   planContent    String         @db.Text
+  tone           String         @default("")
+  personality    String         @default("")
+  length         String         @default("")
+  lang           String         @default("en")
   version        Int            @default(0)
   isSelected     Boolean        @default(true)
   planId         String
+  gptModelId     String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  gptModel       tokenPricing?  @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
   pdfCreatorPlan pdfCreatorPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 }

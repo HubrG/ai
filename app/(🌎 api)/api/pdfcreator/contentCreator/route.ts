@@ -104,7 +104,9 @@ export async function POST(req: Request): Promise<Response> {
 - The content's depth aligns with the ${length} setting ('short', 'medium', 'long'), ensuring appropriate detail and complexity.
 
 **Contextual Integration**:
-- This content is an integral part of '${pdfOriginal?.title}', designed to enhance the overall narrative and understanding.
+- This content is an integral part of all parts, designed to enhance the overall narrative and understanding.
+- Here, all the plan :
+${planTitle}
 
 **Important Notes**:
 - My writing, reflecting the ${personality} style, maintains a consistent ${tone} and focuses on substance.

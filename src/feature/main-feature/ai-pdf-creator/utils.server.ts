@@ -1,5 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { getModelId } from "@/src/query/gptModel.query";
 import { getUserLog } from "@/src/query/user.query";
 import { User } from "@prisma/client";
 
@@ -7,7 +8,7 @@ type createPdfProps = {
   lang: string;
   subject: string;
   user?: User;
-}
+};
 export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
   let userLog;
   if (!user) {
@@ -18,11 +19,17 @@ export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
   if (!userLog) {
     throw new Error("User not logged in");
   }
+  // On recherche la première occurrence du modèle GPT-3
+  const model = await getModelId("gpt-3.5-turbo");
+  if (!model) {
+    throw new Error("Model not found");
+  }
   const pdf = await prisma.pdfCreator.create({
     data: {
       userId: userLog.id,
       lang: lang,
       title: subject,
+      gptModelId: model.id
     },
   });
   if (!pdf) {
@@ -31,7 +38,7 @@ export const createPdf = async ({ lang, subject, user }: createPdfProps) => {
   return pdf;
 };
 
-export const createPdfPlan = async (titles: string[], pdfId: string) => {
+export const createPdfPlan = async (titles: string[], pdfId: string, gptModel:string, selectedLanguage:string, selectedLength:string, selectedPersonality:string, selectedTone:string) => {
   console.log(titles);
   const user = await getUserLog();
   if (!user) {
@@ -46,6 +53,7 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
   }
 
   let firstTitleForPdf: string | null = null;
+  const model = await getModelId(gptModel);
 
   const plans = await prisma.$transaction(
     titles.map((title) => {
@@ -55,12 +63,18 @@ export const createPdfPlan = async (titles: string[], pdfId: string) => {
       if (planLevel === "#" && firstTitleForPdf === null) {
         firstTitleForPdf = title.replace(/^#\s/, "").trim();
       }
+      // On recherche le model ID de GPT
 
       return prisma.pdfCreatorPlan.create({
         data: {
           planTitle: title.replace(/^(#+\s)/, "").trim(),
           pdfId: pdfId,
           planLevel: planLevel,
+          gptModelId: model?.id,
+          lang: selectedLanguage,
+          length: selectedLength,
+          personality: selectedPersonality,
+          tone: selectedTone,
         },
         select: {
           id: true,
@@ -161,7 +175,7 @@ export const updateContent = async (id: string, content: string) => {
         planContent: content,
       },
     });
-    console.log(updatedContent)
+    console.log(updatedContent);
     return updatedContent;
   } else {
     throw new Error(
@@ -171,11 +185,24 @@ export const updateContent = async (id: string, content: string) => {
 };
 
 export const getPdfPlanAndContent = async (pdfId: string) => {
+  const user = await getUserLog();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+  const pdfBase = await prisma.pdfCreator.findUnique({
+    where: {
+      id: pdfId,
+    }
+  });
+  if (!pdfBase) {
+    throw new Error("Pdf not found");
+  }
   const pdf = await prisma.pdfCreator.findUnique({
     where: {
       id: pdfId,
     },
     include: {
+      gptModel: pdfBase.gptModelId ? true : false,
       pdfPlan: {
         orderBy: {
           createdAt: "asc",
@@ -209,8 +236,7 @@ export const retrieveTokenRemaining = async () => {
     throw new Error("Token remaining not found");
   }
   return tokenRemaining;
-}
-
+};
 
 export const getPdf = async (id: string) => {
   const pdf = await prisma.pdfCreator.findUnique({
@@ -219,14 +245,27 @@ export const getPdf = async (id: string) => {
     },
   });
   if (!pdf) {
-   return false;
+    return false;
   }
   return pdf;
-}
-export const updatePdfSettings = async (id: string, lang: string, tone: string, personality: string, length:string, subject:string ) => {
+};
+export const updatePdfSettings = async (
+  id: string,
+  lang: string,
+  tone: string,
+  personality: string,
+  length: string,
+  subject: string,
+  activateAutomaticContent: boolean,
+  GPTModel: string
+) => {
   const user = await getUserLog();
   if (!user) {
     throw new Error("User not logged in");
+  }
+  const modelId = await getModelId(GPTModel);
+  if (!modelId) {
+    return false;
   }
   const pdf = await prisma.pdfCreator.update({
     where: {
@@ -237,11 +276,13 @@ export const updatePdfSettings = async (id: string, lang: string, tone: string, 
       personality: personality,
       tone: tone,
       lang: lang,
-      subject: subject
+      subject: subject,
+      automaticContent: activateAutomaticContent,
+      gptModelId: modelId?.id,
     },
   });
   if (!pdf) {
     throw new Error("Pdf not found");
   }
   return pdf;
-}
+};

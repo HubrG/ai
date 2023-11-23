@@ -100,7 +100,7 @@ export async function POST(req: Request): Promise<Response> {
 
 **Note to AI**: Do not include descriptors like 'Chapter' or 'Section' nor any parentheses after the title text. Maintain a clear and progressive heading structure without jumping levels (H2 just before H4...forbidden ; H2 to H3 and H3 to H4...authorized !) or repeating hash marks.`;
     }
-    promptUser = `Create a detailed and ${length} structure for a PDF in ${language} on the subject: "${prompt}". The content should embody a ${tone} tone and ${personality} style, ensuring a clear and SEO-friendly structure. Focus on making the content engaging and informative, reflecting the unique approach of the ${personality} personality. Remember, maintain a strict heading hierarchy without skipping levels (H2 to H3, H3 to H4, etc.), and avoid adding descriptors or parentheses after titles.
+    promptUser = `Create a detailed and ${length} structure for a PDF in ${language} (STRICTLY IN ${language}) on the subject: "${prompt}". The content should embody a ${tone} tone and ${personality} style, ensuring a clear and SEO-friendly structure. Focus on making the content engaging and informative, reflecting the unique approach of the ${personality} personality. Remember, maintain a strict heading hierarchy without skipping levels (H2 to H3, H3 to H4, etc.), and avoid adding descriptors or parentheses after titles.
     `;
   }
 

@@ -15,3 +15,8 @@ export const personalitiesList = {
   visionary: "Visionary Dreamer",
   tactical: "Tactical Strategist",
 } as const;
+
+
+export const personalityToKey = (personality: string) => {
+  return Object.keys(personalitiesList).find(key => personalitiesList[key as keyof typeof personalitiesList] === personality)
+}

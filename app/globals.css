@@ -77,11 +77,11 @@
     --destructive: var(--color-app-hsl-50);
     --destructive-foreground: var(--color-app-hsl-900);
 
-    --border: var(--color-app-hsl-50);
+    --border: var(--color-app-hsl-200);
     --input: var(--color-app-hsl-200);
     --ring: var(--color-app-hsl-200);
 
-    --radius: 0.5rem;
+    --radius: 0.7rem;
   }
 
   .dark {
@@ -91,7 +91,7 @@
     --card: var(--color-app-hsl-700);
     --card-foreground: var(--color-app-hsl-200);
 
-    --popover: var(--color-app-hsl-800);
+    --popover: var(--color-app-hsl-900);
     --popover-foreground: var(--color-app-hsl-200);
 
     --primary: var(--color-app-hsl-800);
@@ -125,7 +125,7 @@
   }
 }
 main {
-  @apply min-h-screen min-w-full  mx-auto gap-4 text-center bg-app-100 dark:bg-app-950;
+  @apply min-h-screen min-w-full   mx-auto gap-4 text-center bg-app-100 dark:bg-app-950;
 }
 .container {
   @apply w-full max-w-6xl flex flex-col min-h-screen pt-28 justify-center items-center;

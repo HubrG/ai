@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { languageList } from "@/src/list/ai/languagesList";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -8,58 +9,48 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
-import cn from "classnames"; // If you use 'classnames' library
-import { Button } from "@/components/ui/button";
+import cn from "classnames";
 
 type LanguageCode = keyof typeof languageList;
 
 interface SelectLangProps {
-  onLanguageChange: any;
+  onLanguageChange: (language: LanguageCode) => void;
   selectedLangInit: LanguageCode | "";
   id?: string;
 }
-export const SelectLang = ({
-  onLanguageChange,
-  id,
-  selectedLangInit,
-}: SelectLangProps) => {
-  const [openPopoverLang, setOpenPopoverLang] = React.useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
-    selectedLangInit
+
+export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLangProps) => {
+  const [open, setOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(selectedLangInit);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleLanguageSelect = (code: LanguageCode) => {
+    setSelectedLanguage(code);
+    setOpen(false);
+    onLanguageChange(code);
+  };
+
+  const filteredLanguages = Object.entries(languageList).filter(([code, { name }]) =>
+    name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const sortedLanguages = Object.entries(languageList).sort((a, b) => {
-    return a[1].name.localeCompare(b[1].name);
-  }) as [LanguageCode, { name: string; flag: string }][];
-
-  useEffect(() => {
-    setSelectedLanguage(selectedLangInit);
-  }, [selectedLangInit]);
-
   return (
-    <Popover open={openPopoverLang} onOpenChange={setOpenPopoverLang}>
-      <PopoverTrigger id={id} asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
-          aria-expanded={openPopoverLang}
-          className="w-full justify-between items-center gap-x-5 flex flex-row">
+          aria-expanded={open}
+          className="w-full justify-between items-center gap-x-5 flex flex-row"
+        >
           <span className="w-full flex flex-row gap-2 items-center">
             <span>
-              {selectedLanguage
-                ? languageList[selectedLanguage]?.flag
-                : ""}
+              {selectedLanguage ? languageList[selectedLanguage].flag : ""}
             </span>
             <span>
-              {selectedLanguage
-                ? languageList[selectedLanguage]?.name
-                : "Select language..."}
+              {selectedLanguage ? languageList[selectedLanguage].name : "Select language..."}
             </span>
           </span>
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -67,25 +58,23 @@ export const SelectLang = ({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 max-h-[50vh] overflow-y-auto">
         <Command>
-          <CommandInput placeholder="Search language..." className="h-8 my-2" />
+          <CommandInput
+            placeholder="Search language..."
+            className="h-8 my-2"
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+          />
           <CommandEmpty>No language found.</CommandEmpty>
           <CommandGroup>
-            {sortedLanguages.map(([code, { name, flag }]) => (
+            {filteredLanguages.map(([code, { name, flag }]) => (
               <CommandItem
                 key={code}
-                value={code}
-                onSelect={() => {
-                  const newLanguage = code === selectedLanguage ? "" : code;
-                  setSelectedLanguage(newLanguage);
-                  setOpenPopoverLang(false);
-                  onLanguageChange(newLanguage); // Notifie le composant parent
-                }}>
+                value={name}
+                onSelect={() => handleLanguageSelect(code as LanguageCode)}
+              >
                 {flag} {name}
                 <CheckIcon
-                  className={cn(
-                    "ml-auto h-4 w-4",
-                    selectedLanguage === code ? "opacity-100" : "opacity-0"
-                  )}
+                  className={cn("ml-auto h-4 w-4", selectedLanguage === code ? "opacity-100" : "opacity-0")}
                 />
               </CommandItem>
             ))}

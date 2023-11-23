@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader } from "@/components/ui/loader";
 import Showdown from "showdown";
+import { Switch } from "@/components/ui/switch";
 import {
   createPdfPlan,
   getPdfPlanAndContent,
@@ -25,12 +26,16 @@ import { Label } from "@/components/ui/label";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLanguage } from "@fortawesome/pro-solid-svg-icons";
 import {
+  faInfoCircle,
   faMusic,
   faPodiumStar,
+  faRobot,
   faRuler,
-  faWandMagicSparkles,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
+import { SelectModelGPT } from "../components/SelectGPTModel";
+import { personalityToKey } from "@/src/list/ai/personalitiesList";
+import { toneToKey } from "@/src/list/ai/tonesList";
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
@@ -38,8 +43,23 @@ interface Plan {
   planTitle: string;
   planLevel?: string;
   tokenRemaining?: number;
+  isSelected?: boolean;
+  idRef?: string;
+  personality?: string;
+  pdfCreatorContent?: {
+    planContent: string;
+  }[];
+  tone?: string;
+  length?: string;
+  lang?: string;
+  gptModelId?: any;
 }
-
+interface PlansWithAllVersions {
+  [key: string]: {
+    allVersions: Plan[];
+    activeVersion: Plan | null;
+  };
+}
 interface ChapterContents {
   [title: string]: string;
 }
@@ -48,9 +68,7 @@ type PdfCreatorProps = {
   params: { id: string };
 };
 
-// const gptModel = "gpt-4-1106-preview";
-const gptModel = "gpt-3.5-turbo";
-const maxTokens = 500;
+const maxTokens = 200;
 //
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
@@ -71,6 +89,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [regenerate, setRegenerate] = useState<boolean>(false);
   const [whatInProgress, setWhatInProgress] = useState<string>("");
   const [createdPlans, setCreatedPlans] = useState<Plan[]>([]);
+  const [gptModel, setGptModel] = useState<string>("gpt-3.5-turbo");
   //
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     "en"
@@ -143,14 +162,41 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     },
     [converter]
   );
-
   // NOTE: Fetch PDF's
   const fetchPdf = useCallback(async () => {
     try {
       const pdfCreatorObject = await getPdfPlanAndContent(params.id);
+      console.log(pdfCreatorObject)
       if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
-        // On ajoute le plan à l'état createdPlans
-        setCreatedPlans(pdfCreatorObject.pdfPlan);
+        const plansWithAllVersions: PlansWithAllVersions = {};
+
+        pdfCreatorObject.pdfPlan.forEach((plan: Plan) => {
+          const key = plan.idRef || plan.id;
+          if (!plansWithAllVersions[key]) {
+            plansWithAllVersions[key] = {
+              allVersions: [],
+              activeVersion: null,
+            };
+          }
+          plansWithAllVersions[key].allVersions.push(plan);
+          if (plan.isSelected) {
+            plansWithAllVersions[key].activeVersion = plan;
+          }
+        });
+
+        // Transformer en tableau de Plan[] contenant seulement les versions actives
+        const activePlans = Object.values(plansWithAllVersions)
+          .map((item) => item.activeVersion)
+          .filter((plan) => plan !== null) as Plan[];
+
+        setCreatedPlans(activePlans);
+        // Mise à jour des points originaux avec leurs versions modifiées si elles existent
+        // const updatedPlans = originalPoints.map(plan => {
+        //   return modifiedPointsMap.get(plan.id) || plan;
+        // });
+
+        // setCreatedPlans(updatedPlans);
+
         // On prépare le contenu des chapitres
         const contentObject: ChapterContents = {}; // Utilisation du type défini
         pdfCreatorObject.pdfPlan.forEach((plan: any) => {
@@ -166,6 +212,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         setSelectedPersonality(pdfCreatorObject.personality);
         setSelectedLength(pdfCreatorObject.length);
         setSubject(pdfCreatorObject.subject);
+        setActivateAutomaticContent(pdfCreatorObject.automaticContent);
+        if (pdfCreatorObject.gptModel?.GPTModel === undefined) {
+          setGptModel("gpt-3.5-turbo");
+        } else {
+          setGptModel(pdfCreatorObject.gptModel.GPTModel);
+        }
         // On met à jour la langue
         return pdfCreatorObject;
       } else {
@@ -175,6 +227,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       console.error("Error fetching plans:", error);
     }
   }, [params.id]);
+
 
   useEffect(() => {
     if (params.id) {
@@ -259,7 +312,9 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         selectedTone,
         selectedPersonality,
         selectedLength,
-        subject
+        subject,
+        activateAutomaticContent,
+        gptModel
       );
       // Mise à jour du contexte avec le nombre de tokens restants
       updateContextTokenRemaining();
@@ -287,7 +342,15 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             const line = bufferLines[i];
             const titlesToAdd = parseTitles(line + "\n");
             if (titlesToAdd.length > 0) {
-              const newPlans = await createPdfPlan(titlesToAdd, pdfId);
+              const newPlans = await createPdfPlan(
+                titlesToAdd,
+                pdfId,
+                gptModel,
+                selectedLanguage,
+                selectedLength,
+                selectedPersonality,
+                selectedTone
+              );
               setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
             }
           }
@@ -356,17 +419,35 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       selectedToneValue,
       selectedLengthValue,
       selectedPersonalityValue,
+      gptModel,
     ]
   );
 
   useEffect(() => {
     if (!loading && responseSubject && pdfId !== "") {
       // On s'assure que l'appel de fonction est correct :
-      createPdfPlan(parseTitles(responseSubject), pdfId).then((newPlans) => {
+      createPdfPlan(
+        parseTitles(responseSubject),
+        pdfId,
+        gptModel,
+        selectedLanguage,
+        selectedLength,
+        selectedPersonality,
+        selectedTone
+      ).then((newPlans) => {
         setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
       });
     }
-  }, [loading, responseSubject, pdfId]);
+  }, [
+    loading,
+    responseSubject,
+    pdfId,
+    gptModel,
+    selectedLanguage,
+    selectedLength,
+    selectedPersonality,
+    selectedTone,
+  ]);
 
   const handleTryAgain = () => {
     setResponseSubject("");
@@ -449,15 +530,23 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   };
 
   const handleLengthChange = (lengthKey: string, lengthValue: string) => {
-    console.log(lengthKey, lengthValue);
     setSelectedLength(lengthKey);
     setSelectedLengthValue(lengthValue);
   };
 
+  const handleGptModelChange = (modelValue: string) => {
+    setGptModel(modelValue);
+  };
+
+  const handleRefresh = () => {
+    fetchPdf();
+  };
+
+  console.log(createdPlans)
   return (
-    <div className="min-h-screen  flex md:flex-row flex-col w-full gap-5">
-      <div className="md:w-3/12 w-full sticky top-20">
-        <div className="flex flex-col items-center gap-5">
+    <div className="flex md:flex-row items-start flex-col w-full gap-5">
+      <div className="md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg ">
+        <div className="flex flex-col items-center gap-5 flex-wrap h-auto">
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label
               htmlFor="subject"
@@ -465,6 +554,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               Subject of your PDF
             </Label>
             <Input
+              className=" h-12 text-base font-semibold"
               id="subject"
               disabled={loading}
               placeholder="Your subject, any..."
@@ -511,6 +601,19 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           </div>
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label
+              htmlFor="gptModel"
+              className="flex flex-row justify-between items-center px-1">
+              <span>The robot</span>
+              <FontAwesomeIcon icon={faRobot} className="font-ligth" />
+            </Label>
+            <SelectModelGPT
+              id="gptModel"
+              onGPTModelChange={handleGptModelChange}
+              selectedModelGPTInit={gptModel}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label
               htmlFor="length"
               className="flex flex-row justify-between items-center px-1">
               <span>The length</span>
@@ -521,6 +624,28 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               onLengthChange={handleLengthChange}
               selectedLengthInit={selectedLength}
             />
+          </div>
+          <div className="flex items-center justify-between w-full mb-2 space-x-2">
+            <Switch
+              id="activeGenerateContent"
+              checked={activateAutomaticContent}
+              onCheckedChange={(checked) => {
+                setActivateAutomaticContent(checked);
+              }}
+            />
+            <Label htmlFor="activeGenerateContent">
+              <p className="text-right text-sm">
+                Generate content automatically
+              </p>
+            </Label>
+          </div>
+          <div className="infoForm -mt-4 text-left w-full flex flex-row items-start gap-2">
+            <FontAwesomeIcon icon={faInfoCircle} className="font-ligth" />
+            <span className="text-justify">
+              Once the plan is generated, the content of each point will be
+              generated automatically. Disable this option if you want to
+              validate the plan before generating the content.
+            </span>
           </div>
           <div className="flex w-full flex-row gap-x-2">
             <Button
@@ -547,9 +672,9 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           </div>
         </div>
       </div>
-      <div className="md:w-9/12 w-full sticky top-20 ">
-        <div className="rounded-xl border bg-opacity-90  border-app-300 dark:border-app-950 shadow transition grid grid-cols-1 gap-x-2 items-start">
-          <div className="rounded-t-xl p-2 py-3 mb-2 flex flex-row gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-app-300 dark:border-app-900">
+      <div className="md:w-9/12 w-full sticky md:top-28 top-52 ">
+        <div className="rounded-xl  bg-opacity-90  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
+          <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
             <DownloadButton
               allContent={allContent}
               subject={subject}
@@ -583,13 +708,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               </div>
             ))}
           </div>
-          <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[83vh] bg-app-50 dark:bg-app-800">
+          <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[71vh] bg-app-50 dark:bg-app-800">
             <article className="">
               {createdPlans.length === 0 && (
                 <div className="text-center w-full border-2 p-5 border-app-200 bg-white dark:bg-app-800 my-5 rounded-lg border-dashed dark:border-app-900 ">
                   <p className="text-center ">
                     <span className="opacity-70">
-                    Fill out the form and widen your eyes...
+                      Fill out the form and widen your eyes...
                     </span>{" "}
                     🤩
                   </p>
@@ -606,17 +731,52 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                         ),
                       }}
                     />
-                    <EditPartOfPdfButton />
+                    <EditPartOfPdfButton
+                      type="plan"
+                      id={plan.id}
+                      toneInit={!plan.tone ? selectedToneValue : (toneToKey(plan.tone) || selectedToneValue)}
+                      lengthInit={selectedLength}
+                      personalityInit={!plan.personality ? selectedPersonality : (personalityToKey(plan.personality) || selectedPersonality)}
+                      gptModelInit={gptModel}
+                      langInit={plan.lang ? plan.lang : selectedLanguage}
+                      lengthValueInit=""
+                      toneValueInit={selectedToneValue}
+                      personalityValueInit={selectedPersonalityValue}
+                      valueInit={plan.planTitle}
+                      plan={createdPlans}
+                      subject={subject}
+                      pdfId={pdfId}
+                      planLevel={plan.planLevel}
+                      idRef={plan.idRef}
+                      onRefresh={handleRefresh}
+                    />
                   </div>
-                  {chapterContent[plan.id] && (
+                  {((chapterContent[plan.idRef as string]) || chapterContent[plan.id as string]) && (
                     <div className="relative group">
                       <div
                         className="text-left"
                         dangerouslySetInnerHTML={{
-                          __html: markdownToHtml(chapterContent[plan.id]),
+                          __html: markdownToHtml(chapterContent[plan.idRef as string] ? chapterContent[plan.idRef as string] : chapterContent[plan.id]),
                         }}
                       />
-                      <EditPartOfPdfButton />
+                      <EditPartOfPdfButton
+                        type="content"
+                        id={plan.id}
+                        toneInit={selectedTone}
+                        lengthInit={selectedLength}
+                        personalityInit={selectedPersonality}
+                        gptModelInit={gptModel}
+                        langInit={selectedLanguage}
+                        lengthValueInit={selectedLengthValue}
+                        toneValueInit={selectedToneValue}
+                        personalityValueInit={selectedPersonalityValue}
+                        valueInit={chapterContent[plan.id]}
+                        plan={createdPlans}
+                        subject={subject}
+                        pdfId={pdfId}
+                        idRef={plan.idRef}
+                        onRefresh={handleRefresh}
+                      />
                     </div>
                   )}
                 </div>

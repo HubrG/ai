@@ -35,10 +35,10 @@ export const UserProfile = ({ userInfo }: MenuProps) => {
     userInfo?.tokenByMonth ?? user?.tokenByMonth
   );
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo && !user) {
       setUser(userInfo);
     }
-  }, [userInfo, setUser]);
+  }, [userInfo, setUser, user]);
 
   useEffect(() => {
     if (user && user.tokenRemaining && user.tokenByMonth) {
@@ -51,7 +51,7 @@ export const UserProfile = ({ userInfo }: MenuProps) => {
     tokenRemaining,
     tokenByMonth
   );
-
+const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className="flex flex-row w-full">
@@ -73,7 +73,7 @@ export const UserProfile = ({ userInfo }: MenuProps) => {
           <div className="w-full userNavbarDiv">
             <div className="relative w-full" data-tooltip-id="remainingTooltip">
               <div
-                className="progressToken"
+                className={`${tokenPercentage <= 0 ? "progressTokenVoid" : tokenPercentage < 10  ? "progressToken bg-red-500" : "progressToken" }`}
                 style={{
                   width: `${tokenPercentage}%`,
                 }}>
@@ -82,9 +82,9 @@ export const UserProfile = ({ userInfo }: MenuProps) => {
               <div className="progressTokenVoid"></div>
             </div>
             <Tooltip id="remainingTooltip" classNameArrow="hidden" variant="dark" className="tooltip flex flex-col">
-              <span className="font-bold">Remaining credits : {tokenPercentage.toFixed(1)}%</span>
+              <span className="font-bold">Remaining credits : {tokenPercentage <= 0 ? 0 : tokenPercentage.toFixed(1)}%</span>
               <small>
-                {user ? user.tokenRemaining : userInfo?.tokenRemaining}
+                {tokenRemainingDisplay <= 0 ? 0 : tokenRemainingDisplay}
                 &nbsp;/&nbsp;
                 {user ? user.tokenByMonth : userInfo?.tokenByMonth}
               </small>
