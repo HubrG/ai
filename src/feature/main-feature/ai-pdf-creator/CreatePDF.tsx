@@ -45,6 +45,7 @@ import {
   faRuler,
   faSignature,
   faTimer,
+  faWandMagicSparkles,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
 import { SelectModelGPT } from "../components/SelectGPTModel";
@@ -122,13 +123,14 @@ type PdfCreatorProps = {
   params: { id: string };
 };
 
-const maxTokens = 500;
+const maxTokens = 50;
 //
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
   const counter = new Counting();
   const pdfId = params.id;
   const router = useRouter();
+  const [init, setInit] = useState<boolean>(true);
   const [activateAutomaticContent, setActivateAutomaticContent] =
     useState<boolean>(true);
   const [abortControllers, setAbortControllers] = useState<AbortController[]>(
@@ -283,6 +285,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
         setPlansWithAllVersions(plansWithAllVersions);
         setContentsWithAllVersions(contentsWithAllVersions);
+        setInit(false);
 
         // Transformer en tableau de Plan[] contenant seulement les versions actives
         const activePlans = Object.values(plansWithAllVersions)
@@ -783,484 +786,528 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   ]);
 
   return (
-    <div className="flex md:flex-row items-start flex-col w-full gap-5">
-      <div className="md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg ">
-        <div className="flex flex-col items-center gap-5 flex-wrap h-auto">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label
-              htmlFor="subject"
-              className="flex flex-row justify-between items-center">
-              Subject of your PDF
-            </Label>
-            <Input
-              className=" h-12 text-base font-semibold"
-              id="subject"
-              disabled={loading}
-              placeholder="Your subject, any..."
-              value={subject}
-              onChange={(e) => setSubject(e.currentTarget.value)}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="language">
-              <span>Language</span>
-              <FontAwesomeIcon icon={faLanguage} className="font-ligth" />{" "}
-            </Label>
-            <SelectLang
-              id="language"
-              onLanguageChange={handleLanguageChange}
-              selectedLangInit={selectedLanguage}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label
-              htmlFor="tone"
-              className="flex flex-row justify-between items-center px-1">
-              <span>The tone</span>
-              <FontAwesomeIcon icon={faMusic} className="font-ligth" />
-            </Label>
-            <SelectTone
-              id="tone"
-              onToneChange={handleToneChange}
-              selectedToneInit={selectedTone}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label
-              htmlFor="personality"
-              className="flex flex-row justify-between items-center px-1">
-              <span>The personality</span>
-              <FontAwesomeIcon icon={faPodiumStar} className="font-ligth" />
-            </Label>
-            <SelectPersonality
-              id="personality"
-              onPersonalityChange={handlePersonalityChange}
-              selectedPersonalityInit={selectedPersonality}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label
-              htmlFor="gptModel"
-              className="flex flex-row justify-between items-center px-1">
-              <span>The robot</span>
-              <FontAwesomeIcon icon={faRobot} className="font-ligth" />
-            </Label>
-            <SelectModelGPT
-              id="gptModel"
-              onGPTModelChange={handleGptModelChange}
-              selectedModelGPTInit={gptModel}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label
-              htmlFor="length"
-              className="flex flex-row justify-between items-center px-1">
-              <span>The length</span>
-              <FontAwesomeIcon icon={faRuler} className="font-ligth" />
-            </Label>
-            <SelectLength
-              id="length"
-              onLengthChange={handleLengthChange}
-              selectedLengthInit={selectedLength}
-            />
-          </div>
-          <div className="flex items-center justify-between w-full mb-2 space-x-2">
-            <Switch
-              id="activeGenerateContent"
-              checked={activateAutomaticContent}
-              onCheckedChange={(checked) => {
-                setActivateAutomaticContent(checked);
-              }}
-            />
-            <Label htmlFor="activeGenerateContent">
-              <p className="text-right text-sm">
-                Generate content automatically
-              </p>
-            </Label>
-          </div>
-          <div className="infoForm -mt-4 text-left w-full flex flex-row items-start gap-2">
-            <FontAwesomeIcon icon={faInfoCircle} className="font-ligth" />
-            <span className="text-justify">
-              Once the plan is generated, the content of each point will be
-              generated automatically. Disable this option if you want to
-              validate the plan before generating the content.
-            </span>
-          </div>
-          <div className="flex w-full flex-row gap-x-2">
-            <Button
-              className="w-full"
-              onClick={!regenerate ? generatePlan : regeneratePlan}
-              disabled={loading}>
-              {loading && <Loader />}{" "}
-              {loading && whatInProgress === ""
-                ? "Génération du PDF"
-                : loading && whatInProgress === "plan"
-                  ? "Génération du plan..."
-                  : loading && whatInProgress === "content"
-                    ? "Génération du contenu..."
-                    : !regenerate
-                      ? "Générer le PDF"
-                      : "Recommencer"}
-            </Button>
-            {loading && (
-              <Button onClick={handleCancel}>Annuler la Demande</Button>
-            )}
-            {!loading && responseSubject && (
-              <Button onClick={handleTryAgain}>Recommencer</Button>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="md:w-9/12 w-full ">
-        <div className="rounded-xl  bg-opacity-90  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
-          <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row justify-between gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
-            <DownloadButton
-              allContent={allContent}
-              subject={subject}
-              disabled={createdPlans.length === 0}
-            />
-            <div className="p-2 border text-sm border-app-300 dark:border-app-600 self-end rounded-lg flex flex-row gap-x-3">
-              <div data-tooltip-id="countWordTooltip">
-                <FontAwesomeIcon icon={faSignature} />&nbsp;
-                {counter.countWords(allContent)} w.
-                <Tooltip id="countWordTooltip" className="tooltip ">
-                  <strong>Words</strong>
-                </Tooltip>
-              </div>
-              <div data-tooltip-id="readingTimeTooltip">
-                <FontAwesomeIcon icon={faFaceGlasses} />{" "}
-                {counter.countReadingTime(allContent)}mn
-                <Tooltip id="readingTimeTooltip" className="tooltip ">
-                  <strong>Reading time</strong>
-                </Tooltip>
-              </div>
-              <div data-tooltip-id="totalCharactersTooltip">
-                <FontAwesomeIcon icon={faICursor} />
-                &nbsp;{counter.countCharacters(allContent)}
-                <Tooltip id="totalCharactersTooltip" className="tooltip ">
-                  <strong>Characters</strong>
-                </Tooltip>
-              </div>
-              <div data-tooltip-id="totalPagesTooltip">
-                <FontAwesomeIcon icon={faFiles} />
-                &nbsp;
-                {counter.countPages(allContent) > 1
-                  ? counter.countPages(allContent) + " pages"
-                  : counter.countPages(allContent) + " page"}
-                <Tooltip id="totalPagesTooltip" className="tooltip ">
-                  <strong>Pages (approximately)</strong>
-                </Tooltip>
-              </div>
-            </div>
-            <div className="p-2 border border-app-300 self-end  dark:border-app-600 rounded-lg flex md:flex-row gap-2">
-              <div>
-                <FontAwesomeIcon
-                  icon={faCoins}
-                  data-tooltip-id="totalTokenSpentToolTip"
-                />
-                <Tooltip
-                  id="totalTokenSpentToolTip"
-                  classNameArrow="hidden"
-                  variant="dark"
-                  className="tooltip ">
-                  <strong>
-                    {tokenSpentForThisProject
-                      ? tokenSpentForThisProject.totalToken
-                      : 0}{" "}
-                  </strong>
-                  total credits spent
-                </Tooltip>
-              </div>
-              <div>
-                <FontAwesomeIcon
-                  icon={faCoinBlank}
-                  data-tooltip-id="totalTokenSpentInputTooltip"
-                />
-                <Tooltip
-                  id="totalTokenSpentInputTooltip"
-                  classNameArrow="hidden"
-                  variant="dark"
-                  className="tooltip ">
-                  <strong>
-                    {tokenSpentForThisProject
-                      ? tokenSpentForThisProject.totalTokenInput
-                      : 0}{" "}
-                  </strong>
-                  credits spent for content analyze
-                </Tooltip>
-              </div>
-              <div>
-                <FontAwesomeIcon
-                  icon={faCoinVertical}
-                  data-tooltip-id="totalTokenSpentOutputTooltip"
-                />
-                <Tooltip
-                  id="totalTokenSpentOutputTooltip"
-                  classNameArrow="hidden"
-                  variant="dark"
-                  className="tooltip ">
-                  <strong>
-                    {tokenSpentForThisProject
-                      ? tokenSpentForThisProject.totalTokenOutput
-                      : 0}
-                  </strong>{" "}
-                  credits spent for generation
-                </Tooltip>
-              </div>
-              <div>
-                {tokenSpentForThisProject
-                  ? tokenSpentForThisProject.totalCost.toFixed(3)
-                  : 0}
-                €
-              </div>
-            </div>
-            {/* FIXME: pouvoir modifier un titre / content en tapant dans une input */}
-            {/* FIXME: NE pas pouvoir lanver de génération si nombre de tokens insuffisants */}
-            {/* FIXME: Gérer "générate button" ou "générer le contenu" */}
-            {/* FIXME: Ajouter des options (sur le contenu) : racourcir / rallonger */}
-          </div>
-          <div className="row-span-3 hidden">
-            {createdPlans.map((plan) => (
-              <div className="flex flex-col gap-1" key={plan.id}>
-                <div className="flex flex-row">
-                  <span>{plan.planLevel}</span>
+    <>
+      <div className="flex md:flex-row items-start flex-col w-full gap-5">
+        {!init ? (
+          <>
+            <div
+              className={`md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg z-0`}>
+              <div
+                className={`flex flex-col items-center gap-5 flex-wrap h-auto ${
+                  Object.keys(chapterContent).length > 0
+                    ? "opacity-50 pointer-events-none"
+                    : ""
+                }`}>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label
+                    htmlFor="subject"
+                    className="flex flex-row justify-between items-center">
+                    Subject of your PDF
+                  </Label>
                   <Input
-                    id={`title-${plan.id}`}
-                    placeholder={`Titre`}
-                    defaultValue={plan.planTitle}
-                    onChange={(e) => {
-                      handleUpdatePlanTitle(plan.id, e.currentTarget.value);
-                    }}
+                    className=" h-12 text-base font-semibold"
+                    id="subject"
+                    disabled={loading}
+                    placeholder="Your subject, any..."
+                    value={subject}
+                    onChange={(e) => setSubject(e.currentTarget.value)}
                   />
                 </div>
-                <div>
-                  {chapterContent[plan.id] && (
-                    <Textarea
-                      value={chapterContent[plan.id].content}
-                      onChange={(e) =>
-                        handleUpdateContent(plan.id, e.currentTarget.value)
-                      }
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label htmlFor="language">
+                    <span>Language</span>
+                    <FontAwesomeIcon
+                      icon={faLanguage}
+                      className="font-ligth"
+                    />{" "}
+                  </Label>
+                  <SelectLang
+                    id="language"
+                    onLanguageChange={handleLanguageChange}
+                    selectedLangInit={selectedLanguage}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label
+                    htmlFor="tone"
+                    className="flex flex-row justify-between items-center px-1">
+                    <span>The tone</span>
+                    <FontAwesomeIcon icon={faMusic} className="font-ligth" />
+                  </Label>
+                  <SelectTone
+                    id="tone"
+                    onToneChange={handleToneChange}
+                    selectedToneInit={selectedTone}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label
+                    htmlFor="personality"
+                    className="flex flex-row justify-between items-center px-1">
+                    <span>The personality</span>
+                    <FontAwesomeIcon
+                      icon={faPodiumStar}
+                      className="font-ligth"
                     />
+                  </Label>
+                  <SelectPersonality
+                    id="personality"
+                    onPersonalityChange={handlePersonalityChange}
+                    selectedPersonalityInit={selectedPersonality}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label
+                    htmlFor="gptModel"
+                    className="flex flex-row justify-between items-center px-1">
+                    <span>The robot</span>
+                    <FontAwesomeIcon icon={faRobot} className="font-ligth" />
+                  </Label>
+                  <SelectModelGPT
+                    id="gptModel"
+                    onGPTModelChange={handleGptModelChange}
+                    selectedModelGPTInit={gptModel}
+                  />
+                </div>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <Label
+                    htmlFor="length"
+                    className="flex flex-row justify-between items-center px-1">
+                    <span>The length</span>
+                    <FontAwesomeIcon icon={faRuler} className="font-ligth" />
+                  </Label>
+                  <SelectLength
+                    id="length"
+                    onLengthChange={handleLengthChange}
+                    selectedLengthInit={selectedLength}
+                  />
+                </div>
+                <div className="flex items-center justify-between w-full mb-2 space-x-2">
+                  <Switch
+                    id="activeGenerateContent"
+                    checked={activateAutomaticContent}
+                    onCheckedChange={(checked) => {
+                      setActivateAutomaticContent(checked);
+                    }}
+                  />
+                  <Label htmlFor="activeGenerateContent">
+                    <p className="text-right text-sm">
+                      Generate content automatically
+                    </p>
+                  </Label>
+                </div>
+                <div className="infoForm -mt-4 text-left w-full flex flex-row items-start gap-2">
+                  <FontAwesomeIcon icon={faInfoCircle} className="font-ligth" />
+                  <span className="text-justify">
+                    Once the plan is generated, the content of each point will
+                    be generated automatically. Disable this option if you want
+                    to validate the plan before generating the content.
+                  </span>
+                </div>
+                <div className="flex w-full flex-row gap-x-2">
+                  <Button
+                    className="w-full"
+                    onClick={!regenerate ? generatePlan : regeneratePlan}
+                    disabled={loading}>
+                    {loading && <Loader />}{" "}
+                    {loading && whatInProgress === ""
+                      ? "Génération du PDF"
+                      : loading && whatInProgress === "plan"
+                        ? "Génération du plan..."
+                        : loading && whatInProgress === "content"
+                          ? "Génération du contenu..."
+                          : !regenerate
+                            ? "Generate PDF"
+                            : "Recommencer"}
+                  </Button>
+                  {loading && (
+                    <Button onClick={handleCancel}>Annuler la Demande</Button>
+                  )}
+                  {!loading && responseSubject && (
+                    <Button onClick={handleTryAgain}>Recommencer</Button>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[71vh] bg-app-50 dark:bg-app-800">
-            <article className="">
-              {createdPlans.length === 0 && (
-                <div className="text-center w-full border-2 p-5 border-app-200 bg-white dark:bg-app-800 my-5 rounded-lg border-dashed dark:border-app-900 ">
-                  <p className="text-center ">
-                    <span className="opacity-70">
-                      Fill out the form and widen your eyes...
-                    </span>{" "}
-                    🤩
-                  </p>
+            </div>
+            <div className="md:w-9/12 w-full z-30">
+              <div className="rounded-xl  bg-opacity-90  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
+                <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row justify-between gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
+                  <DownloadButton
+                    allContent={allContent}
+                    subject={subject}
+                    disabled={createdPlans.length === 0}
+                  />
+                  <div className="p-2 border text-sm border-app-300 dark:border-app-600 self-end rounded-lg flex flex-row gap-x-3">
+                    <div data-tooltip-id="countWordTooltip">
+                      <FontAwesomeIcon icon={faSignature} />
+                      &nbsp;
+                      {counter.countWords(allContent)} w.
+                      <Tooltip id="countWordTooltip" className="tooltip ">
+                        <strong>Words</strong>
+                      </Tooltip>
+                    </div>
+                    <div data-tooltip-id="readingTimeTooltip">
+                      <FontAwesomeIcon icon={faFaceGlasses} />{" "}
+                      {counter.countReadingTime(allContent, "format")}
+                      <Tooltip id="readingTimeTooltip" className="tooltip ">
+                        <strong>Reading time</strong>
+                      </Tooltip>
+                    </div>
+                    <div data-tooltip-id="totalCharactersTooltip">
+                      <FontAwesomeIcon icon={faICursor} />
+                      &nbsp;{counter.countCharacters(allContent)}
+                      <Tooltip id="totalCharactersTooltip" className="tooltip ">
+                        <strong>Characters</strong>
+                      </Tooltip>
+                    </div>
+                    <div data-tooltip-id="totalPagesTooltip">
+                      <FontAwesomeIcon icon={faFiles} />
+                      &nbsp;
+                      {counter.countPages(allContent) > 1
+                        ? counter.countPages(allContent) + " pages"
+                        : counter.countPages(allContent) + " page"}
+                      <Tooltip id="totalPagesTooltip" className="tooltip ">
+                        <strong>Pages (approximately)</strong>
+                      </Tooltip>
+                    </div>
+                  </div>
+                  <div className="p-2 border border-app-300 self-end  dark:border-app-600 rounded-lg flex md:flex-row gap-2">
+                    <div>
+                      <FontAwesomeIcon
+                        icon={faCoins}
+                        data-tooltip-id="totalTokenSpentToolTip"
+                      />
+                      <Tooltip
+                        id="totalTokenSpentToolTip"
+                        classNameArrow="hidden"
+                        variant="dark"
+                        className="tooltip ">
+                        <strong>
+                          {tokenSpentForThisProject
+                            ? tokenSpentForThisProject.totalToken
+                            : 0}{" "}
+                        </strong>
+                        total credits spent
+                      </Tooltip>
+                    </div>
+                    <div>
+                      <FontAwesomeIcon
+                        icon={faCoinBlank}
+                        data-tooltip-id="totalTokenSpentInputTooltip"
+                      />
+                      <Tooltip
+                        id="totalTokenSpentInputTooltip"
+                        classNameArrow="hidden"
+                        variant="dark"
+                        className="tooltip ">
+                        <strong>
+                          {tokenSpentForThisProject
+                            ? tokenSpentForThisProject.totalTokenInput
+                            : 0}{" "}
+                        </strong>
+                        credits spent for content analyze
+                      </Tooltip>
+                    </div>
+                    <div>
+                      <FontAwesomeIcon
+                        icon={faCoinVertical}
+                        data-tooltip-id="totalTokenSpentOutputTooltip"
+                      />
+                      <Tooltip
+                        id="totalTokenSpentOutputTooltip"
+                        classNameArrow="hidden"
+                        variant="dark"
+                        className="tooltip ">
+                        <strong>
+                          {tokenSpentForThisProject
+                            ? tokenSpentForThisProject.totalTokenOutput
+                            : 0}
+                        </strong>{" "}
+                        credits spent for generation
+                      </Tooltip>
+                    </div>
+                    <div>
+                      {tokenSpentForThisProject
+                        ? tokenSpentForThisProject.totalCost.toFixed(3)
+                        : 0}
+                      €
+                    </div>
+                  </div>
+                  {/* FIXME: pouvoir modifier un titre / content en tapant dans une input */}
+                  {/* FIXME: NE pas pouvoir lanver de génération si nombre de tokens insuffisants */}
+                  {/* FIXME: Gérer "générate button" ou "générer le contenu" */}
+                  {/* FIXME: Ajouter des options (sur le contenu) : racourcir / rallonger */}
                 </div>
-              )}
-              {createdPlans.map((plan) => {
-                // Calculs pour la navigation entre les versions
-                const planKey = plan.idRef || plan.id;
-                const totalVersions =
-                  plansWithAllVersions[planKey]?.allVersions.length || 0;
-                const activeVersionIndex =
-                  plansWithAllVersions[planKey]?.allVersions.findIndex(
-                    (p) => p.isSelected
-                  ) || 0;
-
-                const contentKey = plan.idRef || plan.id;
-                const totalContentVersions =
-                  contentsWithAllVersions[contentKey]?.allVersions.length || 0;
-                const activeContentVersionIndex =
-                  contentsWithAllVersions[contentKey]?.allVersions.findIndex(
-                    (content) => content.isSelected
-                  ) || 0;
-
-                const activeContent =
-                  contentsWithAllVersions[contentKey]?.activeVersion;
-                return (
-                  <>
-                    <div key={plan.id} className="space-y-4">
-                      <div className="relative">
-                        <div
-                          className="text-left"
-                          dangerouslySetInnerHTML={{
-                            __html: markdownToHtml(
-                              plan.planLevel + " " + plan.planTitle
-                            ),
+                <div className="row-span-3 hidden">
+                  {createdPlans.map((plan) => (
+                    <div className="flex flex-col gap-1" key={plan.id}>
+                      <div className="flex flex-row">
+                        <span>{plan.planLevel}</span>
+                        <Input
+                          id={`title-${plan.id}`}
+                          placeholder={`Titre`}
+                          defaultValue={plan.planTitle}
+                          onChange={(e) => {
+                            handleUpdatePlanTitle(
+                              plan.id,
+                              e.currentTarget.value
+                            );
                           }}
                         />
-                        <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
-                          <div className="flex flex-row gap-0.5">
-                            <FontAwesomeIcon
-                              icon={faCircleChevronLeft}
-                              onClick={() =>
-                                navigatePlanVersion(planKey, "prev")
-                              }
-                              className={`
+                      </div>
+                      <div>
+                        {chapterContent[plan.id] && (
+                          <Textarea
+                            value={chapterContent[plan.id].content}
+                            onChange={(e) =>
+                              handleUpdateContent(
+                                plan.id,
+                                e.currentTarget.value
+                              )
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[71vh] bg-app-50 dark:bg-app-800">
+                  <article className="">
+                    {createdPlans.length === 0 && (
+                      <div className="text-center w-full border-2 p-5 border-app-200 bg-white dark:bg-app-800 my-5 rounded-lg border-dashed dark:border-app-900 ">
+                        <p className="text-center ">
+                          <span className="opacity-70">
+                            Fill out the form and widen your eyes...
+                          </span>{" "}
+                          🤩
+                        </p>
+                      </div>
+                    )}
+                    {createdPlans.map((plan) => {
+                      // Calculs pour la navigation entre les versions
+                      const planKey = plan.idRef || plan.id;
+                      const totalVersions =
+                        plansWithAllVersions[planKey]?.allVersions.length || 0;
+                      const activeVersionIndex =
+                        plansWithAllVersions[planKey]?.allVersions.findIndex(
+                          (p) => p.isSelected
+                        ) || 0;
+
+                      const contentKey = plan.idRef || plan.id;
+                      const totalContentVersions =
+                        contentsWithAllVersions[contentKey]?.allVersions
+                          .length || 0;
+                      const activeContentVersionIndex =
+                        contentsWithAllVersions[
+                          contentKey
+                        ]?.allVersions.findIndex(
+                          (content) => content.isSelected
+                        ) || 0;
+
+                      const activeContent =
+                        contentsWithAllVersions[contentKey]?.activeVersion;
+                      return (
+                        <>
+                          <div key={plan.id} className="space-y-4">
+                            <div className="relative">
+                              <div
+                                className="text-left"
+                                dangerouslySetInnerHTML={{
+                                  __html: markdownToHtml(
+                                    plan.planLevel + " " + plan.planTitle
+                                  ),
+                                }}
+                              />
+                              <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
+                                <div className="flex flex-row gap-0.5">
+                                  <FontAwesomeIcon
+                                    icon={faCircleChevronLeft}
+                                    onClick={() =>
+                                      navigatePlanVersion(planKey, "prev")
+                                    }
+                                    className={`
                             select-none	
                             ${
                               activeVersionIndex <= 0
                                 ? "opacity-50"
                                 : "opacity-80 hover:opacity-100 cursor-pointer"
                             }`}
-                            />
-                            <FontAwesomeIcon
-                              icon={faCircleChevronRight}
-                              onClick={() =>
-                                navigatePlanVersion(planKey, "next")
-                              }
-                              className={`
+                                  />
+                                  <FontAwesomeIcon
+                                    icon={faCircleChevronRight}
+                                    onClick={() =>
+                                      navigatePlanVersion(planKey, "next")
+                                    }
+                                    className={`
                             select-none	
                             ${
                               activeVersionIndex >= totalVersions - 1
                                 ? "opacity-50"
                                 : "opacity-80 hover:opacity-100 cursor-pointer"
                             }`}
-                            />
-                          </div>
-                          {totalVersions > 1 && (
-                            <p className="py-0 my-1 text-xs text-center">
-                              v.{activeVersionIndex + 1}/{totalVersions}
-                            </p>
-                          )}
-                        </div>
+                                  />
+                                </div>
+                                {totalVersions > 1 && (
+                                  <p className="py-0 my-1 text-xs text-center">
+                                    v.{activeVersionIndex + 1}/{totalVersions}
+                                  </p>
+                                )}
+                              </div>
 
-                        <EditPartOfPdfButton
-                          type="plan"
-                          id={plan.id}
-                          toneInit={
-                            !plan.tone
-                              ? selectedTone
-                              : toneToKey(plan.tone) || selectedTone
-                          }
-                          lengthInit={selectedLength}
-                          personalityInit={
-                            !plan.personality
-                              ? selectedPersonality
-                              : personalityToKey(plan.personality) ||
-                                selectedPersonality
-                          }
-                          gptModelInit={gptModel}
-                          langInit={plan.lang ? plan.lang : selectedLanguage}
-                          lengthValueInit={selectedLengthValue}
-                          toneValueInit={selectedToneValue}
-                          personalityValueInit={selectedPersonalityValue}
-                          valueInit={plan.planTitle}
-                          plan={createdPlans}
-                          subject={subject}
-                          pdfId={pdfId}
-                          planLevel={plan.planLevel}
-                          idRef={plan.idRef}
-                          onRefresh={handleRefresh}
-                          maxTokens={maxTokens}
-                        />
-                      </div>
-                      {(chapterContent[plan.idRef as string] ||
-                        chapterContent[plan.id as string]) && (
-                        <div className="relative group">
-                          {activeContent && (
-                            <div
-                              dangerouslySetInnerHTML={{
-                                __html: markdownToHtml(
-                                  activeContent.planContent
-                                ),
-                              }}
-                            />
-                          )}
-                          {/* Boutons pour naviguer entre les versions du contenu */}
-                          <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
-                            <div className="flex flex-row gap-0.5">
-                              <FontAwesomeIcon
-                                icon={faCircleChevronLeft}
-                                onClick={() =>
-                                  navigateContentVersion(
-                                    contentKey,
-                                    plan.id,
-                                    "prev"
-                                  )
+                              <EditPartOfPdfButton
+                                type="plan"
+                                id={plan.id}
+                                toneInit={
+                                  !plan.tone
+                                    ? selectedTone
+                                    : toneToKey(plan.tone) || selectedTone
                                 }
-                                className={`select-none ${
-                                  activeContentVersionIndex <= 0
-                                    ? "opacity-50"
-                                    : "opacity-80 hover:opacity-100 cursor-pointer"
-                                }`}
-                              />
-                              <FontAwesomeIcon
-                                icon={faCircleChevronRight}
-                                onClick={() =>
-                                  navigateContentVersion(
-                                    contentKey,
-                                    plan.id,
-                                    "next"
-                                  )
+                                lengthInit={selectedLength}
+                                personalityInit={
+                                  !plan.personality
+                                    ? selectedPersonality
+                                    : personalityToKey(plan.personality) ||
+                                      selectedPersonality
                                 }
-                                className={`select-none ${
-                                  activeContentVersionIndex >=
-                                  totalContentVersions - 1
-                                    ? "opacity-50"
-                                    : "opacity-80 hover:opacity-100 cursor-pointer"
-                                }`}
+                                gptModelInit={gptModel}
+                                langInit={
+                                  plan.lang ? plan.lang : selectedLanguage
+                                }
+                                lengthValueInit={selectedLengthValue}
+                                toneValueInit={selectedToneValue}
+                                personalityValueInit={selectedPersonalityValue}
+                                valueInit={plan.planTitle}
+                                plan={createdPlans}
+                                subject={subject}
+                                pdfId={pdfId}
+                                planLevel={plan.planLevel}
+                                idRef={plan.idRef}
+                                onRefresh={handleRefresh}
+                                maxTokens={maxTokens}
                               />
                             </div>
-                            {totalContentVersions > 1 && (
-                              <p className="py-0 my-1 text-xs text-center">
-                                v.{activeContentVersionIndex + 1}/
-                                {totalContentVersions}
-                              </p>
+                            {(chapterContent[plan.idRef as string] ||
+                              chapterContent[plan.id as string]) && (
+                              <div className="relative group">
+                                {activeContent && (
+                                  <div
+                                    dangerouslySetInnerHTML={{
+                                      __html: markdownToHtml(
+                                        activeContent.planContent
+                                      ),
+                                    }}
+                                  />
+                                )}
+                                {/* Boutons pour naviguer entre les versions du contenu */}
+                                <div className="flex flex-col absolute md:-right-14 -right-[4.2rem] top-3">
+                                  <div className="flex flex-row gap-0.5">
+                                    <FontAwesomeIcon
+                                      icon={faCircleChevronLeft}
+                                      onClick={() =>
+                                        navigateContentVersion(
+                                          contentKey,
+                                          plan.id,
+                                          "prev"
+                                        )
+                                      }
+                                      className={`select-none ${
+                                        activeContentVersionIndex <= 0
+                                          ? "opacity-50"
+                                          : "opacity-80 hover:opacity-100 cursor-pointer"
+                                      }`}
+                                    />
+                                    <FontAwesomeIcon
+                                      icon={faCircleChevronRight}
+                                      onClick={() =>
+                                        navigateContentVersion(
+                                          contentKey,
+                                          plan.id,
+                                          "next"
+                                        )
+                                      }
+                                      className={`select-none ${
+                                        activeContentVersionIndex >=
+                                        totalContentVersions - 1
+                                          ? "opacity-50"
+                                          : "opacity-80 hover:opacity-100 cursor-pointer"
+                                      }`}
+                                    />
+                                  </div>
+                                  {totalContentVersions > 1 && (
+                                    <p className="py-0 my-1 text-xs text-center">
+                                      v.{activeContentVersionIndex + 1}/
+                                      {totalContentVersions}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <EditPartOfPdfButton
+                                  type="content"
+                                  id={plan.id}
+                                  toneInit={
+                                    !activeContent?.tone
+                                      ? selectedTone
+                                      : toneToKey(activeContent.tone) ||
+                                        selectedTone
+                                  }
+                                  lengthInit={
+                                    !activeContent?.length
+                                      ? selectedLength
+                                      : lengthToKey(activeContent.length) ??
+                                        selectedLength
+                                  }
+                                  personalityInit={
+                                    !activeContent?.personality
+                                      ? selectedPersonality
+                                      : personalityToKey(
+                                          activeContent.personality
+                                        ) || selectedPersonality
+                                  }
+                                  gptModelInit={gptModel}
+                                  langInit={
+                                    !activeContent?.lang
+                                      ? selectedLanguage
+                                      : activeContent.lang
+                                  }
+                                  lengthValueInit={selectedLengthValue}
+                                  toneValueInit={selectedToneValue}
+                                  personalityValueInit={
+                                    selectedPersonalityValue
+                                  }
+                                  valueInit={activeContent?.planContent || ""}
+                                  plan={createdPlans}
+                                  subject={subject}
+                                  pdfId={pdfId}
+                                  planLevel={plan.planLevel}
+                                  idRef={plan.idRef}
+                                  onRefresh={handleRefresh}
+                                  maxTokens={maxTokens}
+                                />
+                              </div>
                             )}
                           </div>
+                          <Separator />
+                        </>
+                      );
+                    })}
+                  </article>
+                </div>
+              </div>
+            </div>
 
-                          <EditPartOfPdfButton
-                            type="content"
-                            id={plan.id}
-                            toneInit={
-                              !activeContent?.tone
-                                ? selectedTone
-                                : toneToKey(activeContent.tone) || selectedTone
-                            }
-                            lengthInit={
-                              !activeContent?.length
-                                ? selectedLength
-                                : lengthToKey(activeContent.length) ??
-                                  selectedLength
-                            }
-                            personalityInit={
-                              !activeContent?.personality
-                                ? selectedPersonality
-                                : personalityToKey(activeContent.personality) ||
-                                  selectedPersonality
-                            }
-                            gptModelInit={gptModel}
-                            langInit={
-                              !activeContent?.lang
-                                ? selectedLanguage
-                                : activeContent.lang
-                            }
-                            lengthValueInit={selectedLengthValue}
-                            toneValueInit={selectedToneValue}
-                            personalityValueInit={selectedPersonalityValue}
-                            valueInit={activeContent?.planContent || ""}
-                            plan={createdPlans}
-                            subject={subject}
-                            pdfId={pdfId}
-                            planLevel={plan.planLevel}
-                            idRef={plan.idRef}
-                            onRefresh={handleRefresh}
-                            maxTokens={maxTokens}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <Separator />
-                  </>
-                );
-              })}
-            </article>
+            <Tooltip id="PDFForbidden" className="tooltip ">
+              Your PDF has already been generated, if you wish to regenerate it,
+              please create a new project.
+            </Tooltip>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col justify-center items-center">
+            <Loader />
+            <p className="text-center">Project loading...</p>
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </>
   );
 };
 
