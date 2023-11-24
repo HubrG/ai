@@ -75,18 +75,50 @@ model User {
 }
 
 model tokenSpent {
-  id         String       @id @default(cuid())
+  id         String            @id @default(cuid())
   userId     String
   token      Int
   GPTModelId String
-  input      Boolean      @default(false)
-  output     Boolean      @default(false)
-  type       String       @default("input")
-  createdAt  DateTime     @default(now())
-  cost       Float        @default(0.00)
-  GPTModel   tokenPricing @relation(fields: [GPTModelId], references: [id], onDelete: Cascade)
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  input      Boolean           @default(false)
+  output     Boolean           @default(false)
+  type       String            @default("input")
+  createdAt  DateTime          @default(now())
+  cost       Float             @default(0.00)
+  GPTModel   tokenPricing      @relation(fields: [GPTModelId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens     TokenSpentOnPdf[]
 }
+
+model pdfCreator {
+  id               String            @id @default(cuid())
+  userId           String
+  createdAt        DateTime          @default(now())
+  lang             String            @default("en")
+  title            String            @default("My PDF")
+  subject          String            @default("")
+  updatedAt        DateTime?         @updatedAt
+  length           String            @default("")
+  automaticContent Boolean           @default(true)
+  personality      String            @default("")
+  tone             String            @default("")
+  gptModelId       String?
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gptModel         tokenPricing?     @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
+  pdfPlan          pdfCreatorPlan[]
+  pdfs             TokenSpentOnPdf[]
+  // ... autres champs et relations
+}
+
+model TokenSpentOnPdf {
+  id      String     @id @default(cuid())
+  pdfId   String
+  pdf     pdfCreator @relation(fields: [pdfId], references: [id])
+  tokenId String
+  token   tokenSpent @relation(fields: [tokenId], references: [id])
+
+  @@unique([pdfId, tokenId])
+}
+
 
 model tokenPricing {
   id                String              @id @default(cuid())
@@ -106,24 +138,6 @@ model userToken {
   token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model pdfCreator {
-  id               String           @id @default(cuid())
-  userId           String
-  createdAt        DateTime         @default(now())
-  lang             String           @default("en")
-  title            String           @default("My PDF")
-  subject          String           @default("")
-  updatedAt        DateTime?        @updatedAt
-  length           String           @default("")
-  automaticContent Boolean          @default(true)
-  personality      String           @default("")
-  tone             String           @default("")
-  gptModelId       String?
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gptModel         tokenPricing?    @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
-  pdfPlan          pdfCreatorPlan[]
 }
 
 model pdfCreatorPlan {

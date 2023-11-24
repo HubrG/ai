@@ -90,7 +90,7 @@ const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
               </small>
             </Tooltip>
 
-            <Tooltip id="dataSecure" />
+           
           </div>
         </Button>
       </DropdownMenuTrigger>

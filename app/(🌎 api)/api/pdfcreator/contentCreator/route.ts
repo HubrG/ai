@@ -146,11 +146,13 @@ Create content for the topic '${title}' as part of our PDF plan. The content sho
     tokenCount: response.usage.prompt_tokens,
     input: true,
     GPTModel: model,
+    pdfId: planOriginal.pdfId,
   });
   const outputTokens = await spendTokens({
     tokenCount: response.usage.completion_tokens,
     output: true,
     GPTModel: model,
+    pdfId: planOriginal.pdfId,
   });
   if (!inputToken || !outputTokens) {
     return new Response("Error spending tokens", { status: 400 });

@@ -32,11 +32,19 @@ import {
   faLanguage,
 } from "@fortawesome/pro-solid-svg-icons";
 import {
+  faCoinBlank,
+  faCoinVertical,
+  faCoins,
+  faFaceGlasses,
+  faFiles,
+  faICursor,
   faInfoCircle,
   faMusic,
   faPodiumStar,
   faRobot,
   faRuler,
+  faSignature,
+  faTimer,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
 import { SelectModelGPT } from "../components/SelectGPTModel";
@@ -44,6 +52,13 @@ import { personalityToKey } from "@/src/list/ai/personalitiesList";
 import { toneToKey } from "@/src/list/ai/tonesList";
 import { Separator } from "@/components/ui/separator";
 import { lengthToKey } from "@/src/list/ai/lengthList";
+import { Counting } from "@/src/function/countWords";
+import {
+  TokensOnPdf,
+  TokensSpentByProject,
+} from "@/src/function/tokensSpentByProject";
+import { tokenSpent } from "@prisma/client";
+import { Tooltip } from "react-tooltip";
 
 // SECTION: TYPES/INTERFACES
 interface Plan {
@@ -61,7 +76,9 @@ interface Plan {
   length?: string;
   lang?: string;
   gptModelId?: any;
+  activeVersion?: Plan | any;
 }
+
 interface PlansWithAllVersions {
   [key: string]: {
     allVersions: Plan[];
@@ -90,6 +107,7 @@ type ContentType = {
   length?: string;
   personality?: string;
   gptModel?: any;
+  content?: string;
 };
 type ContentsWithAllVersions = {
   allVersions: ContentType[];
@@ -104,10 +122,11 @@ type PdfCreatorProps = {
   params: { id: string };
 };
 
-const maxTokens = 50;
+const maxTokens = 500;
 //
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
+  const counter = new Counting();
   const pdfId = params.id;
   const router = useRouter();
   const [activateAutomaticContent, setActivateAutomaticContent] =
@@ -135,6 +154,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     "en"
   );
+  const [tokenSpentForThisProject, setTokenSpentForThisProject] =
+    useState<TokensOnPdf>();
   const [selectedTone, setSelectedTone] = useState("energetic");
   const [selectedPersonality, setSelectedPersonality] = useState("deep");
   const [selectedLength, setSelectedLength] = useState("medium");
@@ -167,10 +188,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   };
 
   const handleUpdateContent = (planId: string, newValue: string) => {
-      setChapterContent((prevContent) => ({
-        ...prevContent,
-        [planId]: { content: newValue },
-      }));
+    setChapterContent((prevContent) => ({
+      ...prevContent,
+      [planId]: { content: newValue },
+    }));
     const upContent = updateContent(planId, newValue);
     if (upContent !== null) {
       console.log("Content updated");
@@ -196,6 +217,17 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       });
     }
   }, [user, setUser]);
+
+  const spentTokenForThisProject = useCallback(
+    async (id: string) => {
+      if (pdfId) {
+        const spentByProject = new TokensSpentByProject();
+        const totalToken = await spentByProject.getTotalTokensForPdf(id);
+        setTokenSpentForThisProject(totalToken);
+      }
+    },
+    [pdfId]
+  );
 
   const markdownToHtml = useCallback(
     (markdown: string) => {
@@ -362,6 +394,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           tone: selectedToneValue,
           length: selectedLengthValue,
           personality: selectedPersonalityValue,
+          pdfId: pdfId,
         }),
       });
       // On met à jour les states lang, tone, length, personality en BDD
@@ -517,19 +550,47 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     handleCancel();
   };
 
+  const aggregatedContent = (
+    Object.keys(plansWithAllVersions).length === 0
+      ? createdPlans
+      : Object.values(plansWithAllVersions)
+  ).reduce((accumulator, planOrVersion) => {
+    let activePlan;
+
+    // Si plansWithAllVersions est utilisé, prenez la version active du plan
+    if (planOrVersion.hasOwnProperty("activeVersion")) {
+      activePlan = planOrVersion.activeVersion;
+    } else {
+      // Sinon, utilisez le plan tel quel
+      activePlan = planOrVersion;
+    }
+
+    if (!activePlan) return accumulator;
+
+    const planTitleHtml = markdownToHtml(
+      activePlan.planLevel + " " + activePlan.planTitle
+    );
+
+    // Récupérer la version active du contenu
+    const activeContent =
+      contentsWithAllVersions[activePlan.id]?.activeVersion?.planContent || "";
+    const chapterHtml = markdownToHtml(activeContent);
+
+    return accumulator + planTitleHtml + chapterHtml;
+  }, "");
+
   useEffect(() => {
-    const aggregatedContent = createdPlans.reduce((accumulator, plan) => {
-      const planTitleHtml = markdownToHtml(
-        plan.planLevel + " " + plan.planTitle
-      );
-      const chapterHtml =
-        plan.id in chapterContent
-          ? markdownToHtml(chapterContent[plan.id].content)
-          : "";
-      return accumulator + planTitleHtml + chapterHtml;
-    }, "");
-    setAllContent(aggregatedContent);
-  }, [createdPlans, chapterContent, markdownToHtml]);
+    const content = aggregatedContent;
+    setAllContent(content);
+  }, [
+    plansWithAllVersions,
+    contentsWithAllVersions,
+    markdownToHtml,
+    allContent,
+    aggregatedContent,
+    createdPlans,
+    chapterContent,
+  ]);
 
   useEffect(() => {
     if (generatePlanDone && activateAutomaticContent) {
@@ -594,13 +655,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     activateAutomaticContent,
   ]);
 
-
   const handleLanguageChange = async (language: LanguageCode) => {
     setSelectedLanguage(language);
   };
 
   const handleToneChange = (toneKey: string, toneValue: string) => {
-    console.log(toneKey, toneValue);
     setSelectedTone(toneKey);
     setSelectedToneValue(toneValue);
   };
@@ -625,7 +684,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const handleRefresh = () => {
     fetchPdf();
     updateContextTokenRemaining();
-
   };
 
   const navigatePlanVersion = async (
@@ -710,12 +768,19 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         },
       };
     });
-
-   
-
-    // Mettre à jour en base de données si nécessaire
-    // ...
   };
+
+  useEffect(() => {
+    spentTokenForThisProject(pdfId);
+  }, [
+    allContent,
+    pdfId,
+    spentTokenForThisProject,
+    createdPlans,
+    chapterContent,
+    plansWithAllVersions,
+    contentsWithAllVersions,
+  ]);
 
   return (
     <div className="flex md:flex-row items-start flex-col w-full gap-5">
@@ -846,19 +911,113 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           </div>
         </div>
       </div>
-      <div className="md:w-9/12 w-full sticky md:top-28 top-52 ">
+      <div className="md:w-9/12 w-full ">
         <div className="rounded-xl  bg-opacity-90  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
-          <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
+          <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row justify-between gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
             <DownloadButton
               allContent={allContent}
               subject={subject}
               disabled={createdPlans.length === 0}
             />
-            <div>Nombre de mots</div>
-            <div>Tokens dépensés</div>
-            <div>Temps de lect</div>
+            <div className="p-2 border text-sm border-app-300 dark:border-app-600 self-end rounded-lg flex flex-row gap-x-3">
+              <div data-tooltip-id="countWordTooltip">
+                <FontAwesomeIcon icon={faSignature} />&nbsp;
+                {counter.countWords(allContent)} w.
+                <Tooltip id="countWordTooltip" className="tooltip ">
+                  <strong>Words</strong>
+                </Tooltip>
+              </div>
+              <div data-tooltip-id="readingTimeTooltip">
+                <FontAwesomeIcon icon={faFaceGlasses} />{" "}
+                {counter.countReadingTime(allContent)}mn
+                <Tooltip id="readingTimeTooltip" className="tooltip ">
+                  <strong>Reading time</strong>
+                </Tooltip>
+              </div>
+              <div data-tooltip-id="totalCharactersTooltip">
+                <FontAwesomeIcon icon={faICursor} />
+                &nbsp;{counter.countCharacters(allContent)}
+                <Tooltip id="totalCharactersTooltip" className="tooltip ">
+                  <strong>Characters</strong>
+                </Tooltip>
+              </div>
+              <div data-tooltip-id="totalPagesTooltip">
+                <FontAwesomeIcon icon={faFiles} />
+                &nbsp;
+                {counter.countPages(allContent) > 1
+                  ? counter.countPages(allContent) + " pages"
+                  : counter.countPages(allContent) + " page"}
+                <Tooltip id="totalPagesTooltip" className="tooltip ">
+                  <strong>Pages (approximately)</strong>
+                </Tooltip>
+              </div>
+            </div>
+            <div className="p-2 border border-app-300 self-end  dark:border-app-600 rounded-lg flex md:flex-row gap-2">
+              <div>
+                <FontAwesomeIcon
+                  icon={faCoins}
+                  data-tooltip-id="totalTokenSpentToolTip"
+                />
+                <Tooltip
+                  id="totalTokenSpentToolTip"
+                  classNameArrow="hidden"
+                  variant="dark"
+                  className="tooltip ">
+                  <strong>
+                    {tokenSpentForThisProject
+                      ? tokenSpentForThisProject.totalToken
+                      : 0}{" "}
+                  </strong>
+                  total credits spent
+                </Tooltip>
+              </div>
+              <div>
+                <FontAwesomeIcon
+                  icon={faCoinBlank}
+                  data-tooltip-id="totalTokenSpentInputTooltip"
+                />
+                <Tooltip
+                  id="totalTokenSpentInputTooltip"
+                  classNameArrow="hidden"
+                  variant="dark"
+                  className="tooltip ">
+                  <strong>
+                    {tokenSpentForThisProject
+                      ? tokenSpentForThisProject.totalTokenInput
+                      : 0}{" "}
+                  </strong>
+                  credits spent for content analyze
+                </Tooltip>
+              </div>
+              <div>
+                <FontAwesomeIcon
+                  icon={faCoinVertical}
+                  data-tooltip-id="totalTokenSpentOutputTooltip"
+                />
+                <Tooltip
+                  id="totalTokenSpentOutputTooltip"
+                  classNameArrow="hidden"
+                  variant="dark"
+                  className="tooltip ">
+                  <strong>
+                    {tokenSpentForThisProject
+                      ? tokenSpentForThisProject.totalTokenOutput
+                      : 0}
+                  </strong>{" "}
+                  credits spent for generation
+                </Tooltip>
+              </div>
+              <div>
+                {tokenSpentForThisProject
+                  ? tokenSpentForThisProject.totalCost.toFixed(3)
+                  : 0}
+                €
+              </div>
+            </div>
             {/* FIXME: pouvoir modifier un titre / content en tapant dans une input */}
-            {/* FIXME: gérér "All content" qui déconne, et ne se met pas à jour */}
+            {/* FIXME: NE pas pouvoir lanver de génération si nombre de tokens insuffisants */}
+            {/* FIXME: Gérer "générate button" ou "générer le contenu" */}
+            {/* FIXME: Ajouter des options (sur le contenu) : racourcir / rallonger */}
           </div>
           <div className="row-span-3 hidden">
             {createdPlans.map((plan) => (
@@ -994,6 +1153,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                           planLevel={plan.planLevel}
                           idRef={plan.idRef}
                           onRefresh={handleRefresh}
+                          maxTokens={maxTokens}
                         />
                       </div>
                       {(chapterContent[plan.idRef as string] ||
@@ -1050,7 +1210,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                               </p>
                             )}
                           </div>
-                          
+
                           <EditPartOfPdfButton
                             type="content"
                             id={plan.id}
@@ -1059,7 +1219,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                 ? selectedTone
                                 : toneToKey(activeContent.tone) || selectedTone
                             }
-                            lengthInit={!activeContent?.length ? selectedLength : lengthToKey(activeContent.length) ?? selectedLength}
+                            lengthInit={
+                              !activeContent?.length
+                                ? selectedLength
+                                : lengthToKey(activeContent.length) ??
+                                  selectedLength
+                            }
                             personalityInit={
                               !activeContent?.personality
                                 ? selectedPersonality
@@ -1067,7 +1232,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                   selectedPersonality
                             }
                             gptModelInit={gptModel}
-                            langInit={!activeContent?.lang ? selectedLanguage : activeContent.lang}
+                            langInit={
+                              !activeContent?.lang
+                                ? selectedLanguage
+                                : activeContent.lang
+                            }
                             lengthValueInit={selectedLengthValue}
                             toneValueInit={selectedToneValue}
                             personalityValueInit={selectedPersonalityValue}
@@ -1078,6 +1247,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                             planLevel={plan.planLevel}
                             idRef={plan.idRef}
                             onRefresh={handleRefresh}
+                            maxTokens={maxTokens}
                           />
                         </div>
                       )}

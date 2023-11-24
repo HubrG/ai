@@ -37,6 +37,7 @@ export async function POST(req: Request): Promise<Response> {
     pdfId,
     planLevel,
     idRef,
+    maxTokens,
   } = (await req.json()) as {
     type: "plan" | "content";
     value: string;
@@ -51,6 +52,7 @@ export async function POST(req: Request): Promise<Response> {
     pdfId: string;
     planLevel: string;
     idRef: string | undefined;
+    maxTokens: number;
   };
   const Gpt = await getModelId(gptModel);
 
@@ -133,7 +135,7 @@ export async function POST(req: Request): Promise<Response> {
       top_p: 0.7,
       frequency_penalty: 0.5,
       presence_penalty: 1,
-      max_tokens: 100,
+      max_tokens: maxTokens,
       temperature: 1,
     });
 
@@ -147,11 +149,13 @@ export async function POST(req: Request): Promise<Response> {
       tokenCount: response.usage.prompt_tokens,
       input: true,
       GPTModel: gptModel,
+      pdfId: pdfId,
     });
     const outputTokens = await spendTokens({
       tokenCount: response.usage.completion_tokens,
       output: true,
       GPTModel: gptModel,
+      pdfId: pdfId,
     });
     if (!inputToken || !outputTokens) {
       return new Response("Error spending tokens", { status: 400 });
@@ -278,7 +282,31 @@ export async function POST(req: Request): Promise<Response> {
       response.choices[0].message.content
     );
   }
+  if (!response.choices[0].message.content || !response.usage) {
+    return new Response("No response from OpenAI", { status: 400 });
+  }
 
+  // On dépense le nombre de tokens
+  let totalTokens = 0;
+  const inputToken = await spendTokens({
+    tokenCount: response.usage.prompt_tokens,
+    input: true,
+    GPTModel: gptModel,
+    pdfId: pdfId,
+  });
+  const outputTokens = await spendTokens({
+    tokenCount: response.usage.completion_tokens,
+    output: true,
+    GPTModel: gptModel,
+    pdfId: pdfId,
+  });
+  if (!inputToken || !outputTokens) {
+    return new Response("Error spending tokens", { status: 400 });
+  }
+  totalTokens = outputTokens;
+  if (!response.choices[0].message.content) {
+    return new Response("No content returned", { status: 400 });
+  }
   return new Response(
     JSON.stringify({
       response: response.choices[0].message.content,

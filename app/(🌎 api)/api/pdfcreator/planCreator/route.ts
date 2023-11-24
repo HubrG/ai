@@ -21,17 +21,27 @@ export async function POST(req: Request): Promise<Response> {
   if (!user) {
     return new Response("User not logged in", { status: 401 });
   }
-  const { prompt, model, type, lang, maxTokens, tone, personality, length } =
-    (await req.json()) as {
-      prompt?: string;
-      maxTokens: number;
-      model: GPTModels;
-      type?: "plan" | "content";
-      tone?: TonesValues;
-      length?: Length;
-      personality?: personalitiesValues;
-      lang?: Lang;
-    };
+  const {
+    prompt,
+    model,
+    type,
+    lang,
+    maxTokens,
+    tone,
+    personality,
+    length,
+    pdfId,
+  } = (await req.json()) as {
+    prompt?: string;
+    maxTokens: number;
+    model: GPTModels;
+    type?: "plan" | "content";
+    tone?: TonesValues;
+    length?: Length;
+    personality?: personalitiesValues;
+    lang?: Lang;
+    pdfId: string;
+  };
   //
   let promptSystem = "";
   let promptUser = "";
@@ -124,6 +134,7 @@ export async function POST(req: Request): Promise<Response> {
     max_tokens: maxTokens,
     stream: true,
     n: 1,
+  
   };
 
   // Affichage des tokens et de leur nombre
@@ -131,8 +142,9 @@ export async function POST(req: Request): Promise<Response> {
     tokenCount: tokenCount(promptUser + promptSystem),
     input: true,
     GPTModel: payload.model,
+    pdfId: pdfId,
   });
-  const streamResponse = await OpenAIStream(payload);
+  const streamResponse = await OpenAIStream(payload, pdfId);
 
   return new Response(streamResponse.stream, {
     headers: {

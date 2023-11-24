@@ -6,12 +6,14 @@ type spendTokensProps = {
   input?: boolean;
   output?: boolean;
   GPTModel?: string;
+  pdfId?: string;
 };
 export default async function spendTokens({
   tokenCount = 0,
   input = false,
   output = false,
   GPTModel = "gpt-3.5-turbo",
+  pdfId = "",
 }: spendTokensProps) {
   const user = await getUserLog();
   if (!user) return;
@@ -29,25 +31,45 @@ export default async function spendTokens({
   const costOutput = gpt.priceFor1kOutput * cost;
 
   // On ajoute les tokens au tokenSpent de prisma
-  const tokenSpent = await prisma.tokenSpent.create({
-    data: {
-      token: tokenCount,
-      input: input,
-      output: output,
-      cost: input ? costInput : costOutput,
-      user: {
-        connect: {
-          id: user.id,
-        },
-      },
-      GPTModel: {
-        connect: {
-          id: gpt.id,
-        },
+  const tokenSpentData = {
+    token: tokenCount,
+    input: input,
+    output: output,
+    cost: input ? costInput : costOutput,
+    user: {
+      connect: {
+        id: user.id,
       },
     },
+    GPTModel: {
+      connect: {
+        id: gpt.id,
+      },
+    },
+  };
+
+  const tokenSpent = await prisma.tokenSpent.create({
+    data: tokenSpentData,
   });
+
   if (!tokenSpent) return;
+
+  if (pdfId) {
+    const tokenSpentOnPdf = await prisma.tokenSpentOnPdf.create({
+      data: {
+        token: {
+          connect: { id: tokenSpent.id },
+        },
+        pdf: {
+          connect: { id: pdfId },
+        },
+      },
+    });
+    if (!tokenSpentOnPdf) {
+      console.log("Failed to create tokenSpentOnPdf entry");
+      return;
+    }
+  }
 
   // On retire les tokens au user
   const userUpdate = await prisma.user.update({

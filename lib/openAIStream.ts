@@ -30,7 +30,7 @@ export interface OpenAIStreamPayload {
 }
 
 // Fonction pour créer un stream de réponse de l'API d'OpenAI
-export async function OpenAIStream(payload: OpenAIStreamPayload) {
+export async function OpenAIStream(payload: OpenAIStreamPayload, pdfId?: string) {
   // Encodeurs pour gérer la conversion des données streamées
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -38,6 +38,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
   // Compteur pour suivre le nombre de messages reçus
   let counter = 0;
 
+  console.log("ok")
   // Requête HTTP à l'API d'OpenAI pour démarrer le stream
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     headers: {
@@ -66,6 +67,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
               tokenCount: totalTokens,
               output: true,
               GPTModel: payload.model,
+              pdfId: pdfId ?? "",
             });
             if (tokenCount !== undefined) {
               tokensRemaining = tokenCount;
@@ -102,6 +104,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
       const parser = createParser(onParse);
       // Itération asynchrone sur les morceaux de données de la réponse
       for await (const chunk of res.body as any) {
+        // console.log(decoder.decode(chunk))
         // Nourrit le parser avec le chunk décodé
         parser.feed(decoder.decode(chunk));
       }

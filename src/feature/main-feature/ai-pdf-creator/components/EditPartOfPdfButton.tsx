@@ -33,6 +33,7 @@ type EditPartOfPdfButtonProps = {
   planLevel?: string;
   idRef: string | undefined;
   onRefresh: any;
+  maxTokens: number;
 };
 
 export const EditPartOfPdfButton = ({
@@ -52,7 +53,8 @@ export const EditPartOfPdfButton = ({
   pdfId,
   planLevel,
   idRef,
-  onRefresh
+  onRefresh,
+  maxTokens
 }: EditPartOfPdfButtonProps) => {
   const [gptModel, setGptModel] = useState<string>(gptModelInit);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
@@ -131,7 +133,8 @@ export const EditPartOfPdfButton = ({
           length: selectedLengthValue,
           pdfId: pdfId,
           planLevel: planLevel ? planLevel : "",
-          idRef: idRef ? idRef : ""
+          idRef: idRef ? idRef : "",
+          maxTokens: maxTokens
         }),
       });
       if (!response.ok) {
