@@ -1,6 +1,7 @@
 import NotFound from "@/app/not-found";
 import { Separator } from "@/components/ui/separator";
 import PdfCreator from "@/src/feature/main-feature/ai-pdf-creator/CreatePDF";
+import { CreateNewPdfButton } from "@/src/feature/main-feature/ai-pdf-creator/components/CreateNewPdfButton";
 import { getPdf } from "@/src/feature/main-feature/ai-pdf-creator/utils.server";
 import { getUserLog } from "@/src/query/user.query";
 import {
@@ -31,7 +32,7 @@ export default async function GeneratePdfId({
   return (
     <>
       <div className="flex flex-col gap-y-5 w-full">
-        <div className="flex" aria-label="Breadcrumb">
+        <div className="flex justify-between items-center" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
             <li className="inline-flex items-center">
               <Link
@@ -69,6 +70,7 @@ export default async function GeneratePdfId({
               </div>
             </li>
           </ol>
+          <CreateNewPdfButton user={user} />
         </div>
         <div>
           <Separator className="" />

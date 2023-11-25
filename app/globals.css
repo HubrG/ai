@@ -16,7 +16,6 @@
     --color-app-900: theme("colors.app.900");
     --color-app-950: theme("colors.app.950");
 
-   
     --color-secondary-50: theme("colors.secondary.50");
     --color-secondary-100: theme("colors.secondary.100");
     --color-secondary-200: theme("colors.secondary.200");
@@ -27,9 +26,7 @@
     --color-secondary-700: theme("colors.secondary.700");
     --color-secondary-800: theme("colors.secondary.800");
     --color-secondary-900: theme("colors.secondary.900");
-    --color-secondary-950: theme("colors.secondary.950");
-
-    
+    --color-secondary-950: theme("colors.secondary.950");    
 
     --color-apprgba-50: theme("colors.apprgba.50");
     --color-apprgba-100: theme("colors.apprgba.100");
@@ -43,7 +40,6 @@
     --color-apprgba-900: theme("colors.apprgba.900");
     --color-apprgba-950: theme("colors.apprgba.950");
     
-
     --color-app-hsl-50: theme("colors.apphsl.50");
     --color-app-hsl-100: theme("colors.apphsl.100");
     --color-app-hsl-200: theme("colors.apphsl.200");
@@ -338,10 +334,10 @@ div.progressToken {
 .downloadPdfButton svg {
   @apply w-5 h-5 mr-2;
 }
-/* NOTE : TOOLTIP */
+/* SECTION : TOOLTIP */
 
 .tooltip {
-  @apply bg-app-200 dark:bg-app-700 rounded-md dark:text-app-50 text-app-800 text-sm px-2 py-1 z-50 max-w-xs !important;
+  @apply bg-app-950 dark:bg-app-600 rounded-md dark:text-app-50 text-app-100 text-sm px-2 bg-opacity-100 py-1 z-50 max-w-xs !important;
 }
 
 /** Types variant **/
@@ -360,9 +356,9 @@ div.progressToken {
   color: var(--rt-color-white);
 }
 
-.warning {
-  background-color: var(--rt-color-warning);
-  color: var(--rt-color-white);
+.tooltip.warning {
+  @apply bg-orange-500 text-orange-50 bg-opacity-100 !important;
+;
 }
 
 .error {
@@ -371,8 +367,7 @@ div.progressToken {
 }
 
 .info {
-  background-color: var(--rt-color-info);
-  color: var(--rt-color-white);
+  @apply bg-blue-500 text-blue-50 bg-opacity-100 !important;
 }
 
 label {

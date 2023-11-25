@@ -17,7 +17,7 @@ export const CreateNewPdfButton = ({ user }: Props) => {
   return (
     <form>
       <Button type="button" onClick={handleCreatePdf}>
-        Créer un nouveau PDF
+        Create a new PDF
       </Button>
     </form>
   );

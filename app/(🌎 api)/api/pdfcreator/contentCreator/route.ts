@@ -94,31 +94,21 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("No pdf found", { status: 400 });
   }
 
-  const promptSystem = `
-  **Role and Goal**: As an expert in content creation for the PDF titled '${pdfOriginal?.title}', my task is to elaborate on the specific point '${title}'. I will provide in-depth, focused content without reintroducing the title.
-
-**Personality and Style**: In line with the ${personality} personality, my writing is ${tone}. I engage readers with a detailed narrative and comprehensive explanations, emphasizing key concepts in *italics* and **bold**.
-
-**Language and Format**: The content is in ${language} and strictly adheres to Markdown formatting. Key points and terms are highlighted in *italics* and **bold** for emphasis. No Markdown headers or titles are used.
-
-**Content Creation Guidelines**:
-- I provide substantial information directly related to '${title}', avoiding any repetition of the title.
-- The content's depth aligns with the ${length} setting ('short', 'medium', 'long'), ensuring appropriate detail and complexity.
-
-**Contextual Integration**:
+  const promptSystem = `**Role and Goal**: As a content expert, I'll expand on '${title}' in the PDF '${pdfOriginal?.title}', providing detailed content without repeating the title.
+\n**Personality and Style**: With a ${personality} personality and ${tone} tone, I'll engage readers using detailed narratives, highlighting key points in *italics* and **bold**.
+\n**Language and Format**: Content in ${language}, adhering to Markdown formatting without headers or titles.
+\n**Contextual Integration**:
 - This content is an integral part of all parts, designed to enhance the overall narrative and understanding.
 - Here, all the plan :
-${planTitle}
-
-**Important Notes**:
-- My writing, reflecting the ${personality} style, maintains a consistent ${tone} and focuses on substance.
-- Directly engaging with '${title}', I offer valuable insights and detailed content that enriches the reader's experience.  
+${plan}
+**Guidelines**:
+- Deliver insights related to '${title}' in depth as per the ${length} setting.
+- Enhance narrative and understanding as part of the overall plan. 
+**Notes**:
+- Writing reflects a consistent ${tone} and ${personality} style, focusing on substance and offering valuable insights about '${title}'.
 `;
 
-  const promptUser = `
-Create content for the topic '${title}' as part of our PDF plan. The content should be in ${language} STRICTLY, embodying the ${tone} tone and ${personality} style. Focus directly on the subject matter, highlighting key points in *italics* and **bold**. Avoid reiterating the title. Ensure the content is appropriate for the ${length} ('short', 'medium', 'long') and enriches the reader's understanding of '${title}'.
-'.
-`;
+  const promptUser = `Create content for the topic '${title}' as part of our PDF plan. The content should be in ${language} STRICTLY, embodying the ${tone} tone and ${personality} style. Focus directly on the subject matter, highlighting key points in *italics* and **bold**. Avoid reiterating the title. Ensure the content is appropriate for the ${length} ('short', 'medium', 'long') and enriches the reader's understanding of '${title}'.`;
 
   // On appel le modèle
   const response = await openai.chat.completions.create({

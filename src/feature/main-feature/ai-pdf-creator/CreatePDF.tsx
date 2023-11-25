@@ -1,6 +1,5 @@
 "use client";
 import React, { useMemo, useEffect, useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader } from "@/components/ui/loader";
 import Showdown from "showdown";
@@ -44,8 +43,6 @@ import {
   faRobot,
   faRuler,
   faSignature,
-  faTimer,
-  faWandMagicSparkles,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { EditPartOfPdfButton } from "./components/EditPartOfPdfButton";
 import { SelectModelGPT } from "../components/SelectGPTModel";
@@ -58,10 +55,10 @@ import {
   TokensOnPdf,
   TokensSpentByProject,
 } from "@/src/function/tokensSpentByProject";
-import { tokenSpent } from "@prisma/client";
 import { Tooltip } from "react-tooltip";
+import { GenerateButton } from "./components/GenerateButton";
 
-// SECTION: TYPES/INTERFACES
+// TYPES
 interface Plan {
   id: string;
   planTitle: string;
@@ -123,10 +120,9 @@ type PdfCreatorProps = {
   params: { id: string };
 };
 
-const maxTokens = 50;
-//
-
 const PdfCreator = ({ params }: PdfCreatorProps) => {
+  // SECTION --> States
+  const maxTokens = 200;
   const counter = new Counting();
   const pdfId = params.id;
   const router = useRouter();
@@ -151,7 +147,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     useState<PlansWithAllVersions>({});
   const [contentsWithAllVersions, setContentsWithAllVersions] =
     useState<ContentsWithAllVersionsState>({});
-
+  const [generatePlanButton, setGeneratePlanButton] = useState<boolean>(false);
   //
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     "en"
@@ -168,6 +164,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     useState("Deep Thinker");
   const [selectedLengthValue, setSelectedLengthValue] = useState("Medium");
   //
+  // SECTION --> Function
   const converter = useMemo(() => {
     return new Showdown.Converter();
   }, []);
@@ -231,108 +228,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     [pdfId]
   );
 
-  const markdownToHtml = useCallback(
-    (markdown: string) => {
-      return converter.makeHtml(markdown);
-    },
-    [converter]
-  );
-  // NOTE: Fetch PDF's
-  const fetchPdf = useCallback(async () => {
-    try {
-      const pdfCreatorObject = await getPdfPlanAndContent(params.id);
-
-      if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
-        const plansWithAllVersions: PlansWithAllVersions = {};
-        const contentsWithAllVersions: { [key: string]: any } = {};
-
-        pdfCreatorObject.pdfPlan.forEach((plan: Plan) => {
-          const planKey = plan.idRef || plan.id;
-          if (!plansWithAllVersions[planKey]) {
-            plansWithAllVersions[planKey] = {
-              allVersions: [],
-              activeVersion: null,
-            };
-          }
-          plansWithAllVersions[planKey].allVersions.push(plan);
-          if (plan.isSelected) {
-            plansWithAllVersions[planKey].activeVersion = plan;
-          }
-
-          // Traiter le contenu de chaque plan
-          if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
-            // Trier le contenu par createdAt
-            const sortedContent = plan.pdfCreatorContent.sort(
-              (a: any, b: any) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-            );
-
-            sortedContent.forEach((content: any) => {
-              if (!contentsWithAllVersions[planKey]) {
-                contentsWithAllVersions[planKey] = {
-                  allVersions: [],
-                  activeVersion: null,
-                };
-              }
-              contentsWithAllVersions[planKey].allVersions.push(content);
-              if (content.isSelected) {
-                contentsWithAllVersions[planKey].activeVersion = content;
-              }
-            });
-          }
-        });
-
-        setPlansWithAllVersions(plansWithAllVersions);
-        setContentsWithAllVersions(contentsWithAllVersions);
-        setInit(false);
-
-        // Transformer en tableau de Plan[] contenant seulement les versions actives
-        const activePlans = Object.values(plansWithAllVersions)
-          .map((item) => item.activeVersion)
-          .filter((plan) => plan !== null) as Plan[];
-
-        setCreatedPlans(activePlans);
-        // On prépare le contenu des chapitres
-        const contentObject: ChapterContents = {};
-        pdfCreatorObject.pdfPlan.forEach((plan: any) => {
-          if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
-            contentObject[plan.id] = {
-              content: plan.pdfCreatorContent[0].planContent,
-              lang: plan.lang, // Assurez-vous que la propriété 'lang' est disponible ici
-            };
-          }
-        });
-
-        // On met à jour l'état chapterContent avec les contenus récupérés
-        setChapterContent(contentObject);
-        setSelectedLanguage(pdfCreatorObject.lang as LanguageCode);
-        setSelectedTone(pdfCreatorObject.tone);
-        setSelectedPersonality(pdfCreatorObject.personality);
-        setSelectedLength(pdfCreatorObject.length);
-        setSubject(pdfCreatorObject.subject);
-        setActivateAutomaticContent(pdfCreatorObject.automaticContent);
-        if (pdfCreatorObject.gptModel?.GPTModel === undefined) {
-          setGptModel("gpt-3.5-turbo");
-        } else {
-          setGptModel(pdfCreatorObject.gptModel.GPTModel);
-        }
-        // On met à jour la langue
-        return pdfCreatorObject;
-      } else {
-        console.error("No pdfPlan found in the response");
-      }
-    } catch (error) {
-      console.error("Error fetching plans:", error);
-    }
-  }, [params.id]);
-
-  useEffect(() => {
-    if (params.id) {
-      fetchPdf();
-    }
-  }, [params.id, fetchPdf]);
-
   const parseTitles = (text: string) => {
     const lines = text.split("\n");
     const newPlan: string[] = [];
@@ -357,196 +252,34 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     return newPlan;
   };
 
+  const markdownToHtml = useCallback(
+    (markdown: string) => {
+      return converter.makeHtml(markdown);
+    },
+    [converter]
+  );
+
   const handleCancel = () => {
     abortControllers.forEach((controller) => controller.abort()); // Annuler tous les processus en cours
     setAbortControllers([]); // Réinitialiser les contrôleurs
     //
     setLoading(false);
-    setResponseSubject("");
-    setCreatedPlans([]);
-    setChapterContent({});
-    setAllContent("");
+    setRegenerate(true);
+    setWhatInProgress("");
     router.refresh();
   };
 
   const regeneratePlan = async () => {
     handleCancel();
+    setCreatedPlans([]);
+    setChapterContent({});
+    setAllContent("");
+    setRegenerate(false);
+    setContentsWithAllVersions({});
+    setPlansWithAllVersions({});
+    setResponseSubject("");
     generatePlan();
   };
-
-  // SECTION: GENERATE PLAN
-  const generatePlan = async () => {
-    const controller = new AbortController();
-    setAbortControllers((prev) => [...prev, controller]);
-
-    setLoading(true);
-    let buffer = "";
-    try {
-      const response = await fetch("/api/pdfcreator/planCreator", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: subject,
-          type: "plan",
-          maxTokens: maxTokens,
-          model: gptModel,
-          lang: selectedLanguage,
-          tone: selectedToneValue,
-          length: selectedLengthValue,
-          personality: selectedPersonalityValue,
-          pdfId: pdfId,
-        }),
-      });
-      // On met à jour les states lang, tone, length, personality en BDD
-
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
-      updatePdfSettings(
-        pdfId,
-        selectedLanguage,
-        selectedTone,
-        selectedPersonality,
-        selectedLength,
-        subject,
-        activateAutomaticContent,
-        gptModel
-      );
-      // Mise à jour du contexte avec le nombre de tokens restants
-      updateContextTokenRemaining();
-
-      // Le code pour traiter la réponse de l'API
-      const data = response.body;
-      if (!data) {
-        return;
-      }
-
-      // On stream le plan
-      const reader = data.getReader();
-
-      const decoder = new TextDecoder();
-      let done = false;
-
-      while (!done) {
-        setWhatInProgress("plan");
-        const { value, done: doneReading } = await reader.read();
-
-        if (value) {
-          buffer += decoder.decode(value, { stream: true });
-          let bufferLines = buffer.split("\n");
-          for (let i = 0; i < bufferLines.length - 1; i++) {
-            const line = bufferLines[i];
-            const titlesToAdd = parseTitles(line + "\n");
-            if (titlesToAdd.length > 0) {
-              const newPlans = await createPdfPlan(
-                titlesToAdd,
-                pdfId,
-                gptModel,
-                selectedLanguage,
-                selectedLength,
-                selectedPersonality,
-                selectedTone
-              );
-              setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
-            }
-          }
-          buffer = bufferLines[bufferLines.length - 1];
-        }
-
-        if (doneReading) {
-          done = true;
-        }
-      }
-      if (done) {
-        updateContextTokenRemaining();
-        setGeneratePlanDone(true);
-        setWhatInProgress("");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === "AbortError") {
-          console.log("Fetch aborted:", error.message);
-        } else {
-          console.error("Fetch failed:", error.message);
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // SECTION: GENERATE CONTENT
-  const generateContent = useCallback(
-    async (title: string, pdfId: string) => {
-      const controller = new AbortController();
-      setAbortControllers((prev) => [...prev, controller]); // Ajouter le nouveau contrôleur
-      try {
-        const response = await fetch("/api/pdfcreator/contentCreator", {
-          method: "POST",
-          signal: controller.signal, // Utilisez le signal de l'AbortController
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: title,
-            model: gptModel,
-            lang: selectedLanguage,
-            pdfId: pdfId,
-            maxTokens: maxTokens,
-            plan: createdPlans,
-            personality: selectedPersonalityValue,
-            length: selectedLengthValue,
-            tone: selectedToneValue,
-          }),
-        });
-        if (!response.ok) {
-          throw new Error(`API call failed: ${response.statusText}`);
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error("Error calling other API:", error);
-        return null;
-      }
-    },
-    [
-      selectedLanguage,
-      createdPlans,
-      selectedToneValue,
-      selectedLengthValue,
-      selectedPersonalityValue,
-      gptModel,
-    ]
-  );
-
-  useEffect(() => {
-    if (!loading && responseSubject && pdfId !== "") {
-      // On s'assure que l'appel de fonction est correct :
-      createPdfPlan(
-        parseTitles(responseSubject),
-        pdfId,
-        gptModel,
-        selectedLanguage,
-        selectedLength,
-        selectedPersonality,
-        selectedTone
-      ).then((newPlans) => {
-        setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
-      });
-    }
-  }, [
-    loading,
-    responseSubject,
-    pdfId,
-    gptModel,
-    selectedLanguage,
-    selectedLength,
-    selectedPersonality,
-    selectedTone,
-  ]);
 
   const handleTryAgain = () => {
     setResponseSubject("");
@@ -581,83 +314,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
     return accumulator + planTitleHtml + chapterHtml;
   }, "");
-
-  useEffect(() => {
-    const content = aggregatedContent;
-    setAllContent(content);
-  }, [
-    plansWithAllVersions,
-    contentsWithAllVersions,
-    markdownToHtml,
-    allContent,
-    aggregatedContent,
-    createdPlans,
-    chapterContent,
-  ]);
-
-  useEffect(() => {
-    if (generatePlanDone && activateAutomaticContent) {
-      setLoading(true);
-      setWhatInProgress("content");
-      const apiCalls = createdPlans.map((plan) =>
-        generateContent(plan.planTitle, plan.id).then((apiResponse) => {
-          if (apiResponse) {
-            const newContent = apiResponse.planContent;
-
-            setChapterContent((prevContent) => ({
-              ...prevContent,
-              [plan.id]: {
-                content: newContent, // Ou une autre valeur
-              },
-            }));
-
-            const contentsWithAllVersions: ContentsWithAllVersions = {
-              allVersions: [
-                {
-                  isSelected: true,
-                  id: apiResponse.id,
-                  idRef: apiResponse.idRef,
-                  planContent: newContent,
-                },
-              ],
-              activeVersion: {
-                isSelected: true,
-                id: apiResponse.id,
-                idRef: apiResponse.idRef,
-                planContent: newContent,
-              },
-            };
-
-            setContentsWithAllVersions((prev) => ({
-              ...prev,
-              [plan.id]: contentsWithAllVersions,
-            }));
-          }
-        })
-      );
-
-      Promise.all(apiCalls)
-        .then(() => {
-          setLoading(false);
-          setWhatInProgress("");
-          setGeneratePlanDone(false);
-          setRegenerate(true);
-        })
-        .catch((error) => {
-          console.error("Error in one of the API calls:", error);
-          setLoading(false);
-          setWhatInProgress("");
-          setGeneratePlanDone(false);
-          setRegenerate(true);
-        });
-    }
-  }, [
-    generatePlanDone,
-    createdPlans,
-    generateContent,
-    activateAutomaticContent,
-  ]);
-
   const handleLanguageChange = async (language: LanguageCode) => {
     setSelectedLanguage(language);
   };
@@ -772,6 +428,350 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       };
     });
   };
+  // IMPORTANT --> FetchPDF
+  const fetchPdf = useCallback(async () => {
+    try {
+      const pdfCreatorObject = await getPdfPlanAndContent(params.id);
+
+      if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
+        const plansWithAllVersions: PlansWithAllVersions = {};
+        const contentsWithAllVersions: { [key: string]: any } = {};
+
+        pdfCreatorObject.pdfPlan.forEach((plan: Plan) => {
+          const planKey = plan.idRef || plan.id;
+          if (!plansWithAllVersions[planKey]) {
+            plansWithAllVersions[planKey] = {
+              allVersions: [],
+              activeVersion: null,
+            };
+          }
+          plansWithAllVersions[planKey].allVersions.push(plan);
+          if (plan.isSelected) {
+            plansWithAllVersions[planKey].activeVersion = plan;
+          }
+
+          // Traiter le contenu de chaque plan
+          if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
+            // Trier le contenu par createdAt
+            const sortedContent = plan.pdfCreatorContent.sort(
+              (a: any, b: any) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+            );
+
+            sortedContent.forEach((content: any) => {
+              if (!contentsWithAllVersions[planKey]) {
+                contentsWithAllVersions[planKey] = {
+                  allVersions: [],
+                  activeVersion: null,
+                };
+              }
+              contentsWithAllVersions[planKey].allVersions.push(content);
+              if (content.isSelected) {
+                contentsWithAllVersions[planKey].activeVersion = content;
+              }
+            });
+          }
+        });
+
+        setPlansWithAllVersions(plansWithAllVersions);
+        setContentsWithAllVersions(contentsWithAllVersions);
+        setInit(false);
+
+        // Transformer en tableau de Plan[] contenant seulement les versions actives
+        const activePlans = Object.values(plansWithAllVersions)
+          .map((item) => item.activeVersion)
+          .filter((plan) => plan !== null) as Plan[];
+
+        setCreatedPlans(activePlans);
+        // On prépare le contenu des chapitres
+        const contentObject: ChapterContents = {};
+        pdfCreatorObject.pdfPlan.forEach((plan: any) => {
+          if (plan.pdfCreatorContent && plan.pdfCreatorContent.length > 0) {
+            contentObject[plan.id] = {
+              content: plan.pdfCreatorContent[0].planContent,
+              lang: plan.lang, // Assurez-vous que la propriété 'lang' est disponible ici
+            };
+          }
+        });
+
+        // On met à jour l'état chapterContent avec les contenus récupérés
+        setChapterContent(contentObject);
+        setSelectedLanguage(pdfCreatorObject.lang as LanguageCode);
+        setSelectedTone(pdfCreatorObject.tone);
+        setSelectedPersonality(pdfCreatorObject.personality);
+        setSelectedLength(pdfCreatorObject.length);
+        setSubject(pdfCreatorObject.subject);
+        setActivateAutomaticContent(pdfCreatorObject.automaticContent);
+        if (pdfCreatorObject.gptModel?.GPTModel === undefined) {
+          setGptModel("gpt-3.5-turbo");
+        } else {
+          setGptModel(pdfCreatorObject.gptModel.GPTModel);
+        }
+        // On met à jour la langue
+        return pdfCreatorObject;
+      } else {
+        console.error("No pdfPlan found in the response");
+      }
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+    }
+  }, [params.id]);
+  // IMPORTANT --> Plan generate
+  const generatePlan = async () => {
+    const controller = new AbortController();
+    setAbortControllers((prev) => [...prev, controller]);
+
+    setLoading(true);
+    let buffer = "";
+    try {
+      const response = await fetch("/api/pdfcreator/planCreator", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: subject,
+          type: "plan",
+          maxTokens: maxTokens,
+          model: gptModel,
+          lang: selectedLanguage,
+          tone: selectedToneValue,
+          length: selectedLengthValue,
+          personality: selectedPersonalityValue,
+          pdfId: pdfId,
+        }),
+      });
+      // On met à jour les states lang, tone, length, personality en BDD
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      updatePdfSettings(
+        pdfId,
+        selectedLanguage,
+        selectedTone,
+        selectedPersonality,
+        selectedLength,
+        subject,
+        activateAutomaticContent,
+        gptModel
+      );
+      // Mise à jour du contexte avec le nombre de tokens restants
+      updateContextTokenRemaining();
+
+      // Le code pour traiter la réponse de l'API
+      const data = response.body;
+      if (!data) {
+        return;
+      }
+
+      // On stream le plan
+      const reader = data.getReader();
+
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        setWhatInProgress("plan");
+        const { value, done: doneReading } = await reader.read();
+
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          let bufferLines = buffer.split("\n");
+          for (let i = 0; i < bufferLines.length - 1; i++) {
+            const line = bufferLines[i];
+            const titlesToAdd = parseTitles(line + "\n");
+            if (titlesToAdd.length > 0) {
+              const newPlans = await createPdfPlan(
+                titlesToAdd,
+                pdfId,
+                gptModel,
+                selectedLanguage,
+                selectedLength,
+                selectedPersonality,
+                selectedTone
+              );
+              setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
+            }
+          }
+          buffer = bufferLines[bufferLines.length - 1];
+        }
+
+        if (doneReading) {
+          done = true;
+        }
+      }
+      if (done) {
+        updateContextTokenRemaining();
+        setGeneratePlanDone(true);
+        setWhatInProgress("");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted:", error.message);
+        } else {
+          console.error("Fetch failed:", error.message);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  // IMPORTANT --> Content generate
+  const generateContent = useCallback(
+    async (title: string, pdfId: string) => {
+      const controller = new AbortController();
+      setAbortControllers((prev) => [...prev, controller]); // Ajouter le nouveau contrôleur
+      try {
+        const response = await fetch("/api/pdfcreator/contentCreator", {
+          method: "POST",
+          signal: controller.signal, // Utilisez le signal de l'AbortController
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: title,
+            model: gptModel,
+            lang: selectedLanguage,
+            pdfId: pdfId,
+            maxTokens: maxTokens,
+            plan: createdPlans,
+            personality: selectedPersonalityValue,
+            length: selectedLengthValue,
+            tone: selectedToneValue,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`API call failed: ${response.statusText}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error("Error calling other API:", error);
+        return null;
+      }
+    },
+    [
+      selectedLanguage,
+      createdPlans,
+      selectedToneValue,
+      selectedLengthValue,
+      selectedPersonalityValue,
+      gptModel,
+    ]
+  );
+  // SECTION --> useEffects
+  useEffect(() => {
+    if (params.id) {
+      fetchPdf();
+    }
+  }, [params.id, fetchPdf]);
+
+  useEffect(() => {
+    if (!loading && responseSubject && pdfId !== "") {
+      // On s'assure que l'appel de fonction est correct :
+      createPdfPlan(
+        parseTitles(responseSubject),
+        pdfId,
+        gptModel,
+        selectedLanguage,
+        selectedLength,
+        selectedPersonality,
+        selectedTone
+      ).then((newPlans) => {
+        setCreatedPlans((prevPlans) => [...prevPlans, ...newPlans]);
+      });
+    }
+  }, [
+    loading,
+    responseSubject,
+    pdfId,
+    gptModel,
+    selectedLanguage,
+    selectedLength,
+    selectedPersonality,
+    selectedTone,
+  ]);
+
+  useEffect(() => {
+    const content = aggregatedContent;
+    setAllContent(content);
+  }, [
+    plansWithAllVersions,
+    contentsWithAllVersions,
+    markdownToHtml,
+    allContent,
+    aggregatedContent,
+    createdPlans,
+    chapterContent,
+  ]);
+
+  useEffect(() => {
+    if ((generatePlanDone && activateAutomaticContent) || generatePlanButton) {
+      setLoading(true);
+      setWhatInProgress("content");
+      const apiCalls = createdPlans.map((plan) =>
+        generateContent(plan.planTitle, plan.id).then((apiResponse) => {
+          if (apiResponse) {
+            const newContent = apiResponse.planContent;
+
+            setChapterContent((prevContent) => ({
+              ...prevContent,
+              [plan.id]: {
+                content: newContent, // Ou une autre valeur
+              },
+            }));
+
+            const contentsWithAllVersions: ContentsWithAllVersions = {
+              allVersions: [
+                {
+                  isSelected: true,
+                  id: apiResponse.id,
+                  idRef: apiResponse.idRef,
+                  planContent: newContent,
+                },
+              ],
+              activeVersion: {
+                isSelected: true,
+                id: apiResponse.id,
+                idRef: apiResponse.idRef,
+                planContent: newContent,
+              },
+            };
+
+            setContentsWithAllVersions((prev) => ({
+              ...prev,
+              [plan.id]: contentsWithAllVersions,
+            }));
+          }
+        })
+      );
+
+      Promise.all(apiCalls)
+        .then(() => {
+          setLoading(false);
+          setWhatInProgress("");
+          setGeneratePlanDone(false);
+          setRegenerate(true);
+        })
+        .catch((error) => {
+          console.error("Error in one of the API calls:", error);
+          setLoading(false);
+          setWhatInProgress("");
+          setGeneratePlanDone(false);
+          setRegenerate(true);
+        });
+    }
+  }, [
+    generatePlanDone,
+    createdPlans,
+    generateContent,
+    activateAutomaticContent,
+    generatePlanButton,
+  ]);
 
   useEffect(() => {
     spentTokenForThisProject(pdfId);
@@ -784,17 +784,25 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     plansWithAllVersions,
     contentsWithAllVersions,
   ]);
-
+  // SECTION --> Retun
   return (
     <>
       <div className="flex md:flex-row items-start flex-col w-full gap-5">
         {!init ? (
           <>
             <div
+              data-tooltip-id="PDFForbidden"
               className={`md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-200 w-full h-auto py-5 p-3 rounded-lg z-0`}>
+              {Object.keys(chapterContent).length > 0 && (
+                <Tooltip id="PDFForbidden" className="tooltip info" opacity={1}>
+                  Your PDF has already been generated, if you wish to regenerate
+                  it, please create a new project.
+                </Tooltip>
+              )}
               <div
+                data-tooltip-id="PDFForbidden"
                 className={`flex flex-col items-center gap-5 flex-wrap h-auto ${
-                  Object.keys(chapterContent).length > 0
+                  Object.keys(chapterContent).length > 0 && whatInProgress == ""
                     ? "opacity-50 pointer-events-none"
                     : ""
                 }`}>
@@ -888,6 +896,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     checked={activateAutomaticContent}
                     onCheckedChange={(checked) => {
                       setActivateAutomaticContent(checked);
+                      setGeneratePlanDone(true);
                     }}
                   />
                   <Label htmlFor="activeGenerateContent">
@@ -905,73 +914,79 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                   </span>
                 </div>
                 <div className="flex w-full flex-row gap-x-2">
-                  <Button
-                    className="w-full"
-                    onClick={!regenerate ? generatePlan : regeneratePlan}
-                    disabled={loading}>
-                    {loading && <Loader />}{" "}
-                    {loading && whatInProgress === ""
-                      ? "Génération du PDF"
-                      : loading && whatInProgress === "plan"
-                        ? "Génération du plan..."
-                        : loading && whatInProgress === "content"
-                          ? "Génération du contenu..."
-                          : !regenerate
-                            ? "Generate PDF"
-                            : "Recommencer"}
-                  </Button>
-                  {loading && (
-                    <Button onClick={handleCancel}>Annuler la Demande</Button>
-                  )}
-                  {!loading && responseSubject && (
-                    <Button onClick={handleTryAgain}>Recommencer</Button>
-                  )}
+                  <GenerateButton
+                    whatInProgress={whatInProgress}
+                    createdPlans={createdPlans.length}
+                    chapterContent={Object.keys(chapterContent).length}
+                    generatePlanButton={generatePlanButton}
+                    regenerate={regenerate}
+                    handleCancel={handleCancel}
+                    generatePlanDone={generatePlanDone}
+                    responseSubject={responseSubject}
+                    regeneratePlan={regeneratePlan}
+                    generatePlan={generatePlan}
+                    handleTryAgain={handleTryAgain}
+                  />
                 </div>
               </div>
             </div>
             <div className="md:w-9/12 w-full z-30">
               <div className="rounded-xl  bg-opacity-90  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
                 <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row justify-between gap-x-2 dark:bg-app-700 bg-app-200 items-center border-b border-white dark:border-app-900">
-                  <DownloadButton
-                    allContent={allContent}
-                    subject={subject}
-                    disabled={createdPlans.length === 0}
-                  />
-                  <div className="p-2 border text-sm border-app-300 dark:border-app-600 self-end rounded-lg flex flex-row gap-x-3">
-                    <div data-tooltip-id="countWordTooltip">
-                      <FontAwesomeIcon icon={faSignature} />
-                      &nbsp;
-                      {counter.countWords(allContent)} w.
-                      <Tooltip id="countWordTooltip" className="tooltip ">
-                        <strong>Words</strong>
-                      </Tooltip>
-                    </div>
-                    <div data-tooltip-id="readingTimeTooltip">
-                      <FontAwesomeIcon icon={faFaceGlasses} />{" "}
-                      {counter.countReadingTime(allContent, "format")}
-                      <Tooltip id="readingTimeTooltip" className="tooltip ">
-                        <strong>Reading time</strong>
-                      </Tooltip>
-                    </div>
-                    <div data-tooltip-id="totalCharactersTooltip">
-                      <FontAwesomeIcon icon={faICursor} />
-                      &nbsp;{counter.countCharacters(allContent)}
-                      <Tooltip id="totalCharactersTooltip" className="tooltip ">
-                        <strong>Characters</strong>
-                      </Tooltip>
-                    </div>
-                    <div data-tooltip-id="totalPagesTooltip">
-                      <FontAwesomeIcon icon={faFiles} />
-                      &nbsp;
-                      {counter.countPages(allContent) > 1
-                        ? counter.countPages(allContent) + " pages"
-                        : counter.countPages(allContent) + " page"}
-                      <Tooltip id="totalPagesTooltip" className="tooltip ">
-                        <strong>Pages (approximately)</strong>
-                      </Tooltip>
+                  <div className="flex flex-row gap-2">
+                    <DownloadButton
+                      allContent={allContent}
+                      subject={subject}
+                      disabled={createdPlans.length === 0}
+                    />
+                    <div className="p-2 border text-sm py-2.5 border-app-300 dark:border-app-800 dark:bg-app-800 bg-app-100  self-end rounded-lg flex flex-row gap-x-3">
+                      <div data-tooltip-id="countWordTooltip">
+                        <FontAwesomeIcon icon={faSignature} />
+                        &nbsp;
+                        {counter.countWords(allContent)} w.
+                        <Tooltip
+                          opacity={1}
+                          id="countWordTooltip"
+                          className="tooltip ">
+                          <strong>Words</strong>
+                        </Tooltip>
+                      </div>
+                      <div data-tooltip-id="readingTimeTooltip">
+                        <FontAwesomeIcon icon={faFaceGlasses} />{" "}
+                        {counter.countReadingTime(allContent, "format")}
+                        <Tooltip
+                          opacity={1}
+                          id="readingTimeTooltip"
+                          className="tooltip ">
+                          <strong>Reading time</strong>
+                        </Tooltip>
+                      </div>
+                      <div data-tooltip-id="totalCharactersTooltip">
+                        <FontAwesomeIcon icon={faICursor} />
+                        &nbsp;{counter.countCharacters(allContent)}
+                        <Tooltip
+                          opacity={1}
+                          id="totalCharactersTooltip"
+                          className="tooltip ">
+                          <strong>Characters</strong>
+                        </Tooltip>
+                      </div>
+                      <div data-tooltip-id="totalPagesTooltip">
+                        <FontAwesomeIcon icon={faFiles} />
+                        &nbsp;
+                        {counter.countPages(allContent) > 1
+                          ? counter.countPages(allContent) + " pages"
+                          : counter.countPages(allContent) + " page"}
+                        <Tooltip
+                          opacity={1}
+                          id="totalPagesTooltip"
+                          className="tooltip ">
+                          <strong>Pages (approximately)</strong>
+                        </Tooltip>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-2 border border-app-300 self-end  dark:border-app-600 rounded-lg flex md:flex-row gap-2">
+                  <div className="p-2   self-end  rounded-lg flex md:flex-row gap-2">
                     <div>
                       <FontAwesomeIcon
                         icon={faCoins}
@@ -1033,10 +1048,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                       €
                     </div>
                   </div>
-                  {/* FIXME: pouvoir modifier un titre / content en tapant dans une input */}
-                  {/* FIXME: NE pas pouvoir lanver de génération si nombre de tokens insuffisants */}
-                  {/* FIXME: Gérer "générate button" ou "générer le contenu" */}
-                  {/* FIXME: Ajouter des options (sur le contenu) : racourcir / rallonger */}
+                  {/* FIX pouvoir modifier un titre / content en tapant dans une input */}
+                  {/* FIX NE pas pouvoir lanver de génération si nombre de tokens insuffisants */}
+                  {/* FIX Gérer "générate button" ou "générer le contenu" */}
+                  {/* FIX Ajouter des options (sur le contenu) : racourcir / rallonger */}
                 </div>
                 <div className="row-span-3 hidden">
                   {createdPlans.map((plan) => (
@@ -1294,11 +1309,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                 </div>
               </div>
             </div>
-
-            <Tooltip id="PDFForbidden" className="tooltip ">
-              Your PDF has already been generated, if you wish to regenerate it,
-              please create a new project.
-            </Tooltip>
           </>
         ) : (
           <div className="w-full h-full flex flex-col justify-center items-center">
