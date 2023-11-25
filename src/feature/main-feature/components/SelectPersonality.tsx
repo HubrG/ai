@@ -15,11 +15,13 @@ interface SelectPersonalityProps {
   onPersonalityChange: any;
   selectedPersonalityInit: string;
   id: string;
+  disabled?: boolean;
 }
 export const SelectPersonality = ({
   onPersonalityChange,
   selectedPersonalityInit,
-  id
+  id,
+  disabled
 }: SelectPersonalityProps) => {
   const [selectedPersonality, setSelectedPersonality] = useState<string>(selectedPersonalityInit);
 
@@ -35,7 +37,7 @@ export const SelectPersonality = ({
     onPersonalityChange(PersonalityKey, PersonalityValue);
   };
   return (
-    <Select onValueChange={handleSelectChange}  value={selectedPersonality}>
+    <Select onValueChange={handleSelectChange}  value={selectedPersonality} disabled={disabled}>
     <SelectTrigger id={id}>
         <SelectValue placeholder="Select a personality" />
       </SelectTrigger>

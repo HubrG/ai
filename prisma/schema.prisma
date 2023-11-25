@@ -112,9 +112,9 @@ model pdfCreator {
 model TokenSpentOnPdf {
   id      String     @id @default(cuid())
   pdfId   String
-  pdf     pdfCreator @relation(fields: [pdfId], references: [id])
+  pdf     pdfCreator @relation(fields: [pdfId], references: [id], onDelete: Cascade)
   tokenId String
-  token   tokenSpent @relation(fields: [tokenId], references: [id])
+  token   tokenSpent @relation(fields: [tokenId], references: [id], onDelete: Cascade)
 
   @@unique([pdfId, tokenId])
 }

@@ -14,12 +14,14 @@ import { tonesList } from "@/src/list/ai/tonesList";
 interface SelectToneProps {
   onToneChange: any;
   selectedToneInit: string;
-  id?:string
+  id?: string
+  disabled?: boolean;
 }
 export const SelectTone = ({
   onToneChange,
   selectedToneInit,
-  id
+  id,
+  disabled
 }: SelectToneProps) => {
   const [selectedTone, setSelectedTone] = useState<string>(selectedToneInit);
 
@@ -37,7 +39,7 @@ export const SelectTone = ({
 
 
   return (
-    <Select onValueChange={handleSelectChange} value={selectedTone}>
+    <Select onValueChange={handleSelectChange} value={selectedTone} disabled={disabled}>
       <SelectTrigger id={id}>
         <SelectValue  placeholder="Select a tone" />
       </SelectTrigger>

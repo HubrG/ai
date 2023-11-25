@@ -54,7 +54,7 @@ export default async function GeneratePdfId({
                 <Link
                   href="/ai/pdf"
                   className="ms-1 text-sm font-medium text-app-700 hover:text-blue-600 md:ms-2 dark:text-app-400 dark:hover:text-white">
-                  Projects
+                  PDF Projects
                 </Link>
               </div>
             </li>
@@ -65,7 +65,7 @@ export default async function GeneratePdfId({
                   className="rtl:rotate-180 w-3 h-3 text-app-400 mx-1"
                 />
                 <span className="ms-1 text-sm font-medium text-app-500 md:ms-2 dark:text-app-400">
-                  Generate a pdf
+                  {pdf.title !== "" ? pdf.title : "Untitled project"}
                 </span>
               </div>
             </li>

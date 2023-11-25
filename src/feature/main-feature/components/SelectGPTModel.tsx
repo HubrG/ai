@@ -15,11 +15,13 @@ interface SelectModelGPTProps {
   onGPTModelChange: any;
   selectedModelGPTInit: string;
   id?: string;
+  disabled?: boolean;
 }
 export const SelectModelGPT = ({
   onGPTModelChange,
   selectedModelGPTInit,
   id,
+  disabled,
 }: SelectModelGPTProps) => {
   const [selectedModelGPT, setSelectedModelGPT] =
     useState<string>(selectedModelGPTInit);
@@ -35,7 +37,7 @@ export const SelectModelGPT = ({
   };
 
   return (
-    <Select onValueChange={handleSelectChange} value={selectedModelGPT}>
+    <Select onValueChange={handleSelectChange} value={selectedModelGPT} disabled={disabled}>
       <SelectTrigger  className="w-full" id={id}>
         <SelectValue placeholder="Select a ModelGPT" />
       </SelectTrigger>

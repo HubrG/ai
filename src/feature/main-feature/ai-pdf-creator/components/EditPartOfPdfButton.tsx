@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { faWandMagicSparkles } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  faCirclePlus,
+  faSparkles,
+  faWandMagicSparkles,
+} from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +18,7 @@ import { SelectLang } from "../../components/SelectLang";
 import { SelectModelGPT } from "../../components/SelectGPTModel";
 import { SelectPersonality } from "../../components/SelectPersonality";
 import { SelectLength } from "../../components/SelectLength";
+import { Tooltip } from "react-tooltip";
 
 type EditPartOfPdfButtonProps = {
   type: "plan" | "content";
@@ -34,6 +39,7 @@ type EditPartOfPdfButtonProps = {
   idRef: string | undefined;
   onRefresh: any;
   maxTokens: number;
+  createVoidContent?: boolean;
 };
 
 export const EditPartOfPdfButton = ({
@@ -54,7 +60,8 @@ export const EditPartOfPdfButton = ({
   planLevel,
   idRef,
   onRefresh,
-  maxTokens
+  maxTokens,
+  createVoidContent,
 }: EditPartOfPdfButtonProps) => {
   const [gptModel, setGptModel] = useState<string>(gptModelInit);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
@@ -107,13 +114,10 @@ export const EditPartOfPdfButton = ({
     // On récupère le planLevel et on le map pour récupérer planTitle
     aggregatedPlan += "-- " + plan.planLevel + " ";
     aggregatedPlan += plan.planTitle;
-    aggregatedPlan += "\n"
+    aggregatedPlan += "\n";
   });
 
-
-
   const update = async () => {
-
     try {
       const response = await fetch("/api/pdfcreator/updateContent", {
         method: "POST",
@@ -134,13 +138,13 @@ export const EditPartOfPdfButton = ({
           pdfId: pdfId,
           planLevel: planLevel ? planLevel : "",
           idRef: idRef ? idRef : "",
-          maxTokens: maxTokens
+          maxTokens: maxTokens,
         }),
       });
       if (!response.ok) {
         throw new Error(`API call failed: ${response.statusText}`);
       }
-        onRefresh();
+      onRefresh();
       // router.refresh();
       return await response.json();
     } catch (error) {
@@ -170,14 +174,34 @@ export const EditPartOfPdfButton = ({
   ]);
 
   return (
-    <div className="absolute right-full top-1 rounded-lg cursor-pointer dark:text-app-400 text-app-400 hover:text-app-500  dark:hover:text-app-300 px-3 pt-0.5">
+    <div
+      className={`${
+        !createVoidContent && "absolute right-full top-1"
+      } rounded-lg cursor-pointer dark:text-app-400 text-app-400  hover:text-app-500  dark:hover:text-app-300 px-3 pt-0.5`}>
       <Popover>
         <PopoverTrigger asChild>
-          <FontAwesomeIcon icon={faWandMagicSparkles} />
+          {createVoidContent ? (
+            <Button
+              variant={"ghost"}
+              className="w-full flex flex-row justify-center gap-2 items-center"
+              size={"sm"}>
+              <FontAwesomeIcon icon={faCirclePlus} /> Create content for this
+              point
+            </Button>
+          ) : (
+            <Button
+              variant={"ghost"}
+              size={"sm"}
+              className="-mt-2"
+              data-tooltip-id={`sparkleTooltip${type}${id}`}>
+              <FontAwesomeIcon icon={faSparkles} />
+            </Button>
+          )}
         </PopoverTrigger>
-        <PopoverContent className="w-80 flex flex-col gap-2">
+        <PopoverContent className="w-80 flex flex-col gap-2 dark:bg-app-950 border-none shadow-2xl">
           <p className="font-bold text-base">
-          Rewrite  {type === "plan" ? "this point of the plan" : "this content"}
+            {createVoidContent ? "Generate " : "Rewrite "}
+            {type === "plan" ? "this point of the plan" : "this content"}
           </p>
           <SelectLang
             id="language"
@@ -206,9 +230,20 @@ export const EditPartOfPdfButton = ({
               selectedLengthInit={selectedLength}
             />
           )}
-          <Button onClick={update}>Rewrite</Button>
+          <Button onClick={update}>
+            {createVoidContent ? "Generate content for this point" : "Rewrite"}
+          </Button>
         </PopoverContent>
       </Popover>
+      <Tooltip
+        id={`sparkleTooltip${type}${id}`}
+        classNameArrow="hidden"
+        variant="dark"
+        className="tooltip flex flex-col">
+        <span className="font-bold">Rewrite this content</span>
+        You can rewrite this content with a different tone, personality or
+        length.
+      </Tooltip>
     </div>
   );
 };

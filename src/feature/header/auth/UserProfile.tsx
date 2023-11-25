@@ -65,7 +65,7 @@ const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
                   src={user.image}
                   alt="Profil picture"
                   fill
-                  className="object-cover rounded-full"
+                  className="object-cover rounded-full w-20 h-20"
                 />
               )}
             </div>

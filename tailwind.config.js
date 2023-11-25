@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-const appColor = "slate";
-const appColorSecondary = "fuchsia";
-const appColorRGBA = "slate";
-const appColorhsl = "slate";
+const appColor = "special1";
+const appColorhsl = "special2";
+const appColorSecondary = "special1";
+const appColorRGBA = "fuchsia";
 // tahiti   #22d3ee,
 // rose     #fb7185,
 // orange   #fb923c,
@@ -20,7 +20,63 @@ const appColorhsl = "slate";
 // lime     #84cc16,
 // green    #22c55e,
 // emerald  #10b981
+// sepcial1
 const colorPaletteshsl = {
+  special4: {
+    50: 'hsl(240, 4%, 95%)',
+   100: 'hsl(280, 6%, 90%)',
+   200: 'hsl(270, 4%, 80%)',
+   300: 'hsl(274, 5%, 70%)',
+   400: 'hsl(270, 4%, 60%)',
+   500: 'hsl(273, 4%, 50%)',
+   600: 'hsl(270, 4%, 40%)',
+   700: 'hsl(274, 5%, 30%)',
+   800: 'hsl(270, 4%, 20%)',
+   900: 'hsl(280, 6%, 10%)',
+   950: 'hsl(300, 4%, 5%)',
+  },
+  special3: {
+    50: "hsl(270, 38%, 95%)",
+    100: "hsl(271, 41%, 90%)",
+    200: "hsl(270, 39%, 80%)",
+    300: "hsl(270, 40%, 70%)",
+    400: "hsl(270, 40%, 60%)",
+    500: "hsl(269, 40%, 50%)",
+    600: "hsl(270, 40%, 40%)",
+    700: "hsl(270, 40%, 30%)",
+    800: "hsl(270, 39%, 20%)",
+    900: "hsl(269, 41%, 10%)",
+    950: "hsl(270, 38%, 5%)",
+    DEFAULT: "hsl(269, 40%, 50%)",
+  },
+  special2: {
+    50: "hsl(270, 15%, 95%)",
+    100: "hsl(274, 14%, 90%)",
+    200: "hsl(270, 16%, 80%)",
+    300: "hsl(271, 15%, 70%)",
+    400: "hsl(270, 15%, 60%)",
+    500: "hsl(269, 15%, 50%)",
+    600: "hsl(270, 15%, 40%)",
+    700: "hsl(269, 15%, 30%)",
+    800: "hsl(270, 16%, 20%)",
+    900: "hsl(266, 14%, 10%)",
+    950: "hsl(270, 15%, 5%)",
+    DEFAULT: "hsl(269, 15%, 50%)",
+  },
+  special1: {
+    50: "hsl(216, 20%, 95%)",
+    100: "hsl(207, 22%, 90%)",
+    200: "hsl(210, 20%, 80%)",
+    300: "hsl(209, 20%, 70%)",
+    400: "hsl(210, 20%, 60%)",
+    500: "hsl(211, 20%, 50%)",
+    600: "hsl(210, 20%, 40%)",
+    700: "hsl(211, 20%, 30%)",
+    800: "hsl(210, 20%, 20%)",
+    900: "hsl(213, 22%, 10%)",
+    950: "hsl(204, 20%, 5%)",
+    DEFAULT: "hsl(211, 20%, 50%)",
+  },
   slate: {
     50: "hsl(210, 40%, 98%)",
     100: "hsl(210, 40%, 96%)",
@@ -65,6 +121,62 @@ const colorPaletteshsl = {
   },
 };
 const colorPalettes = {
+  special4: {
+    50: '#f3f2f3',
+    100: '#e6e5e6',
+    200: '#cecace',
+    300: '#b5b0b5',
+    400: '#9c969c',
+    500: '#837c83',
+    600: '#696369',
+    700: '#4f4a4f',
+    800: '#353135',
+    900: '#1a191a',
+    950: '#0d0c0d',
+    DEFAULT: '#837c83',
+  },
+  special3: {
+    50: "#f2edf7",
+    100: "#e6dbf0",
+    200: "#ccb8e0",
+    300: "#b294d1",
+    400: "#9970c2",
+    500: "#7f4db3",
+    600: "#663d8f",
+    700: "#4c2e6b",
+    800: "#331f47",
+    900: "#190f24",
+    950: "#0d0812",
+    DEFAULT: "#7f4db3",
+  },
+  special1: {
+    50: "#f2f0f4",
+    100: "#e6e2e9",
+    200: "#ccc4d4",
+    300: "#b3a7be",
+    400: "#998aa8",
+    500: "#7f6c93",
+    600: "#665775",
+    700: "#4c4158",
+    800: "#332b3b",
+    900: "#19161d",
+    950: "#0d0b0f",
+    DEFAULT: "#7f6c93",
+  },
+  special2: {
+    50: "#f0f2f5",
+    100: "#e0e6eb",
+    200: "#c2ccd6",
+    300: "#a3b3c2",
+    400: "#8599ad",
+    500: "#667f99",
+    600: "#52667a",
+    700: "#3d4c5c",
+    800: "#29333d",
+    900: "#14191f",
+    950: "#0a0d0f",
+    DEFAULT: "#667f99",
+  },
   tahiti: {
     50: "#e0f7fa",
     100: "#cffafe",
@@ -586,6 +698,7 @@ module.exports = {
         foreground: "var(--foreground)",
         app: colorPalettes[appColor],
         secondary: colorPalettes[appColorSecondary],
+        secondaryhsl: colorPaletteshsl[appColorhsl],
         apprgba: colorPalettesRGBA[appColorRGBA],
         apphsl: colorPaletteshsl[appColorhsl],
         primary: {

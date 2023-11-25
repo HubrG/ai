@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { getModelId } from "@/src/query/gptModel.query";
-import { getUserLog } from "@/src/query/user.query";
+import { getUserLog, getUserLogId } from "@/src/query/user.query";
 import { User } from "@prisma/client";
 
 type createPdfProps = {
@@ -48,7 +48,7 @@ export const createPdfPlan = async (
   selectedTone: string
 ) => {
   console.log(titles);
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -108,20 +108,26 @@ export const createPdfPlan = async (
 };
 
 export const deletePlan = async (id: string) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
-  const plan = await prisma.pdfCreator.delete({
+  const plan = await prisma.pdfCreatorPlan.deleteMany({
     where: {
-      userId: user.id,
-      id: id,
+      pdfId: id,
+      pdf: {
+        userId: user.id,
+      },
     },
   });
+  if (!plan) {
+    throw new Error("Plan not found");
+  }
+  return plan;
 };
 
 export const updatePlan = async (id: string, title: string) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -156,7 +162,7 @@ export const updatePlan = async (id: string, title: string) => {
 };
 
 export const updateContent = async (id: string, content: string) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -193,7 +199,7 @@ export const updateContent = async (id: string, content: string) => {
 };
 
 export const getPdfPlanAndContent = async (pdfId: string) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -228,7 +234,7 @@ export const getPdfPlanAndContent = async (pdfId: string) => {
 };
 
 export const retrieveTokenRemaining = async () => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -267,7 +273,7 @@ export const updatePdfSettings = async (
   activateAutomaticContent: boolean,
   GPTModel: string
 ) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -296,7 +302,7 @@ export const updatePdfSettings = async (
 };
 
 export const updatePlanIsSelected = async (id: string, idRef: string) => {
-  const user = await getUserLog();
+  const user = await getUserLogId();
   if (!user) {
     throw new Error("User not logged in");
   }
@@ -331,8 +337,7 @@ export const updatePlanIsSelected = async (id: string, idRef: string) => {
   return planSelected;
 };
 
-
-export const updateContentIsSelected = async (id: string, planId:string) => {
+export const updateContentIsSelected = async (id: string, planId: string) => {
   // On met à jour le contenu sélectionné et on met en false tous les autres
   const contentSelected = await prisma.pdfCreatorContent.update({
     where: {
@@ -361,5 +366,33 @@ export const updateContentIsSelected = async (id: string, planId:string) => {
     throw new Error("Content not found");
   }
   return contentSelected;
-  
-}
+};
+
+export const deletePdf = async (id: string) => {
+  const user = await getUserLogId();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+  const pdf = await prisma.pdfCreator.deleteMany({
+    where: {
+      OR: [
+        {
+          // Supprimer le pdfCreator spécifique de l'utilisateur connecté
+          id: id,
+          userId: user.id,
+        },
+        {
+          // Supprimer les pdfCreators qui n'ont aucun pdfCreatorPlan
+          userId: user.id,
+          pdfPlan: {
+            none: {},
+          },
+        },
+      ],
+    },
+  });
+  if (!pdf) {
+    throw new Error("Pdf not found");
+  }
+  return true;
+};

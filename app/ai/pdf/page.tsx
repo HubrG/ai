@@ -2,8 +2,7 @@ import { getUserLog } from "@/src/query/user.query";
 import { getPdfs } from "@/src/query/pdf.query";
 import NotFound from "@/app/not-found";
 import { CreateNewPdfButton } from "@/src/feature/main-feature/ai-pdf-creator/components/CreateNewPdfButton";
-import Link from "next/link";
-import { pdfCreator } from "@prisma/client";
+import { PDFList } from "@/src/feature/main-feature/ai-pdf-creator/components/PDFList";
 
 export default async function GeneratePDF() {
   const user = await getUserLog();
@@ -20,19 +19,12 @@ export default async function GeneratePDF() {
             {user && <CreateNewPdfButton user={user} />}
           </div>
           <div>
-            {/* On map */}
             <ul className="text-left">
-              {pdfs &&
-                pdfs.map(
-                  (pdf:pdfCreator) =>
-                    pdf.title && (
-                      <li key={pdf.id}>
-                        <Link href={`/ai/pdf/${pdf.id}`}>
-                          {pdf.title !== "" ? pdf.title : "Projet sans titre"}
-                        </Link>
-                      </li>
-                    )
-                )}
+              {pdfs && pdfs.length > 0 ? (
+                <PDFList pdfs={pdfs} />
+              ) : (
+                "No PDF created yet."
+              )}
             </ul>
           </div>
         </div>

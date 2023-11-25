@@ -15,11 +15,13 @@ interface SelectLengthProps {
   onLengthChange: any;
   selectedLengthInit: string;
   id: string;
+  disabled?: boolean;
 }
 export const SelectLength = ({
   onLengthChange,
   selectedLengthInit,
   id,
+  disabled
 }: SelectLengthProps) => {
   const [selectedLength, setSelectedLength] =
     useState<string>(selectedLengthInit);
@@ -36,7 +38,7 @@ export const SelectLength = ({
     onLengthChange(LengthKey, LengthValue);
   };
   return (
-    <Select onValueChange={handleSelectChange}  value={selectedLength}>
+    <Select onValueChange={handleSelectChange} disabled={disabled}  value={selectedLength}>
       <SelectTrigger id={id}>
         <SelectValue placeholder="Select a length" />
       </SelectTrigger>

@@ -19,9 +19,10 @@ interface SelectLangProps {
   onLanguageChange: (language: LanguageCode) => void;
   selectedLangInit: LanguageCode | "";
   id?: string;
+  disabled?: boolean;
 }
 
-export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLangProps) => {
+export const SelectLang = ({ onLanguageChange, selectedLangInit, id, disabled }: SelectLangProps) => {
   const [open, setOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(selectedLangInit);
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,6 +46,7 @@ export const SelectLang = ({ onLanguageChange, selectedLangInit, id }: SelectLan
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+         disabled={disabled}
           variant="outline"
           role="combobox"
           aria-expanded={open}

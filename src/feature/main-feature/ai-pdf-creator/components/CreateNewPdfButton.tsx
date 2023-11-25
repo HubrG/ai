@@ -16,7 +16,7 @@ export const CreateNewPdfButton = ({ user }: Props) => {
   };
   return (
     <form>
-      <Button type="button" onClick={handleCreatePdf}>
+      <Button type="button" variant={"outline"} onClick={handleCreatePdf}>
         Create a new PDF
       </Button>
     </form>

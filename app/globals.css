@@ -52,6 +52,18 @@
     --color-app-hsl-900: theme("colors.apphsl.900");
     --color-app-hsl-950: theme("colors.apphsl.950");
 
+    --color-secondary-hsl-50: theme("colors.secondaryhsl.50");
+    --color-secondary-hsl-100: theme("colors.secondaryhsl.100");
+    --color-secondary-hsl-200: theme("colors.secondaryhsl.200");
+    --color-secondary-hsl-300: theme("colors.secondaryhsl.300");
+    --color-secondary-hsl-400: theme("colors.secondaryhsl.400");
+    --color-secondary-hsl-500: theme("colors.secondaryhsl.500");
+    --color-secondary-hsl-600: theme("colors.secondaryhsl.600");
+    --color-secondary-hsl-700: theme("colors.secondaryhsl.700");
+    --color-secondary-hsl-800: theme("colors.secondaryhsl.800");
+    --color-secondary-hsl-900: theme("colors.secondaryhsl.900");
+    --color-secondary-hsl-950: theme("colors.secondaryhsl.950");
+
    --background: var(--color-app-hsl-50);
     --foreground: var(--color-app-hsl-900);
 
@@ -121,7 +133,7 @@
   }
 }
 main {
-  @apply min-h-screen min-w-full   mx-auto gap-4 text-center bg-app-100 dark:bg-app-950;
+  @apply min-h-screen min-w-full   mx-auto gap-4 text-center bg-app-50 dark:bg-app-950;
 }
 .container {
   @apply w-full max-w-6xl flex flex-col min-h-screen pt-28;
@@ -378,3 +390,7 @@ label {
 }
 
 /*  */
+
+.ring-offset-2 {
+  @apply focus-visible:ring-offset-1 !important;
+}

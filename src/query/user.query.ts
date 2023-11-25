@@ -19,6 +19,18 @@ export const getUserLog = async () => {
   return user;
 };
 
+export const getUserLogId = async () => {
+  const session = await getAuthSession();
+
+  if (!session?.user.id) {
+    return;
+  }
+
+  
+
+  return session.user;
+};
+
 export const getUser = async (email?: string): Promise<User | null> => {
   try {
     const user = await prisma.user.findUnique({
