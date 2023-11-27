@@ -50,16 +50,19 @@ export const GenerateButton = ({
           )}
           {chapterContent == 0 && createdPlans > 0 && !loading && (
             <>
-              <Button
-                className="w-full flex flex-row justify-evenly"
-                onClick={regeneratePlan}>
-                <span>Regenerate plan</span>
-              </Button>
-              <Button
-                className="w-full flex flex-row justify-evenly"
-                onClick={() => setGeneratePlanButtonState(true)}>
-                <span>Generate all content</span>
-              </Button>
+              <div className="flex flex-col gap-2 w-full">
+                <Button
+                  variant={"outline"}
+                  className="w-full flex flex-row justify-evenly"
+                  onClick={regeneratePlan}>
+                  <span>Regenerate plan</span>
+                </Button>
+                <Button
+                  className="w-full flex flex-row justify-evenly"
+                  onClick={() => setGeneratePlanButtonState(true)}>
+                  <span>Generate all content</span>
+                </Button>
+              </div>
             </>
           )}
         </>

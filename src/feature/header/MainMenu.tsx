@@ -28,7 +28,7 @@ export default function MainMenu(props:MenuProps) {
               className={`${
                 pathname === link.url
                   ? "special-uderline-active"
-                  : "text-app-900 special-uderline"
+                  : "special-uderline"
               } nunderline`}>
               {link.name}
             </Link>

@@ -36,20 +36,20 @@ export const Navbar = async () => {
                 /> */}
               </span>
               <span>Fastuff</span>
-              <sup className="mt-1 ml-2 text-sm text-secondary">ai</sup>
+              <sup className="mt-1 ml-2 text-sm text-secondary/60">ai</sup>
             </span>
           </Link>
           <div className="flex gap-x-2 md:order-2 items-center lg:text-base">
             <div className="flex items-center gap-x-2">
               <Link href="/raconter-ses-memoires/tarifs">
                 <Button
-                  className="px-4 font-bold text-base text-app-900 dark:text-app-100"
+                  className="px-4 font-bold text-base"
                   variant="ghost"
                   size={"lg"}>
                   <FontAwesomeIcon
                     icon={faCube}
                     beat
-                    className="mr-2  text-secondary"
+                    className="mr-2  text-secondary-foreground"
                   />
                   Try us for free !
                 </Button>

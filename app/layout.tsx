@@ -9,7 +9,7 @@ import { Inter } from "next/font/google";
 import { Session } from "next-auth";
 import dynamic from "next/dynamic";
 import { Navbar } from "@/src/feature/Navbar";
-import { Bitter, Caveat, Nunito } from "next/font/google";
+import { Playfair_Display, Caveat, Nunito } from "next/font/google";
 import { GlobalContextProvider } from "./Context/store";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -19,7 +19,7 @@ const sans = Nunito({
   display: "swap",
   variable: "--font-sans",
 });
-const serif = Bitter({
+const serif = Playfair_Display({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-serif",

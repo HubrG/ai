@@ -37,10 +37,10 @@ export default async function GeneratePdfId({
             <li className="inline-flex items-center">
               <Link
                 href="/"
-                className="inline-flex items-center text-sm font-medium text-app-700 hover:text-blue-600 dark:text-app-400 dark:hover:text-white">
+                className="inline-flex items-center text-sm font-medium ">
                 <FontAwesomeIcon
                   icon={faHome}
-                  className="rtl:rotate-180 w-3 h-3 -mt-0.5 text-app-400 mx-2"
+                  className="rtl:rotate-180 w-3 h-3 -mt-0.5 mx-2"
                 />
                 Home
               </Link>
@@ -49,11 +49,11 @@ export default async function GeneratePdfId({
               <div className="flex items-center">
                 <FontAwesomeIcon
                   icon={faArrowRight}
-                  className="rtl:rotate-180 w-3 h-3 text-app-400 mx-1"
+                  className="rtl:rotate-180 w-3 h-3  mx-1"
                 />
                 <Link
                   href="/ai/pdf"
-                  className="ms-1 text-sm font-medium text-app-700 hover:text-blue-600 md:ms-2 dark:text-app-400 dark:hover:text-white">
+                  className="ms-1 text-sm font-medium ">
                   PDF Projects
                 </Link>
               </div>
@@ -62,9 +62,9 @@ export default async function GeneratePdfId({
               <div className="flex items-center">
                 <FontAwesomeIcon
                   icon={faArrowRight}
-                  className="rtl:rotate-180 w-3 h-3 text-app-400 mx-1"
+                  className="rtl:rotate-180 w-3 h-3  mx-1"
                 />
-                <span className="ms-1 text-sm font-medium text-app-500 md:ms-2 dark:text-app-400">
+                <span className="ms-1 text-sm font-medium md:ms-2 ">
                   {pdf.title !== "" ? pdf.title : "Untitled project"}
                 </span>
               </div>

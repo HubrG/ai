@@ -19,6 +19,8 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { faMarkdown } from "@fortawesome/free-brands-svg-icons";
 import Showdown from "showdown";
+import { Button } from "@/components/ui/button";
+import { Tooltip } from "react-tooltip";
 
 const converter = new Showdown.Converter();
 //
@@ -33,10 +35,15 @@ export default function DownloadButton({
 }) {
   return (
     <Popover>
-      <PopoverTrigger disabled={disabled ? true : false}>
-        <div className={`shadcnButton-default bg-opacity-30 ${disabled ? "opacity-30 hover:bg-opacity-50" : ""}`} >
-          <FontAwesomeIcon icon={faDownload} />
-        </div>
+      <PopoverTrigger
+        disabled={disabled ? true : false}
+        data-tooltip-id="downloadButtonTooltip">
+        <>
+          <Button disabled={disabled} variant={"default"}>
+            <FontAwesomeIcon icon={faDownload} />
+          </Button>
+          <Tooltip id="downloadButtonTooltip" className="tooltip" opacity={1} place="bottom">Download</Tooltip>
+        </>
       </PopoverTrigger>
       <PopoverContent>
         <div

@@ -81,7 +81,7 @@ const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
               </div>
               <div className="progressTokenVoid"></div>
             </div>
-            <Tooltip id="remainingTooltip" classNameArrow="hidden" variant="dark" className="tooltip flex flex-col">
+            <Tooltip id="remainingTooltip" opacity={1} classNameArrow="hidden" variant="dark" className="tooltip flex flex-col">
               <span className="font-bold">Remaining credits : {tokenPercentage <= 0 ? 0 : tokenPercentage.toFixed(1)}%</span>
               <small>
                 {tokenRemainingDisplay <= 0 ? 0 : tokenRemainingDisplay}

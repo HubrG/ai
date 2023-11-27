@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import {
   faCirclePlus,
   faSparkles,
-  faWandMagicSparkles,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import { SelectModelGPT } from "../../components/SelectGPTModel";
 import { SelectPersonality } from "../../components/SelectPersonality";
 import { SelectLength } from "../../components/SelectLength";
 import { Tooltip } from "react-tooltip";
+import { PopoverClose } from "@radix-ui/react-popover";
 
 type EditPartOfPdfButtonProps = {
   type: "plan" | "content";
@@ -40,6 +40,8 @@ type EditPartOfPdfButtonProps = {
   onRefresh: any;
   maxTokens: number;
   createVoidContent?: boolean;
+  // fonction boolean
+  loadingRefreshPart?: (loading: boolean, type: string, id: string) => void;
 };
 
 export const EditPartOfPdfButton = ({
@@ -62,7 +64,9 @@ export const EditPartOfPdfButton = ({
   onRefresh,
   maxTokens,
   createVoidContent,
+  loadingRefreshPart,
 }: EditPartOfPdfButtonProps) => {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
   const [gptModel, setGptModel] = useState<string>(gptModelInit);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     langInit as LanguageCode
@@ -76,6 +80,7 @@ export const EditPartOfPdfButton = ({
     useState(personalityValueInit);
   const [selectedLengthValue, setSelectedLengthValue] =
     useState(lengthValueInit);
+  const [loadingRefreshState, setLoadingRefresh] = useState(false);
   type LanguageCode = keyof typeof languageList;
 
   const handleLanguageChange = async (language: LanguageCode) => {
@@ -118,6 +123,7 @@ export const EditPartOfPdfButton = ({
   });
 
   const update = async () => {
+    loadingRefreshPart?.(true, type, id);
     try {
       const response = await fetch("/api/pdfcreator/updateContent", {
         method: "POST",
@@ -145,9 +151,11 @@ export const EditPartOfPdfButton = ({
         throw new Error(`API call failed: ${response.statusText}`);
       }
       onRefresh();
+      loadingRefreshPart?.(false, type, id);
       // router.refresh();
       return await response.json();
     } catch (error) {
+      loadingRefreshPart?.(false, type, id);
       console.error("Error calling other API:", error);
       return null;
     }
@@ -177,13 +185,13 @@ export const EditPartOfPdfButton = ({
     <div
       className={`${
         !createVoidContent && "absolute right-full top-1"
-      } rounded-lg cursor-pointer dark:text-app-400 text-app-400  hover:text-app-500  dark:hover:text-app-300 px-3 pt-0.5`}>
+      } rounded-lg cursor-pointer  px-3 pt-0.5`}>
       <Popover>
         <PopoverTrigger asChild>
           {createVoidContent ? (
             <Button
               variant={"ghost"}
-              className="w-full flex flex-row justify-center gap-2 items-center"
+              className="w-full flex flex-row justify-center gap-2 items-center text-primary-foreground/60"
               size={"sm"}>
               <FontAwesomeIcon icon={faCirclePlus} /> Create content for this
               point
@@ -193,13 +201,16 @@ export const EditPartOfPdfButton = ({
               variant={"ghost"}
               size={"sm"}
               className="-mt-2"
-              data-tooltip-id={`sparkleTooltip${type}${id}`}>
+                data-tooltip-id={`sparkleTooltip${type}${id}`}
+                onMouseEnter={() => setIsTooltipOpen(true)}
+                onMouseLeave={() => setIsTooltipOpen(false)}
+              >
               <FontAwesomeIcon icon={faSparkles} />
             </Button>
           )}
         </PopoverTrigger>
-        <PopoverContent className="w-80 flex flex-col gap-2 dark:bg-app-950 border-none shadow-2xl">
-          <p className="font-bold text-base">
+        <PopoverContent className="w-80 flex flex-col gap-2  bg-background shadow-2xl border-0 shadow-secondary/20 dark:shadow-primary">
+          <p className="font-bold text-base text-accent-foreground/80">
             {createVoidContent ? "Generate " : "Rewrite "}
             {type === "plan" ? "this point of the plan" : "this content"}
           </p>
@@ -230,15 +241,28 @@ export const EditPartOfPdfButton = ({
               selectedLengthInit={selectedLength}
             />
           )}
-          <Button onClick={update}>
+
+          <Button
+            onClick={() => {
+              update();
+              document.getElementById(`closePopover${type}${id}`)?.click();
+            }}
+            variant={"default"}>
             {createVoidContent ? "Generate content for this point" : "Rewrite"}
           </Button>
         </PopoverContent>
+        <PopoverClose>
+          <span id={`closePopover${type}${id}`}></span>
+        </PopoverClose>
       </Popover>
+
       <Tooltip
         id={`sparkleTooltip${type}${id}`}
         classNameArrow="hidden"
         variant="dark"
+        opacity={1}
+        isOpen={isTooltipOpen}
+       
         className="tooltip flex flex-col">
         <span className="font-bold">Rewrite this content</span>
         You can rewrite this content with a different tone, personality or

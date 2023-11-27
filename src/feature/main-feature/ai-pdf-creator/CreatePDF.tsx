@@ -59,9 +59,10 @@ import {
 import { Tooltip } from "react-tooltip";
 import { GenerateButton } from "./components/GenerateButton";
 // TODO --> pouvoir modifier un titre / content en tapant dans une input
-// TODO --> NE pas pouvoir lanver de génération si nombre de tokens insuffisants
 // TODO --> Ajouter des options (sur le contenu) : racourcir / rallonger
 // TODO --> Afficher un selecteur permettant de naviguer dans le PDF
+// TODO --> NE paspouvoir lanver de génération si nombre de tokens insuffisants
+// TODO --> Afficher des Toasts selon les erreurs
 // TYPES
 interface Plan {
   id: string;
@@ -126,7 +127,7 @@ type PdfCreatorProps = {
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
   // SECTION --> States
-  const maxTokens = 200;
+  const maxTokens = 100;
   const counter = new Counting();
   const pdfId = params.id;
   const router = useRouter();
@@ -696,7 +697,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   ]);
   // IMPORTANT --> Content generation trigger
   useEffect(() => {
-    if ((generatePlanDone && activateAutomaticContent) || generatePlanButton) {
+    if (generatePlanDone && activateAutomaticContent) {
       setLoading(true);
       setWhatInProgress("content");
       const apiCalls = createdPlans.map((plan) =>
@@ -773,31 +774,49 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     plansWithAllVersions,
     contentsWithAllVersions,
   ]);
+
+  const [loadingRefreshPart, setLoadingRefreshPart] = useState<{
+    loading: boolean;
+    type: string;
+    id: string;
+  }>({
+    loading: false,
+    type: "",
+    id: "",
+  });
+
+  const handleLoadingRefreshPart = (
+    loading: boolean,
+    type: string,
+    id: string
+  ) => {
+    setLoadingRefreshPart({ loading, type, id });
+  };
   // SECTION --> Return
   return (
     <>
-      <div className="flex md:flex-row items-start flex-col w-full gap-5">
+      <div className="flex md:flex-row items-start flex-col w-full gap-5 -mt-7">
         {!init ? (
           <>
+            {/* ELEMENT --> Side */}
+            {Object.keys(chapterContent).length > 0 && !loading && (
+              <Tooltip
+                id="PDFForbidden"
+                className="tooltip"
+                noArrow={true}
+                place="top"
+                opacity={1}>
+                Your PDF has already been generated. If you wish to regenerate
+                it please create a new project.
+              </Tooltip>
+            )}
             <div
               data-tooltip-id="PDFForbidden"
-              className={`md:w-3/12 sticky md:top-24 top-32 dark:bg-transparent dark:border bg-app-100 w-full h-auto py-5 p-3 rounded-lg z-0`}>
-              {Object.keys(chapterContent).length > 0 && !loading && (
-                <Tooltip
-                  id="PDFForbidden"
-                  className="tooltip info"
-                  noArrow
-                  place="top"
-                  opacity={1}>
-                  Your PDF has already been generated. If you wish to regenerate
-                  it please create a new project.
-                </Tooltip>
-              )}
+              className={`md:w-3/12 sticky md:top-24  top-32  border  w-full h-auto mt-5 py-5 p-3 rounded-lg z-0`}>
               <div
-                data-tooltip-id="PDFForbidden"
-                className={`flex flex-col items-center gap-5 flex-wrap h-auto ${
+                className={`flex flex-col  items-center gap-5 flex-wrap h-auto ${
                   Object.keys(chapterContent).length > 0 && whatInProgress == ""
-                    ? "opacity-50 pointer-events-none"
+                    ? "opacity-70 pointer-events-none"
                     : ""
                 }`}>
                 <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -807,7 +826,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     Subject of your PDF
                   </Label>
                   <Input
-                    className={`h-12 text-base font-semibold ${!loading && createdPlans.length > 0 && "disabled:opacity-100"}`}
+                    className={`h-12 text-base font-semibold ${
+                      !loading &&
+                      createdPlans.length > 0 &&
+                      "disabled:opacity-70"
+                    }`}
                     id="subject"
                     disabled={loading || createdPlans.length > 0 ? true : false}
                     placeholder="Your subject, any..."
@@ -891,7 +914,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                 </div>
                 <div className="flex items-center justify-between w-full mb-2 space-x-2">
                   <Switch
-                    disabled={loading}
+                    disabled={loading || createdPlans.length > 0 ? true : false}
                     id="activeGenerateContent"
                     checked={activateAutomaticContent}
                     onCheckedChange={(checked) => {
@@ -926,7 +949,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                   </div>
                 </div>
                 <div className="flex w-full flex-row gap-x-2">
-                  {/* ELEMENT : Generate Button */}
+                  {/* ELEMENT --> Generate Button */}
                   <GenerateButton
                     whatInProgress={whatInProgress}
                     createdPlans={createdPlans.length}
@@ -941,58 +964,87 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                 </div>
               </div>
             </div>
-            <div className="md:w-9/12 w-full z-30">
-              <div className="rounded-xl  bg-opacity-70  shadow-xl  transition grid grid-cols-1 gap-x-2 items-start mb-10">
-                <div className="rounded-t-xl p-2 py-3 mb-2 md:shadow-none shadow-t-md flex flex-row justify-between gap-x-2 dark:bg-app-700 bg-app-100 items-center border-b border-white dark:border-app-900">
+            {/* ELEMENT --> Text window */}
+            <div className="md:w-9/12 w-full bg-background z-30">
+              <div className="rounded-xl   transition grid grid-cols-1 gap-x-2 items-start mb-10">
+                <div className="rounded-t-xl pb-5 mb-2 md:shadow-none sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
                   <div className="flex flex-row gap-2">
                     <DownloadButton
                       allContent={allContent}
                       subject={subject}
                       disabled={createdPlans.length === 0}
                     />
-                    <div className="p-2 border text-sm py-2.5 border-app-300 dark:border-app-800 dark:bg-app-800 bg-app-100  self-end rounded-lg flex flex-row gap-x-3">
+                    <div className="p-2 text-sm py-2.5 bg-background select-none cursor-default  self-end rounded-lg flex flex-row gap-x-3">
                       <div data-tooltip-id="countWordTooltip">
                         <FontAwesomeIcon icon={faSignature} />
-                        &nbsp;
-                        {counter.countWords(allContent)} w.
+                        <span className="max-md:hidden">
+                          &nbsp;
+                          {counter.countWords(allContent)} w.
+                        </span>
                         <Tooltip
                           opacity={1}
                           id="countWordTooltip"
-                          className="tooltip ">
+                          className="tooltip "
+                          place="bottom">
                           <strong>Words</strong>
+                          <span className="md:hidden block">
+                            &nbsp;
+                            {counter.countWords(allContent)} w.
+                          </span>
                         </Tooltip>
                       </div>
                       <div data-tooltip-id="readingTimeTooltip">
                         <FontAwesomeIcon icon={faFaceGlasses} />{" "}
-                        {counter.countReadingTime(allContent, "format")}
+                        <span className="max-md:hidden">
+                          {counter.countReadingTime(allContent, "format")}
+                        </span>
                         <Tooltip
                           opacity={1}
                           id="readingTimeTooltip"
-                          className="tooltip ">
+                          className="tooltip "
+                          place="bottom">
                           <strong>Reading time</strong>
+                          <span className="md:hidden block">
+                            {counter.countReadingTime(allContent, "format")}
+                          </span>
                         </Tooltip>
                       </div>
                       <div data-tooltip-id="totalCharactersTooltip">
                         <FontAwesomeIcon icon={faICursor} />
-                        &nbsp;{counter.countCharacters(allContent)}
+                        <span className="max-md:hidden">
+                          &nbsp;{counter.countCharacters(allContent)}
+                        </span>
                         <Tooltip
                           opacity={1}
                           id="totalCharactersTooltip"
-                          className="tooltip ">
+                          className="tooltip "
+                          place="bottom">
                           <strong>Characters</strong>
+                          <span className="md:hidden block">
+                            &nbsp;{counter.countCharacters(allContent)}
+                          </span>
                         </Tooltip>
                       </div>
                       <div data-tooltip-id="totalPagesTooltip">
                         <FontAwesomeIcon icon={faFiles} />
-                        &nbsp;
-                        {counter.countPages(allContent) > 1
-                          ? counter.countPages(allContent) + " pages"
-                          : counter.countPages(allContent) + " page"}
+                        <span className="max-md:hidden">
+                          &nbsp;
+                          {counter.countPages(allContent) > 1
+                            ? counter.countPages(allContent) + " pages"
+                            : counter.countPages(allContent) + " page"}
+                        </span>
                         <Tooltip
                           opacity={1}
                           id="totalPagesTooltip"
-                          className="tooltip ">
+                          className="tooltip"
+                          place="bottom">
                           <strong>Pages (approximately)</strong>
+                          <span className="block md:hidden">
+                            &nbsp;
+                            {counter.countPages(allContent) > 1
+                              ? counter.countPages(allContent) + " pages"
+                              : counter.countPages(allContent) + " page"}
+                          </span>
                         </Tooltip>
                       </div>
                     </div>
@@ -1005,9 +1057,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                       />
                       <Tooltip
                         id="totalTokenSpentToolTip"
-                        classNameArrow="hidden"
                         variant="dark"
-                        className="tooltip ">
+                        className="tooltip "
+                        place="bottom"
+                        opacity={1}>
                         <strong>
                           {tokenSpentForThisProject
                             ? tokenSpentForThisProject.totalToken
@@ -1023,9 +1076,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                       />
                       <Tooltip
                         id="totalTokenSpentInputTooltip"
-                        classNameArrow="hidden"
                         variant="dark"
-                        className="tooltip ">
+                        className="tooltip "
+                        place="bottom"
+                        opacity={1}>
                         <strong>
                           {tokenSpentForThisProject
                             ? tokenSpentForThisProject.totalTokenInput
@@ -1041,9 +1095,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                       />
                       <Tooltip
                         id="totalTokenSpentOutputTooltip"
-                        classNameArrow="hidden"
                         variant="dark"
-                        className="tooltip ">
+                        className="tooltip "
+                        place="bottom"
+                        opacity={1}>
                         <strong>
                           {tokenSpentForThisProject
                             ? tokenSpentForThisProject.totalTokenOutput
@@ -1093,14 +1148,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     </div>
                   ))}
                 </div>
-                <div className="py-5 -mt-2 overflow-y-auto  px-14 pr-20 rounded-b-xl max-h-[71vh] bg-app-50 dark:bg-app-900">
+                <div className="py-5 -mt-2 md:px-14 px-5 md:pr-20 rounded-b-xl ">
                   <article className="">
                     {createdPlans.length === 0 && (
-                      <div className="text-center w-full border-2 p-5 border-app-200 bg-white dark:bg-app-800 my-5 rounded-lg border-dashed dark:border-app-900 ">
+                      <div className="text-center w-full border-2 md:p-5 p-2  my-5 rounded-lg border-dashed  ">
                         <p className="text-center ">
-                          <span className="opacity-70">
-                            Fill out the form and widen your eyes...
-                          </span>{" "}
+                          <span>Fill out the form and widen your eyes...</span>{" "}
                           🤩
                         </p>
                       </div>
@@ -1133,7 +1186,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                           <div key={plan.id} className="space-y-4">
                             <div className="relative">
                               <div
-                                className="text-left"
+                                className={`text-left ${
+                                  loadingRefreshPart.id === plan.id &&
+                                  loadingRefreshPart.loading &&
+                                  loadingRefreshPart.type === "plan" &&
+                                  "opacity-80  blur-sm select-none"
+                                }`}
                                 dangerouslySetInnerHTML={{
                                   __html: markdownToHtml(
                                     plan.planLevel + " " + plan.planTitle
@@ -1141,9 +1199,21 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                 }}
                               />
                               <div
+                                className={`
+                                  absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
+                                  ${
+                                    loadingRefreshPart.id === plan.id &&
+                                    loadingRefreshPart.loading &&
+                                    loadingRefreshPart.type === "plan"
+                                      ? "block"
+                                      : "hidden"
+                                  }`}>
+                                <Loader />
+                              </div>
+                              <div
                                 className={`${
                                   loading && "hidden"
-                                } flex flex-col absolute md:-right-14 -right-[4.2rem] top-3`}>
+                                } pdfNavigationButton`}>
                                 <div className="flex flex-row gap-0.5">
                                   <FontAwesomeIcon
                                     icon={faCircleChevronLeft}
@@ -1211,6 +1281,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                   idRef={plan.idRef}
                                   onRefresh={handleRefresh}
                                   maxTokens={maxTokens}
+                                  createVoidContent={false}
+                                  loadingRefreshPart={handleLoadingRefreshPart}
                                 />
                               )}
                             </div>
@@ -1222,51 +1294,90 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                 </div>
                               )}
                             {/* NOTE : Si un contenu n'a pas été créé */}
-                            {!chapterContent[plan.id] && !loading && (
-                              <>
-                                <div className="mb-5">
-                                  <EditPartOfPdfButton
-                                    type="content"
-                                    id={plan.id}
-                                    toneInit={
-                                      !plan.tone
-                                        ? selectedTone
-                                        : toneToKey(plan.tone) || selectedTone
-                                    }
-                                    lengthInit={selectedLength}
-                                    personalityInit={
-                                      !plan.personality
-                                        ? selectedPersonality
-                                        : personalityToKey(plan.personality) ||
-                                          selectedPersonality
-                                    }
-                                    gptModelInit={gptModel}
-                                    langInit={
-                                      plan.lang ? plan.lang : selectedLanguage
-                                    }
-                                    lengthValueInit={selectedLengthValue}
-                                    toneValueInit={selectedToneValue}
-                                    personalityValueInit={
-                                      selectedPersonalityValue
-                                    }
-                                    valueInit={plan.planTitle}
-                                    plan={createdPlans}
-                                    subject={subject}
-                                    pdfId={pdfId}
-                                    planLevel={plan.planLevel}
-                                    idRef={plan.idRef}
-                                    onRefresh={handleRefresh}
-                                    maxTokens={maxTokens}
-                                    createVoidContent={true}
-                                  />
-                                </div>
-                              </>
-                            )}
+                            {!chapterContent[plan.id] &&
+                              !activeContent &&
+                              !loading && (
+                                <>
+                                  <div className="relative">
+                                    <div className="mb-5 h-auto relative">
+                                      <div
+                                        className={`
+                                          absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
+                                          ${
+                                            loadingRefreshPart.id === plan.id &&
+                                            loadingRefreshPart.loading &&
+                                            loadingRefreshPart.type ===
+                                              "content"
+                                              ? "block"
+                                              : "hidden"
+                                          }`}>
+                                        <Loader />
+                                      </div>
+                                      <div
+                                        className={` ${
+                                          loadingRefreshPart.id === plan.id &&
+                                          loadingRefreshPart.loading &&
+                                          loadingRefreshPart.type === "content"
+                                            ? "blur-sm select-none"
+                                            : ""
+                                        }`}>
+                                        <EditPartOfPdfButton
+                                          type="content"
+                                          id={plan.id}
+                                          toneInit={
+                                            !plan.tone
+                                              ? selectedTone
+                                              : toneToKey(plan.tone) ||
+                                                selectedTone
+                                          }
+                                          lengthInit={selectedLength}
+                                          personalityInit={
+                                            !plan.personality
+                                              ? selectedPersonality
+                                              : personalityToKey(
+                                                  plan.personality
+                                                ) || selectedPersonality
+                                          }
+                                          gptModelInit={gptModel}
+                                          langInit={
+                                            plan.lang
+                                              ? plan.lang
+                                              : selectedLanguage
+                                          }
+                                          lengthValueInit={selectedLengthValue}
+                                          toneValueInit={selectedToneValue}
+                                          personalityValueInit={
+                                            selectedPersonalityValue
+                                          }
+                                          valueInit={plan.planTitle}
+                                          plan={createdPlans}
+                                          subject={subject}
+                                          pdfId={pdfId}
+                                          planLevel={plan.planLevel}
+                                          idRef={plan.idRef}
+                                          onRefresh={handleRefresh}
+                                          maxTokens={maxTokens}
+                                          createVoidContent={true}
+                                          loadingRefreshPart={
+                                            handleLoadingRefreshPart
+                                          }
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             {(chapterContent[plan.idRef as string] ||
                               chapterContent[plan.id as string]) && (
                               <div className="relative group">
                                 {activeContent && (
                                   <div
+                                    className={`text-left ${
+                                      loadingRefreshPart.id === plan.id &&
+                                      loadingRefreshPart.loading &&
+                                      loadingRefreshPart.type === "content" &&
+                                      "opacity-80  blur-sm select-none"
+                                    }`}
                                     dangerouslySetInnerHTML={{
                                       __html: markdownToHtml(
                                         activeContent.planContent
@@ -1274,11 +1385,23 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     }}
                                   />
                                 )}
+                                <div
+                                  className={`
+                                  absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
+                                  ${
+                                    loadingRefreshPart.id === plan.id &&
+                                    loadingRefreshPart.loading &&
+                                    loadingRefreshPart.type === "content"
+                                      ? "block"
+                                      : "hidden"
+                                  }`}>
+                                  <Loader />
+                                </div>
                                 {/* Boutons pour naviguer entre les versions du contenu */}
                                 <div
                                   className={`${
                                     loading && "hidden"
-                                  } flex flex-col absolute md:-right-14 -right-[4.2rem] top-3`}>
+                                  } pdfNavigationButton`}>
                                   <div className="flex flex-row gap-0.5">
                                     <FontAwesomeIcon
                                       icon={faCircleChevronLeft}
@@ -1362,12 +1485,15 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     idRef={plan.idRef}
                                     onRefresh={handleRefresh}
                                     maxTokens={maxTokens}
+                                    loadingRefreshPart={
+                                      handleLoadingRefreshPart
+                                    }
                                   />
                                 )}
                               </div>
                             )}
                           </div>
-                          <Separator className={`dark:bg-app-800 mt-5 mb-0`} />
+                          <Separator className={`dark:bg-border mt-5 mb-0`} />
                         </>
                       );
                     })}
@@ -1377,7 +1503,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex flex-col justify-center items-center">
+          <div className="w-full h-[80vh] flex  flex-col justify-center items-center">
             <Loader />
             <p className="text-center">Project loading...</p>
           </div>
