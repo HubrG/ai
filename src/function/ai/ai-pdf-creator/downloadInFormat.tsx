@@ -1,6 +1,6 @@
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import htmlToPdfmake from "html-to-pdfmake";
+// import pdfMake from "pdfmake/build/pdfmake";
+// import pdfFonts from "pdfmake/build/vfs_fonts";
+// import htmlToPdfmake from "html-to-pdfmake";
 import {
   Document,
   TextRun,
@@ -14,52 +14,52 @@ import { saveAs } from "file-saver";
 import Showdown from "showdown";
 const converter = new Showdown.Converter();
 
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-pdfMake.fonts = {
-  Nunito: {
-    normal: "./Nunito-Regular.ttf",
-    bold: "./Nunito-Regular.ttf",
-    italics: "./Nunito-Regular.ttf",
-    bolditalics: "./Nunito-Regular.ttf",
-  },
+// pdfMake.fonts = {
+//   Nunito: {
+//     normal: "./Nunito-Regular.ttf",
+//     bold: "./Nunito-Regular.ttf",
+//     italics: "./Nunito-Regular.ttf",
+//     bolditalics: "./Nunito-Regular.ttf",
+//   },
 
-  // download default Roboto font from cdnjs.com
-  Roboto: {
-    normal:
-      "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf",
-    bold: "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf",
-    italics:
-      "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf",
-    bolditalics:
-      "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf",
-  },
-};
+//   // download default Roboto font from cdnjs.com
+//   Roboto: {
+//     normal:
+//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf",
+//     bold: "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf",
+//     italics:
+//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf",
+//     bolditalics:
+//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf",
+//   },
+// };
 
-export const downloadPdf = (htmlContent: string, title: string) => {
-  // Crée une nouvelle version du contenu HTML avec des IDs uniques
-  let newHtmlContent = htmlContent;
-  const idRegex = /id="[^"]+"/g; // Regex pour trouver tous les attributs id
-  let match;
-  let idCount = 0;
+// export const downloadPdf = (htmlContent: string, title: string) => {
+//   // Crée une nouvelle version du contenu HTML avec des IDs uniques
+//   let newHtmlContent = htmlContent;
+//   const idRegex = /id="[^"]+"/g; // Regex pour trouver tous les attributs id
+//   let match;
+//   let idCount = 0;
 
-  // Remplace chaque id par un id unique
-  while ((match = idRegex.exec(htmlContent)) !== null) {
-    const originalId = match[0]; // ex: id="hackdegnie"
-    const uniqueId = `id="unique${idCount++}"`; // ex: id="unique0"
-    newHtmlContent = newHtmlContent.replace(originalId, uniqueId);
-  }
+//   // Remplace chaque id par un id unique
+//   while ((match = idRegex.exec(htmlContent)) !== null) {
+//     const originalId = match[0]; // ex: id="hackdegnie"
+//     const uniqueId = `id="unique${idCount++}"`; // ex: id="unique0"
+//     newHtmlContent = newHtmlContent.replace(originalId, uniqueId);
+//   }
 
-  const documentDefinition = {
-    content: htmlToPdfmake(newHtmlContent),
+//   const documentDefinition = {
+//     content: htmlToPdfmake(newHtmlContent),
 
-    defaultStyle: {
-      font: "Roboto",
-    },
-  };
+//     defaultStyle: {
+//       font: "Roboto",
+//     },
+//   };
 
-  pdfMake.createPdf(documentDefinition).download(title + ".pdf");
-};
+//   pdfMake.createPdf(documentDefinition).download(title + ".pdf");
+// };
 
 export const downloadMarkdown = (markdownContent: string, filename: string) => {
   // Créer un élément d'ancrage

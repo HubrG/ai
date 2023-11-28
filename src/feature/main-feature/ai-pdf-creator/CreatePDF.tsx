@@ -14,6 +14,7 @@ import {
   updatePlanIsSelected,
   updateContentIsSelected,
   deletePlan,
+  getTokenRequired,
 } from "./utils.server";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
@@ -29,12 +30,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCircleChevronLeft,
   faCircleChevronRight,
+  faCompassDrafting,
   faLanguage,
 } from "@fortawesome/pro-solid-svg-icons";
 import {
   faCoinBlank,
   faCoinVertical,
   faCoins,
+  faCompass,
   faFaceGlasses,
   faFiles,
   faICursor,
@@ -58,11 +61,20 @@ import {
 } from "@/src/function/tokensSpentByProject";
 import { Tooltip } from "react-tooltip";
 import { GenerateButton } from "./components/GenerateButton";
+import { tokenRequired } from "@prisma/client";
+import { Toastify } from "@/src/toastify/Toastify";
+import { isAuthorized } from "@/src/function/ai/ai-pdf-creator/isAuthorized";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PopoverClose } from "@radix-ui/react-popover";
 // TODO --> pouvoir modifier un titre / content en tapant dans une input
 // TODO --> Ajouter des options (sur le contenu) : racourcir / rallonger
-// TODO --> Afficher un selecteur permettant de naviguer dans le PDF
-// TODO --> NE paspouvoir lanver de génération si nombre de tokens insuffisants
-// TODO --> Afficher des Toasts selon les erreurs
+// FIX --> Problème « génération all content » une fois le plan généré
 // TYPES
 interface Plan {
   id: string;
@@ -167,13 +179,28 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [selectedPersonalityValue, setSelectedPersonalityValue] =
     useState("Deep Thinker");
   const [selectedLengthValue, setSelectedLengthValue] = useState("Medium");
+  const [tokenRequired, setTokenRequired] = useState<tokenRequired[]>();
   //
+
   // SECTION --> Functions
   const converter = useMemo(() => {
     return new Showdown.Converter();
   }, []);
-
+  const scrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   const setGeneratePlanButtonState = (newState: boolean) => {
+    // Vérifier si l'utilisateur a assez de jetons pour générer un plan
+    const authorize = isAuthorized(tokenRequired, user, "pdf-content");
+    if (!authorize) {
+      return Toastify({
+        value: "You don't have enough credits to generate all content",
+        type: "error",
+      });
+    }
     setGeneratePlanButton(newState);
   };
 
@@ -347,11 +374,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     setGptModel(modelValue);
   };
 
-  const handleRefresh = () => {
-    fetchPdf();
-    updateContextTokenRemaining();
-  };
-
   const navigatePlanVersion = async (
     planKey: string,
     direction: "prev" | "next"
@@ -439,6 +461,10 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const fetchPdf = useCallback(async () => {
     try {
       const pdfCreatorObject = await getPdfPlanAndContent(params.id);
+      const tokenReq = await getTokenRequired();
+      if (tokenReq) {
+        setTokenRequired(tokenReq.map((token) => token));
+      }
 
       if (pdfCreatorObject && pdfCreatorObject.pdfPlan) {
         const plansWithAllVersions: PlansWithAllVersions = {};
@@ -524,8 +550,23 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       console.error("Error fetching plans:", error);
     }
   }, [params.id]);
+
+  const handleRefresh = useCallback(() => {
+    fetchPdf();
+    updateContextTokenRemaining();
+  }, [fetchPdf, updateContextTokenRemaining]);
+
   // IMPORTANT --> Plan generate
   const generatePlan = async () => {
+    // Vérifier si l'utilisateur a assez de jetons pour générer un plan
+    const authorize = isAuthorized(tokenRequired, user, "pdf-plan");
+    if (!authorize) {
+      return Toastify({
+        value: "You don't have enough credits to generate a plan",
+        type: "error",
+      });
+    }
+    // Si oui, on génère le plan
     const controller = new AbortController();
     setAbortControllers((prev) => [...prev, controller]);
 
@@ -612,8 +653,16 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       }
       if (done) {
         updateContextTokenRemaining();
-        setGeneratePlanDone(true);
         setWhatInProgress("");
+        // Vérifier si l'utilisateur a assez de jetons pour générer un plan
+        const authorize = isAuthorized(tokenRequired, user, "pdf-content");
+        if (!authorize) {
+          return Toastify({
+            value: "You don't have enough credits to generate a content",
+            type: "error",
+          });
+        }
+        setGeneratePlanDone(true);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -630,6 +679,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   // IMPORTANT --> Content generate
   const generateContent = useCallback(
     async (title: string, pdfId: string) => {
+      const authorize = isAuthorized(tokenRequired, user, "pdf-content");
+      if (!authorize) {
+        return Toastify({
+          value: "You don't have enough credits to generate all content",
+          type: "error",
+        });
+      }
       const controller = new AbortController();
       setAbortControllers((prev) => [...prev, controller]); // Ajouter le nouveau contrôleur
       try {
@@ -668,6 +724,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       selectedLengthValue,
       selectedPersonalityValue,
       gptModel,
+      user,
+      tokenRequired,
     ]
   );
   // SECTION --> useEffects
@@ -728,7 +786,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                 planContent: newContent,
               },
             };
-
+            updateContextTokenRemaining();
             setContentsWithAllVersions((prev) => ({
               ...prev,
               [plan.id]: contentsWithAllVersions,
@@ -739,6 +797,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
       Promise.all(apiCalls)
         .then(() => {
+          handleRefresh;
           setLoading(false);
           setWhatInProgress("");
           setGeneratePlanDone(false);
@@ -761,6 +820,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     activateAutomaticContent,
     generatePlanButton,
     router,
+    handleRefresh,
+    updateContextTokenRemaining,
   ]);
 
   useEffect(() => {
@@ -960,6 +1021,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     generatePlan={generatePlan}
                     loading={loading}
                     disabled={subject ? false : true}
+                    // tokenRemaining={user?.tokenRemaining ?? 0}
                   />
                 </div>
               </div>
@@ -968,13 +1030,63 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             <div className="md:w-9/12 w-full bg-background z-30">
               <div className="rounded-xl   transition grid grid-cols-1 gap-x-2 items-start mb-10">
                 <div className="rounded-t-xl pb-5 mb-2 md:shadow-none sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
-                  <div className="flex flex-row gap-2">
-                    <DownloadButton
-                      allContent={allContent}
-                      subject={subject}
-                      disabled={createdPlans.length === 0}
-                    />
-                    <div className="p-2 text-sm py-2.5 bg-background select-none cursor-default  self-end rounded-lg flex flex-row gap-x-3">
+                  <div className="flex flex-row gap-2 justify-between w-full">
+                    <div className="flex flex-row gap-2">
+                      <DownloadButton
+                        allContent={allContent}
+                        subject={subject}
+                        disabled={createdPlans.length === 0}
+                      />
+                      <Popover>
+                        <PopoverTrigger                         
+                          asChild>
+                            <div data-tooltip-id="navigateTooltip">
+                          <Button
+                            disabled={createdPlans.length === 0}
+                            variant="outline">
+                            <FontAwesomeIcon icon={faCompass} />
+                          </Button>
+                          </div>
+                        </PopoverTrigger>
+                        <PopoverContent className={`w-80 ${createdPlans.length === 0 && "hidden"}`}>
+                          <ScrollArea className="h-96 w-full flex flex-col gap-3">
+                            <div className="flex flex-col gap-2">
+                              {createdPlans.map((plan) => (
+                                <>
+                                  <a
+                                    className="pdf-navigation"
+                                    onClick={() => {
+                                      scrollToElement(plan.id);
+                                      document
+                                        .getElementById(`closePopoverSummary`)
+                                        ?.click();
+                                    }}>
+                                    <strong>{plan.planLevel}</strong>
+                                    <br />
+                                    {plan.planTitle}
+                                  </a>
+                                </>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </PopoverContent>
+                        <PopoverClose>
+                          <span id={`closePopoverSummary`}></span>
+                        </PopoverClose>
+                      </Popover>
+                      <Tooltip
+                        id="navigateTooltip"
+                        className="tooltip"
+                        opacity={1}
+                        place="bottom">
+                        <strong>Navigation</strong>
+                        <span className="block">
+                          Click on a title to navigate to the corresponding
+                          section
+                        </span>
+                      </Tooltip>
+                    </div>
+                    <div className="p-2 text-sm py-2.5 bg-background select-none cursor-default rounded-lg flex flex-row gap-x-3">
                       <div data-tooltip-id="countWordTooltip">
                         <FontAwesomeIcon icon={faSignature} />
                         <span className="max-md:hidden">
@@ -1048,70 +1160,71 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                         </Tooltip>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-2   self-end  rounded-lg flex md:flex-row gap-2">
-                    <div>
-                      <FontAwesomeIcon
-                        icon={faCoins}
-                        data-tooltip-id="totalTokenSpentToolTip"
-                      />
-                      <Tooltip
-                        id="totalTokenSpentToolTip"
-                        variant="dark"
-                        className="tooltip "
-                        place="bottom"
-                        opacity={1}>
-                        <strong>
-                          {tokenSpentForThisProject
-                            ? tokenSpentForThisProject.totalToken
-                            : 0}{" "}
-                        </strong>
-                        total credits spent
-                      </Tooltip>
-                    </div>
-                    <div>
-                      <FontAwesomeIcon
-                        icon={faCoinBlank}
-                        data-tooltip-id="totalTokenSpentInputTooltip"
-                      />
-                      <Tooltip
-                        id="totalTokenSpentInputTooltip"
-                        variant="dark"
-                        className="tooltip "
-                        place="bottom"
-                        opacity={1}>
-                        <strong>
-                          {tokenSpentForThisProject
-                            ? tokenSpentForThisProject.totalTokenInput
-                            : 0}{" "}
-                        </strong>
-                        credits spent for content analyze
-                      </Tooltip>
-                    </div>
-                    <div>
-                      <FontAwesomeIcon
-                        icon={faCoinVertical}
-                        data-tooltip-id="totalTokenSpentOutputTooltip"
-                      />
-                      <Tooltip
-                        id="totalTokenSpentOutputTooltip"
-                        variant="dark"
-                        className="tooltip "
-                        place="bottom"
-                        opacity={1}>
-                        <strong>
-                          {tokenSpentForThisProject
-                            ? tokenSpentForThisProject.totalTokenOutput
-                            : 0}
-                        </strong>{" "}
-                        credits spent for generation
-                      </Tooltip>
-                    </div>
-                    <div>
-                      {tokenSpentForThisProject
-                        ? tokenSpentForThisProject.totalCost.toFixed(3)
-                        : 0}
-                      €
+
+                    <div className="p-2   self-end  rounded-lg flex md:flex-row gap-2">
+                      <div>
+                        <FontAwesomeIcon
+                          icon={faCoins}
+                          data-tooltip-id="totalTokenSpentToolTip"
+                        />
+                        <Tooltip
+                          id="totalTokenSpentToolTip"
+                          variant="dark"
+                          className="tooltip "
+                          place="bottom"
+                          opacity={1}>
+                          <strong>
+                            {tokenSpentForThisProject
+                              ? tokenSpentForThisProject.totalToken
+                              : 0}{" "}
+                          </strong>
+                          total credits spent
+                        </Tooltip>
+                      </div>
+                      <div>
+                        <FontAwesomeIcon
+                          icon={faCoinBlank}
+                          data-tooltip-id="totalTokenSpentInputTooltip"
+                        />
+                        <Tooltip
+                          id="totalTokenSpentInputTooltip"
+                          variant="dark"
+                          className="tooltip "
+                          place="bottom"
+                          opacity={1}>
+                          <strong>
+                            {tokenSpentForThisProject
+                              ? tokenSpentForThisProject.totalTokenInput
+                              : 0}{" "}
+                          </strong>
+                          credits spent for content analyze
+                        </Tooltip>
+                      </div>
+                      <div>
+                        <FontAwesomeIcon
+                          icon={faCoinVertical}
+                          data-tooltip-id="totalTokenSpentOutputTooltip"
+                        />
+                        <Tooltip
+                          id="totalTokenSpentOutputTooltip"
+                          variant="dark"
+                          className="tooltip "
+                          place="bottom"
+                          opacity={1}>
+                          <strong>
+                            {tokenSpentForThisProject
+                              ? tokenSpentForThisProject.totalTokenOutput
+                              : 0}
+                          </strong>{" "}
+                          credits spent for generation
+                        </Tooltip>
+                      </div>
+                      <div>
+                        {tokenSpentForThisProject
+                          ? tokenSpentForThisProject.totalCost.toFixed(3)
+                          : 0}
+                        €
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1183,7 +1296,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                         contentsWithAllVersions[contentKey]?.activeVersion;
                       return (
                         <>
-                          <div key={plan.id} className="space-y-4">
+                          <div key={plan.id} id={plan.id} className="space-y-4">
                             <div className="relative">
                               <div
                                 className={`text-left ${
@@ -1283,6 +1396,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                   maxTokens={maxTokens}
                                   createVoidContent={false}
                                   loadingRefreshPart={handleLoadingRefreshPart}
+                                  tokenRequired={tokenRequired}
+                                  user={user}
                                 />
                               )}
                             </div>
@@ -1361,6 +1476,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                           loadingRefreshPart={
                                             handleLoadingRefreshPart
                                           }
+                                          tokenRequired={tokenRequired}
+                                          user={user}
                                         />
                                       </div>
                                     </div>
@@ -1488,6 +1605,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     loadingRefreshPart={
                                       handleLoadingRefreshPart
                                     }
+                                    tokenRequired={tokenRequired}
+                                    user={user}
                                   />
                                 )}
                               </div>

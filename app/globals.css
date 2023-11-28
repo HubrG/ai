@@ -1,4 +1,4 @@
-@import "../cssThemes/pink2.css";
+@import "../cssThemes/nanny.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -325,4 +325,7 @@ button {
 
 .pdfNavigationButton {
   @apply flex flex-col absolute md:-right-14 -right-[2.8rem] top-3;
+}
+a.pdf-navigation {
+  @apply hover:no-underline cursor-pointer opacity-80 hover:opacity-100 font-semibold pb-2 !important;
 }

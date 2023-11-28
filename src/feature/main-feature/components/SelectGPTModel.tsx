@@ -48,7 +48,7 @@ export const SelectModelGPT = ({
             <SelectItem key={gpt} value={gpt} className="w-full">
               {ModelGPTs[gpt as keyof typeof ModelGPTs]}
               {ModelGPTs[gpt as keyof typeof ModelGPTs] === "GPT 4" && (
-                <>&nbsp;&nbsp;<Badge className="mr-5 bg-secondary content-end self-end text-secondary hover:bg-secondary">Best and more fast !</Badge></>
+                <>&nbsp;&nbsp;<Badge className="mr-5 bg-secondary content-end self-end text-primary hover:bg-secondary">Best and more fast !</Badge></>
               )}
             </SelectItem>
           ))}

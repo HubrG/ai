@@ -396,3 +396,30 @@ export const deletePdf = async (id: string) => {
   }
   return true;
 };
+
+export const getUserTokenRemaining = async () => {
+  const user = await getUserLogId();
+  if (!user) {
+    throw new Error("User not logged in");
+  }
+  const tokenRemaining = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+    },
+    select: {
+      tokenRemaining: true,
+    },
+  });
+  if (!tokenRemaining) {
+    throw new Error("Token remaining not found");
+  }
+  return tokenRemaining;
+}
+
+export const getTokenRequired = async () => {
+  const tokenRequired = await prisma.tokenRequired.findMany();
+  if (!tokenRequired) {
+    throw new Error("Token required not found");
+  }
+  return tokenRequired;
+}

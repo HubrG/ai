@@ -82,7 +82,7 @@ export class Counting {
     // Compter le nombre de mots
     const wordsCount = this.countWords(str);
     //   On cherche en moyenne le nombre de mots par page
-    const wordsPerPage = 350;
+    const wordsPerPage = 400;
     // On divise le nombre de mots par le nombre de mots par page
     const pagesCount = Math.ceil(wordsCount / wordsPerPage);
     return pagesCount;

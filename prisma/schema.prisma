@@ -119,7 +119,6 @@ model TokenSpentOnPdf {
   @@unique([pdfId, tokenId])
 }
 
-
 model tokenPricing {
   id                String              @id @default(cuid())
   GPTModel          String
@@ -175,4 +174,10 @@ model pdfCreatorContent {
   updatedAt      DateTime       @updatedAt
   gptModel       tokenPricing?  @relation(fields: [gptModelId], references: [id], onDelete: Cascade)
   pdfCreatorPlan pdfCreatorPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model tokenRequired {
+  id          String @id @default(cuid())
+  featureName String @unique
+  minRequired Int
 }

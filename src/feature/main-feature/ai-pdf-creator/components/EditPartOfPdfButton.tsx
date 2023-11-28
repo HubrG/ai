@@ -1,11 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {
-  faCirclePlus,
-  faSparkles,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { faCirclePlus, faSparkles } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "@/components/ui/button";
+import { isAuthorized } from "@/src/function/ai/ai-pdf-creator/isAuthorized";
 import {
   Popover,
   PopoverContent,
@@ -19,6 +17,8 @@ import { SelectPersonality } from "../../components/SelectPersonality";
 import { SelectLength } from "../../components/SelectLength";
 import { Tooltip } from "react-tooltip";
 import { PopoverClose } from "@radix-ui/react-popover";
+import { User, tokenRequired } from "@prisma/client";
+import { Toastify } from "@/src/toastify/Toastify";
 
 type EditPartOfPdfButtonProps = {
   type: "plan" | "content";
@@ -40,8 +40,9 @@ type EditPartOfPdfButtonProps = {
   onRefresh: any;
   maxTokens: number;
   createVoidContent?: boolean;
-  // fonction boolean
   loadingRefreshPart?: (loading: boolean, type: string, id: string) => void;
+  tokenRequired: any;
+  user: any
 };
 
 export const EditPartOfPdfButton = ({
@@ -65,8 +66,10 @@ export const EditPartOfPdfButton = ({
   maxTokens,
   createVoidContent,
   loadingRefreshPart,
+  tokenRequired,
+  user
 }: EditPartOfPdfButtonProps) => {
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [gptModel, setGptModel] = useState<string>(gptModelInit);
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode | "">(
     langInit as LanguageCode
@@ -123,6 +126,13 @@ export const EditPartOfPdfButton = ({
   });
 
   const update = async () => {
+    const authorize = isAuthorized(tokenRequired, user, "pdf-refresh-" + type);
+    if (!authorize) {
+      return Toastify({
+        value: "You don't have enough credits to regenerate this " + type,
+        type: "error",
+      });
+    }
     loadingRefreshPart?.(true, type, id);
     try {
       const response = await fetch("/api/pdfcreator/updateContent", {
@@ -201,10 +211,9 @@ export const EditPartOfPdfButton = ({
               variant={"ghost"}
               size={"sm"}
               className="-mt-2"
-                data-tooltip-id={`sparkleTooltip${type}${id}`}
-                onMouseEnter={() => setIsTooltipOpen(true)}
-                onMouseLeave={() => setIsTooltipOpen(false)}
-              >
+              data-tooltip-id={`sparkleTooltip${type}${id}`}
+              onMouseEnter={() => setIsTooltipOpen(true)}
+              onMouseLeave={() => setIsTooltipOpen(false)}>
               <FontAwesomeIcon icon={faSparkles} />
             </Button>
           )}
@@ -262,7 +271,6 @@ export const EditPartOfPdfButton = ({
         variant="dark"
         opacity={1}
         isOpen={isTooltipOpen}
-       
         className="tooltip flex flex-col">
         <span className="font-bold">Rewrite this content</span>
         You can rewrite this content with a different tone, personality or

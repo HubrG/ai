@@ -1,7 +1,6 @@
 "use client";
 import {
   downloadHtml,
-  downloadPdf,
   downloadDocx,
   downloadMarkdown,
 } from "@/src/function/ai/ai-pdf-creator/downloadInFormat";
@@ -42,18 +41,27 @@ export default function DownloadButton({
           <Button disabled={disabled} variant={"default"}>
             <FontAwesomeIcon icon={faDownload} />
           </Button>
-          <Tooltip id="downloadButtonTooltip" className="tooltip" opacity={1} place="bottom">Download</Tooltip>
+          <Tooltip
+            id="downloadButtonTooltip"
+            className="tooltip"
+            opacity={1}
+            place="bottom">
+            <strong>Download</strong>
+            <span className="block">
+              Download your PDF in Docx, HTML or Markdown format.
+            </span>
+          </Tooltip>
         </>
       </PopoverTrigger>
       <PopoverContent>
-        <div
+        {/* <div
           className={`downloadPdfButton `}
           onClick={() => downloadPdf(allContent, "Fastuff-" + subject)}>
           <FontAwesomeIcon icon={faFilePdf} />
           <span>
             Download in <strong>PDF</strong>
           </span>
-        </div>
+        </div> */}
         <div
           className="downloadPdfButton"
           onClick={() => downloadDocx(allContent, "Fastuff-" + subject)}>
