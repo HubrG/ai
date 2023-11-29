@@ -1577,8 +1577,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                       .toString()
                                       .trim() && (
                                   <Button 
-                                    className=" fixed bottom-10 z-50"
-                                      onClick={() =>
+                                  className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
+                                  onClick={() =>
                                         handleSaveTitle(planKey, plan.id)
                                       }>
                                       Save changes
@@ -1805,8 +1805,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                         .toString()
                                         .trim() && (
                                       <Button
-                                      className=" fixed bottom-10 z-50"
-                                        onClick={() =>
+                                      className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
+                                      onClick={() =>
                                           handleSaveContent(
                                             contentKey,
                                             activeContent.id
