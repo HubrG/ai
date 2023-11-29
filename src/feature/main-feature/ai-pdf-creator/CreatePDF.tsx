@@ -202,13 +202,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     useState<TokensOnPdf>();
   const [selectedTone, setSelectedTone] = useState("energetic");
   const [selectedPersonality, setSelectedPersonality] = useState("deep");
-  const [selectedLength, setSelectedLength] = useState("medium");
+  const [selectedLength, setSelectedLength] = useState("long");
   const [selectedToneValue, setSelectedToneValue] = useState(
     "Energetic and enthusiastic"
   );
   const [selectedPersonalityValue, setSelectedPersonalityValue] =
     useState("Deep Thinker");
-  const [selectedLengthValue, setSelectedLengthValue] = useState("Medium");
+  const [selectedLengthValue, setSelectedLengthValue] = useState("Long");
   const [tokenRequired, setTokenRequired] = useState<tokenRequired[]>();
   //
 
@@ -1587,7 +1587,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                               </div>
                               <div
                                 className={`
-                                  absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
+                                  absolute top-[25%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
                                   ${
                                     loadingRefreshPart.id === plan.id &&
                                     loadingRefreshPart.loading &&
@@ -1694,7 +1694,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     <div className="mb-5 h-auto relative">
                                       <div
                                         className={`
-                                          absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
+                                          absolute top-[25%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
                                           ${
                                             loadingRefreshPart.id === plan.id &&
                                             loadingRefreshPart.loading &&
