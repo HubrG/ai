@@ -155,7 +155,7 @@ type PdfCreatorProps = {
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
   // SECTION --> States
-  const maxTokens = 100;
+  const maxTokens = 1000;
   const { toast } = useToast()
   const counter = new Counting();
   const pdfId = params.id;
@@ -928,7 +928,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           setGeneratePlanDone(false);
           setRegenerate(true);
           Toastify({
-            value: "You can modify the content of each part directly on the content, or regenerate each point of the content.",
+            value: "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
             type: "info",
             position: "bottom-right",
             autoClose : false
@@ -1552,7 +1552,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                   />
                                 ) : (
                                   <div
-                                    className="text-left"
+                                    className="text-left relative"
                                     dangerouslySetInnerHTML={{
                                       __html: markdownToHtml(
                                         plan.planLevel + " " + plan.planTitle
@@ -1576,7 +1576,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                       )
                                       .toString()
                                       .trim() && (
-                                    <Button
+                                  <Button 
+                                    className=" fixed bottom-10 z-50"
                                       onClick={() =>
                                         handleSaveTitle(planKey, plan.id)
                                       }>
@@ -1804,6 +1805,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                         .toString()
                                         .trim() && (
                                       <Button
+                                      className=" fixed bottom-10 z-50"
                                         onClick={() =>
                                           handleSaveContent(
                                             contentKey,
