@@ -151,7 +151,7 @@ function processMarkdownElement(markdownText: string) {
       }
     }
     // Texte en gras
-    else if (segment.startsWith("**")) {
+    if (segment.startsWith("**")) {
       return createTextRun(segment.substring(2, segment.length - 2), {
         bold: true,
       });
@@ -178,6 +178,7 @@ function processMarkdownElement(markdownText: string) {
         style: "Quote",
       });
     }
+  
     // Blocs de code
     else if (segment.startsWith("```")) {
       return new Paragraph({

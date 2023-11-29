@@ -329,3 +329,7 @@ button {
 a.pdf-navigation {
   @apply hover:no-underline cursor-pointer opacity-80 hover:opacity-100 font-semibold pb-2 !important;
 }
+.editor-class, .rdw-editor-main {
+  @apply p-0 m-0 !important;
+  overflow:unset !important;
+}

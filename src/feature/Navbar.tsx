@@ -49,7 +49,7 @@ export const Navbar = async () => {
                   <FontAwesomeIcon
                     icon={faCube}
                     beat
-                    className="mr-2  text-secondary-foreground"
+                    className="mr-2  text-secondary/80"
                   />
                   Try us for free !
                 </Button>

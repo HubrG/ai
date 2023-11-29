@@ -132,31 +132,24 @@ export const updatePlan = async (id: string, title: string) => {
     throw new Error("User not logged in");
   }
 
-  // On récupère le plan pour vérifier l'appartenance
-  const plan = await prisma.pdfCreatorPlan.findUnique({
+  // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
+  const titleToUpdate = await prisma.pdfCreatorPlan.update({
     where: {
       id: id,
+      // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
+      pdf: {
+        userId: user.id,
+      },
     },
-    include: {
-      pdf: true, // Inclut les informations sur le pdfCreator associé
+    data: {
+      planTitle: title,
     },
   });
-
-  // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au plan
-  if (plan && plan.pdf.userId === user.id) {
-    // Si c'est le cas, on met à jour le plan
-    const updatedPlan = await prisma.pdfCreatorPlan.update({
-      where: {
-        id: id,
-      },
-      data: {
-        planTitle: title,
-      },
-    });
-    return updatedPlan;
+  if (titleToUpdate) {
+    return titleToUpdate;
   } else {
     throw new Error(
-      "Plan not found or user does not have permission to update this plan."
+      "Plan not found or user does not have permission to update this content."
     );
   }
 };
@@ -167,30 +160,23 @@ export const updateContent = async (id: string, content: string) => {
     throw new Error("User not logged in");
   }
 
-  // On récupère le contenu pour vérifier l'appartenance
-  const contentToEdit = await prisma.pdfCreatorPlan.findUnique({
+  // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
+  const contentToUpdate = await prisma.pdfCreatorContent.update({
     where: {
       id: id,
+      // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
+      pdfCreatorPlan: {
+        pdf: {
+          userId: user.id,
+        },
+      },
     },
-    include: {
-      pdfCreatorContent: true,
-      pdf: true,
+    data: {
+      planContent: content,
     },
   });
-
-  // On vérifie que l'utilisateur est bien le propriétaire du pdfCreator associé au contenu
-  if (contentToEdit && contentToEdit.pdf.userId === user.id) {
-    // Si c'est le cas, on met à jour le contenu
-    const updatedContent = await prisma.pdfCreatorContent.update({
-      where: {
-        id: contentToEdit.pdfCreatorContent[0].id,
-      },
-      data: {
-        planContent: content,
-      },
-    });
-    console.log(updatedContent);
-    return updatedContent;
+  if (contentToUpdate) {
+    return contentToUpdate;
   } else {
     throw new Error(
       "Content not found or user does not have permission to update this content."
@@ -414,7 +400,7 @@ export const getUserTokenRemaining = async () => {
     throw new Error("Token remaining not found");
   }
   return tokenRemaining;
-}
+};
 
 export const getTokenRequired = async () => {
   const tokenRequired = await prisma.tokenRequired.findMany();
@@ -422,4 +408,4 @@ export const getTokenRequired = async () => {
     throw new Error("Token required not found");
   }
   return tokenRequired;
-}
+};

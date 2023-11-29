@@ -19,6 +19,7 @@ import { Tooltip } from "react-tooltip";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { User, tokenRequired } from "@prisma/client";
 import { Toastify } from "@/src/toastify/Toastify";
+import { Textarea } from "@/components/ui/textarea";
 
 type EditPartOfPdfButtonProps = {
   type: "plan" | "content";
@@ -259,12 +260,12 @@ export const EditPartOfPdfButton = ({
             variant={"default"}>
             {createVoidContent ? "Generate content for this point" : "Rewrite"}
           </Button>
+          {/* NOTE : REWRITE */}
         </PopoverContent>
         <PopoverClose>
           <span id={`closePopover${type}${id}`}></span>
         </PopoverClose>
       </Popover>
-
       <Tooltip
         id={`sparkleTooltip${type}${id}`}
         classNameArrow="hidden"

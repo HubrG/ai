@@ -16,7 +16,6 @@ import {
   deletePlan,
   getTokenRequired,
 } from "./utils.server";
-import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useGlobalContext } from "@/app/Context/store";
 import DownloadButton from "./components/DownloadButton";
@@ -30,7 +29,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCircleChevronLeft,
   faCircleChevronRight,
-  faCompassDrafting,
   faLanguage,
 } from "@fortawesome/pro-solid-svg-icons";
 import {
@@ -72,8 +70,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PopoverClose } from "@radix-ui/react-popover";
+import ReusableWysiwyg from "../components/Wysiwyg";
 // TODO --> pouvoir modifier un titre / content en tapant dans une input
-// TODO --> Ajouter des options (sur le contenu) : racourcir / rallonger
 // FIX --> Problème « génération all content » une fois le plan généré
 // TYPES
 interface Plan {
@@ -94,11 +92,25 @@ interface Plan {
   activeVersion?: Plan | any;
 }
 
+interface ContentModification {
+  isModified: boolean;
+  originalContent: string;
+}
 interface PlansWithAllVersions {
   [key: string]: {
     allVersions: Plan[];
     activeVersion: Plan | null;
   };
+}
+interface CurrentContent {
+  [key: string]: string;
+}
+interface CurrentTitle {
+  [key: string]: string;
+}
+interface TitleModification {
+  isModified: boolean;
+  originalContent: string;
 }
 type LanguageCode = keyof typeof languageList;
 
@@ -107,16 +119,15 @@ interface ChapterContents {
 }
 interface ChapterContentItem {
   content: string;
-  lang?: LanguageCode; // Vous pouvez ajouter d'autres propriétés si nécessaire
+  lang?: LanguageCode;
 }
 
 type ContentType = {
-  // ...définition de vos propriétés de contenu ici
   isSelected: boolean;
   id: string;
   idRef: string;
   planContent: string;
-  createdAt?: string; // Assurez-vous que c'est le bon type
+  createdAt?: string;
   lang?: string;
   tone?: string;
   length?: string;
@@ -129,9 +140,14 @@ type ContentsWithAllVersions = {
   activeVersion: ContentType | null;
 };
 
-// Définissez le type pour l'ensemble de l'état 'contentsWithAllVersions'
 type ContentsWithAllVersionsState = {
   [key: string]: ContentsWithAllVersions;
+};
+type PlansWithAllVersionsState = {
+  [key: string]: {
+    allVersions: Plan[];
+    activeVersion: Plan | null;
+  };
 };
 type PdfCreatorProps = {
   params: { id: string };
@@ -144,6 +160,18 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const pdfId = params.id;
   const router = useRouter();
   const [init, setInit] = useState<boolean>(true);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const [contentModifications, setContentModifications] = useState<{
+    [key: string]: ContentModification;
+  }>({});
+  const [currentContent, setCurrentContent] = useState<CurrentContent>({});
+  const [titleModifications, setTitleModifications] = useState<{
+    [key: string]: TitleModification;
+  }>({});
+  const [currentTitle, setCurrentTitle] = useState<CurrentTitle>({});
+
   const [activateAutomaticContent, setActivateAutomaticContent] =
     useState<boolean>(true);
   const [abortControllers, setAbortControllers] = useState<AbortController[]>(
@@ -205,32 +233,32 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   };
 
   const handleUpdatePlanTitle = (planId: string, newTitle: string) => {
-    setCreatedPlans((prevPlans) =>
-      prevPlans.map((plan) => {
-        if (plan.id === planId) {
-          return { ...plan, planTitle: newTitle };
-        }
-        return plan;
-      })
-    );
-    const upPlan = updatePlan(planId, newTitle);
+    const upPlan = updatePlan(planId, converter.makeMarkdown(newTitle));
     if (upPlan !== null) {
-      console.log("Plan updated");
+      Toastify({
+        value: "Plan updated",
+        type: "success",
+      });
     } else {
-      console.log("Plan not updated");
+      Toastify({
+        value: "An error occured while updating the plan",
+        type: "error",
+      });
     }
   };
 
-  const handleUpdateContent = (planId: string, newValue: string) => {
-    setChapterContent((prevContent) => ({
-      ...prevContent,
-      [planId]: { content: newValue },
-    }));
-    const upContent = updateContent(planId, newValue);
+  const handleUpdateContent = (contentId: string, newValue: string) => {
+    const upContent = updateContent(contentId, converter.makeMarkdown(newValue));
     if (upContent !== null) {
-      console.log("Content updated");
+      Toastify({
+        value: "Content updated",
+        type: "success",
+      });
     } else {
-      console.log("Content not updated");
+      Toastify({
+        value: "An error occured while updating the content",
+        type: "error",
+      });
     }
   };
 
@@ -414,6 +442,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       plan.idRef === planKey || plan.id === planKey ? newActiveVersion : plan
     );
     setCreatedPlans(updatedCreatedPlans);
+    setTitleModifications((prev) => ({
+      ...prev,
+      [planKey]: {
+        isModified: false,
+        originalContent: converter.makeHtml(newActiveVersion.planTitle),
+      },
+    }));
   };
 
   const navigateContentVersion = async (
@@ -441,6 +476,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       ...content,
       isSelected: index === activeVersionIndex,
     }));
+    // Mettre à jour les version du titre pour refléter quelle version est actuellement sélectionnée
 
     // On récupère l'ID et on l'envoie en BDD
     const newId = updatedVersions[activeVersionIndex].id;
@@ -456,6 +492,18 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         },
       };
     });
+    // On met à jour contentModifications avec le nouveau contneu
+    setContentModifications((prev) => ({
+      ...prev,
+      [contentKey]: {
+        isModified: false,
+        originalContent: converter.makeHtml(
+          updatedVersions[activeVersionIndex].planContent
+        ),
+      },
+    }));
+
+    //
   };
   // IMPORTANT --> FetchPDF
   const fetchPdf = useCallback(async () => {
@@ -510,6 +558,34 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         setPlansWithAllVersions(plansWithAllVersions);
         setContentsWithAllVersions(contentsWithAllVersions);
         setInit(false);
+        // Initialisation des contenus (peut-être dans useEffect ou lors du chargement des données)
+        //
+        Object.keys(contentsWithAllVersions).forEach((key) => {
+          setContentModifications((prev) => ({
+            ...prev,
+            [key]: {
+              isModified: false,
+              originalContent: converter.makeHtml(
+                contentsWithAllVersions[key].activeVersion.planContent
+              ),
+            },
+          }));
+        });
+
+        if (Object.keys(plansWithAllVersions).length > 0) {
+          Object.keys(plansWithAllVersions).forEach((key) => {
+            const activeVersion = plansWithAllVersions[key].activeVersion;
+            if (activeVersion) {
+              setTitleModifications((prev) => ({
+                ...prev,
+                [key]: {
+                  isModified: false,
+                  originalContent: converter.makeHtml(activeVersion.planTitle),
+                },
+              }));
+            }
+          });
+        }
 
         // Transformer en tableau de Plan[] contenant seulement les versions actives
         const activePlans = Object.values(plansWithAllVersions)
@@ -549,13 +625,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     } catch (error) {
       console.error("Error fetching plans:", error);
     }
-  }, [params.id]);
+  }, [params.id, converter]);
 
   const handleRefresh = useCallback(() => {
     fetchPdf();
     updateContextTokenRemaining();
   }, [fetchPdf, updateContextTokenRemaining]);
-
   // IMPORTANT --> Plan generate
   const generatePlan = async () => {
     // Vérifier si l'utilisateur a assez de jetons pour générer un plan
@@ -853,6 +928,134 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   ) => {
     setLoadingRefreshPart({ loading, type, id });
   };
+
+  //
+  const handleSaveContent = (contentKey: string, id: string) => {
+    const newContent = currentContent[contentKey];
+    const activeVersionIndex = contentsWithAllVersions[
+      contentKey
+    ].allVersions.findIndex((v) => v.isSelected);
+
+    const updatedVersions = contentsWithAllVersions[contentKey].allVersions.map(
+      (version, index) => {
+        if (index === activeVersionIndex) {
+          return { ...version, planContent: newContent };
+        }
+        return version;
+      }
+    );
+
+    const updatedContents = {
+      ...contentsWithAllVersions,
+      [contentKey]: {
+        ...contentsWithAllVersions[contentKey],
+        allVersions: updatedVersions,
+        activeVersion: {
+          ...contentsWithAllVersions[contentKey].activeVersion,
+          planContent: newContent,
+        },
+      },
+    };
+
+    setContentsWithAllVersions(updatedContents as ContentsWithAllVersionsState);
+    setContentModifications((prev) => ({
+      ...prev,
+      [contentKey]: { ...prev[contentKey], isModified: false },
+    }));
+    handleUpdateContent(id, newContent);
+  };
+
+  const debouncedHandleContentChange = (
+    newContent: string,
+    contentKey: string
+  ) => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      handleContentChange(newContent, contentKey);
+    }, 200); // 2 secondes
+
+    setTypingTimeout(newTimeout);
+  };
+
+  const handleContentChange = (newContent: string, contentKey: string) => {
+    setCurrentContent((prev) => ({ ...prev, [contentKey]: newContent }));
+    if (newContent !== contentModifications[contentKey].originalContent) {
+      setContentModifications((prev) => ({
+        ...prev,
+        [contentKey]: {
+          ...prev[contentKey],
+          isModified: true,
+          originalContent: newContent,
+        },
+      }));
+    }
+  };
+
+  const handleTitleChange = (newContent: string, contentKey: string) => {
+    setCurrentTitle((prev) => ({ ...prev, [contentKey]: newContent }));
+    if (newContent !== contentModifications[contentKey].originalContent) {
+      setTitleModifications((prev) => ({
+        ...prev,
+        [contentKey]: {
+          ...prev[contentKey],
+          isModified: true,
+          originalContent: newContent,
+        },
+      }));
+    }
+  };
+
+  const debouncedHandleTitleChange = (
+    newContent: string,
+    contentKey: string
+  ) => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      handleTitleChange(newContent, contentKey);
+    }, 200); // 2 secondes
+
+    setTypingTimeout(newTimeout);
+  };
+
+  const handleSaveTitle = async (contentKey: string, id: string) => {
+    const newContent = currentTitle[contentKey];
+    const activeVersionIndex = plansWithAllVersions[
+      contentKey
+    ].allVersions.findIndex((v) => v.isSelected);
+    const updatedVersions = plansWithAllVersions[contentKey].allVersions.map(
+      (version, index) => {
+        if (index === activeVersionIndex) {
+          return { ...version, planTitle: newContent };
+        }
+        return version;
+      }
+    );
+
+    const updatedTitles = {
+      ...plansWithAllVersions,
+      [contentKey]: {
+        ...plansWithAllVersions[contentKey],
+        allVersions: updatedVersions,
+        activeVersion: {
+          ...plansWithAllVersions[contentKey].activeVersion,
+          planTitle: newContent,
+        },
+      },
+    };
+    setPlansWithAllVersions(updatedTitles as PlansWithAllVersionsState);
+    setTitleModifications((prev) => ({
+      ...prev,
+      [contentKey]: { ...prev[contentKey], isModified: false },
+    }));
+    handleUpdatePlanTitle(id, newContent);
+  };
+
   // SECTION --> Return
   return (
     <>
@@ -1028,7 +1231,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             </div>
             {/* ELEMENT --> Text window */}
             <div className="md:w-9/12 w-full bg-background z-30">
-              <div className="rounded-xl   transition grid grid-cols-1 gap-x-2 items-start mb-10">
+              <div className="rounded-xl transition grid grid-cols-1 gap-x-2 items-start mb-10">
                 <div className="rounded-t-xl pb-5 mb-2 md:shadow-none sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
                   <div className="flex flex-row gap-2 justify-between w-full">
                     <div className="flex flex-row gap-2">
@@ -1038,18 +1241,20 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                         disabled={createdPlans.length === 0}
                       />
                       <Popover>
-                        <PopoverTrigger                         
-                          asChild>
-                            <div data-tooltip-id="navigateTooltip">
-                          <Button
-                            disabled={createdPlans.length === 0}
-                            variant="outline">
-                            <FontAwesomeIcon icon={faCompass} />
-                          </Button>
+                        <PopoverTrigger asChild>
+                          <div data-tooltip-id="navigateTooltip">
+                            <Button
+                              disabled={createdPlans.length === 0}
+                              variant="outline">
+                              <FontAwesomeIcon icon={faCompass} />
+                            </Button>
                           </div>
                         </PopoverTrigger>
-                        <PopoverContent className={`w-80 ${createdPlans.length === 0 && "hidden"}`}>
-                          <ScrollArea className="h-96 w-full flex flex-col gap-3">
+                        <PopoverContent
+                          className={`w-80 ${
+                            createdPlans.length === 0 && "hidden"
+                          }`}>
+                          <ScrollArea className="max-h-96 w-full flex flex-col gap-3">
                             <div className="flex flex-col gap-2">
                               {createdPlans.map((plan) => (
                                 <>
@@ -1063,7 +1268,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     }}>
                                     <strong>{plan.planLevel}</strong>
                                     <br />
-                                    {plan.planTitle}
+                                    <span dangerouslySetInnerHTML={{ __html: converter.makeHtml(plan.planTitle) }}></span>
                                   </a>
                                 </>
                               ))}
@@ -1228,39 +1433,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     </div>
                   </div>
                 </div>
-                <div className="row-span-3 hidden">
-                  {createdPlans.map((plan) => (
-                    <div className="flex flex-col gap-1" key={plan.id}>
-                      <div className="flex flex-row">
-                        <span>{plan.planLevel}</span>
-                        <Input
-                          id={`title-${plan.id}`}
-                          placeholder={`Titre`}
-                          defaultValue={plan.planTitle}
-                          onChange={(e) => {
-                            handleUpdatePlanTitle(
-                              plan.id,
-                              e.currentTarget.value
-                            );
-                          }}
-                        />
-                      </div>
-                      <div>
-                        {chapterContent[plan.id] && (
-                          <Textarea
-                            value={chapterContent[plan.id].content}
-                            onChange={(e) =>
-                              handleUpdateContent(
-                                plan.id,
-                                e.currentTarget.value
-                              )
-                            }
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
                 <div className="py-5 -mt-2 md:px-14 px-5 md:pr-20 rounded-b-xl ">
                   <article className="">
                     {createdPlans.length === 0 && (
@@ -1294,6 +1466,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
                       const activeContent =
                         contentsWithAllVersions[contentKey]?.activeVersion;
+
                       return (
                         <>
                           <div key={plan.id} id={plan.id} className="space-y-4">
@@ -1304,13 +1477,47 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                   loadingRefreshPart.loading &&
                                   loadingRefreshPart.type === "plan" &&
                                   "opacity-80  blur-sm select-none"
-                                }`}
-                                dangerouslySetInnerHTML={{
-                                  __html: markdownToHtml(
-                                    plan.planLevel + " " + plan.planTitle
-                                  ),
-                                }}
-                              />
+                                }`}>
+                                {/* NOTE Wysiwig */}
+                                <ReusableWysiwyg
+                                  showToolbar={false}
+                                  defaultValue={markdownToHtml(
+                                    plan.planLevel +
+                                      " " +
+                                      plansWithAllVersions[planKey]
+                                        .activeVersion?.planTitle
+                                  )}
+                                  onContentChange={(newContent) =>
+                                    debouncedHandleTitleChange(
+                                      // On remplace les # (de 1 à 4) par rien
+                                      newContent.replace(
+                                        /<h[1-7][^>]*>(.*?)<\/h[1-7]>/gi,
+                                        "$1"
+                                      ),
+                                      planKey
+                                    )
+                                  }
+                                />
+                                {converter.makeHtml(
+                                  titleModifications[contentKey].originalContent
+                                    .toString()
+                                    .trim()
+                                ) !==
+                                  converter
+                                    .makeHtml(
+                                      plansWithAllVersions[planKey]
+                                        .activeVersion?.planTitle ?? ""
+                                    )
+                                    .toString()
+                                    .trim() && (
+                                  <Button
+                                    onClick={() =>
+                                      handleSaveTitle(planKey, plan.id)
+                                    }>
+                                    Save changes
+                                  </Button>
+                                )}
+                              </div>
                               <div
                                 className={`
                                   absolute top-[40%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
@@ -1488,19 +1695,46 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                               chapterContent[plan.id as string]) && (
                               <div className="relative group">
                                 {activeContent && (
+                                  // {/* NOTE: WYSIWIG */}
                                   <div
                                     className={`text-left ${
                                       loadingRefreshPart.id === plan.id &&
                                       loadingRefreshPart.loading &&
                                       loadingRefreshPart.type === "content" &&
                                       "opacity-80  blur-sm select-none"
-                                    }`}
-                                    dangerouslySetInnerHTML={{
-                                      __html: markdownToHtml(
+                                    }`}>
+                                    <ReusableWysiwyg
+                                      showToolbar={false}
+                                      defaultValue={markdownToHtml(
                                         activeContent.planContent
-                                      ),
-                                    }}
-                                  />
+                                      )}
+                                      onContentChange={(newContent) =>
+                                        debouncedHandleContentChange(
+                                          newContent,
+                                          contentKey
+                                        )
+                                      }
+                                    />
+                                    {contentModifications[
+                                      contentKey
+                                    ].originalContent
+                                      .toString()
+                                      .trim() !==
+                                      converter
+                                        .makeHtml(activeContent.planContent)
+                                        .toString()
+                                        .trim() && (
+                                      <Button
+                                        onClick={() =>
+                                          handleSaveContent(
+                                            contentKey,
+                                            activeContent.id
+                                          )
+                                        }>
+                                        Save changes
+                                      </Button>
+                                    )}
+                                  </div>
                                 )}
                                 <div
                                   className={`
