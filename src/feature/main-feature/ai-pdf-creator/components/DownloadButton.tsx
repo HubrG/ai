@@ -3,6 +3,7 @@ import {
   downloadHtml,
   downloadDocx,
   downloadMarkdown,
+  downloadToTxt,
 } from "@/src/function/ai/ai-pdf-creator/downloadInFormat";
 import {
   Popover,
@@ -20,6 +21,7 @@ import { faMarkdown } from "@fortawesome/free-brands-svg-icons";
 import Showdown from "showdown";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "react-tooltip";
+import { faText } from "@fortawesome/pro-solid-svg-icons";
 
 const converter = new Showdown.Converter();
 //
@@ -62,14 +64,14 @@ export default function DownloadButton({
             Download in <strong>PDF</strong>
           </span>
         </div> */}
-        <div
+        {/* <div
           className="downloadPdfButton"
           onClick={() => downloadDocx(allContent, "Fastuff-" + subject)}>
           <FontAwesomeIcon icon={faFileDoc} />
           <span>
             Download in <strong>Docx</strong>
           </span>
-        </div>
+        </div> */}
         <div
           className="downloadPdfButton"
           onClick={() => downloadHtml(allContent, "Fastuff-" + subject)}>
@@ -89,6 +91,20 @@ export default function DownloadButton({
           <FontAwesomeIcon icon={faMarkdown} />
           <div>
             Download in <strong>Markdown</strong>
+          </div>
+        </div>
+
+        <div
+          className="downloadPdfButton"
+          onClick={() => {
+            downloadToTxt(
+              converter.makeMarkdown(allContent).replace(/\\/g, ""),
+              "Fastuff-" + subject
+            );
+          }}>
+          <FontAwesomeIcon icon={faText} />
+          <div>
+            Download in <strong>TXT</strong> (markdown)
           </div>
         </div>
       </PopoverContent>

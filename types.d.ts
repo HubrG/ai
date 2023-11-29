@@ -27,4 +27,7 @@ declare module "tiktoken"
 declare module "@dqbd/tiktoken"
 
 declare module "isomorphic-fetch"
+declare module "unified"
+declare module "remark-parse"
 
+declare module '@adobe/helix-md2docx';

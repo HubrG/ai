@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  EditorState,
-  ContentState,
-  convertToRaw,
-} from "draft-js";
+import { EditorState, ContentState, convertToRaw } from "draft-js";
 import { Editor } from "react-draft-wysiwyg";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import htmlToDraft from "html-to-draftjs";
@@ -12,15 +8,15 @@ import draftToHtml from "draftjs-to-html";
 interface ReusableWysiwygProps {
   showToolbar?: boolean;
   defaultValue?: string;
-    onContentChange?: (content: string) => void;
-    planLevel?: string;
+  onContentChange?: (content: string) => void;
+  planLevel?: string;
 }
 
 const ReusableWysiwyg = ({
   showToolbar = true,
   defaultValue = "",
-    onContentChange,
-    planLevel,
+  onContentChange,
+  planLevel,
 }: ReusableWysiwygProps) => {
   const [editorState, setEditorState] = useState(() =>
     EditorState.createEmpty()
@@ -32,7 +28,7 @@ const ReusableWysiwyg = ({
       blocksFromHtml.contentBlocks
     );
     const newEditorState = EditorState.createWithContent(contentState);
-      
+
     setEditorState(newEditorState);
     //   handleEditorStateChange(newEditorState);
   }, [defaultValue, setEditorState]);

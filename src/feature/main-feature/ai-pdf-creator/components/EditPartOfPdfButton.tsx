@@ -221,7 +221,7 @@ export const EditPartOfPdfButton = ({
         </PopoverTrigger>
         <PopoverContent className="w-80 flex flex-col gap-2  bg-background shadow-2xl border-0 shadow-secondary/20 dark:shadow-primary">
           <p className="font-bold text-base text-accent-foreground/80">
-            {createVoidContent ? "Generate " : "Rewrite "}
+            {createVoidContent ? "Generate " : "Regenerate "}
             {type === "plan" ? "this point of the plan" : "this content"}
           </p>
           <SelectLang
@@ -273,8 +273,8 @@ export const EditPartOfPdfButton = ({
         opacity={1}
         isOpen={isTooltipOpen}
         className="tooltip flex flex-col">
-        <span className="font-bold">Rewrite this content</span>
-        You can rewrite this content with a different tone, personality or
+        <span className="font-bold">Regenerate this content</span>
+        You can regenerate this content with a different tone, personality or
         length.
       </Tooltip>
     </div>

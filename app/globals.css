@@ -1,4 +1,4 @@
-@import "../cssThemes/nanny.css";
+@import "../cssThemes/pink2.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -329,7 +329,8 @@ button {
 a.pdf-navigation {
   @apply hover:no-underline cursor-pointer opacity-80 hover:opacity-100 font-semibold pb-2 !important;
 }
-.editor-class, .rdw-editor-main {
+.editor-class,
+.rdw-editor-main {
   @apply p-0 m-0 !important;
-  overflow:unset !important;
+  overflow: unset !important;
 }

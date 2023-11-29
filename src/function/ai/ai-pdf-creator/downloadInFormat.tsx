@@ -1,6 +1,3 @@
-// import pdfMake from "pdfmake/build/pdfmake";
-// import pdfFonts from "pdfmake/build/vfs_fonts";
-// import htmlToPdfmake from "html-to-pdfmake";
 import {
   Document,
   TextRun,
@@ -13,53 +10,11 @@ import {
 import { saveAs } from "file-saver";
 import Showdown from "showdown";
 const converter = new Showdown.Converter();
+import { unified } from "unified";
+import markdown from "remark-parse";
+import docx from "remark-docx";
+import  convert  from '@adobe/helix-md2docx';
 
-// pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
-// pdfMake.fonts = {
-//   Nunito: {
-//     normal: "./Nunito-Regular.ttf",
-//     bold: "./Nunito-Regular.ttf",
-//     italics: "./Nunito-Regular.ttf",
-//     bolditalics: "./Nunito-Regular.ttf",
-//   },
-
-//   // download default Roboto font from cdnjs.com
-//   Roboto: {
-//     normal:
-//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf",
-//     bold: "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf",
-//     italics:
-//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf",
-//     bolditalics:
-//       "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf",
-//   },
-// };
-
-// export const downloadPdf = (htmlContent: string, title: string) => {
-//   // Crée une nouvelle version du contenu HTML avec des IDs uniques
-//   let newHtmlContent = htmlContent;
-//   const idRegex = /id="[^"]+"/g; // Regex pour trouver tous les attributs id
-//   let match;
-//   let idCount = 0;
-
-//   // Remplace chaque id par un id unique
-//   while ((match = idRegex.exec(htmlContent)) !== null) {
-//     const originalId = match[0]; // ex: id="hackdegnie"
-//     const uniqueId = `id="unique${idCount++}"`; // ex: id="unique0"
-//     newHtmlContent = newHtmlContent.replace(originalId, uniqueId);
-//   }
-
-//   const documentDefinition = {
-//     content: htmlToPdfmake(newHtmlContent),
-
-//     defaultStyle: {
-//       font: "Roboto",
-//     },
-//   };
-
-//   pdfMake.createPdf(documentDefinition).download(title + ".pdf");
-// };
 
 export const downloadMarkdown = (markdownContent: string, filename: string) => {
   // Créer un élément d'ancrage
@@ -151,9 +106,16 @@ function processMarkdownElement(markdownText: string) {
       }
     }
     // Texte en gras
-    if (segment.startsWith("**")) {
+    else if (segment.startsWith("**")) {
       return createTextRun(segment.substring(2, segment.length - 2), {
         bold: true,
+      });
+    }
+    // Texte en gras
+    else if (segment.startsWith("**")) {
+      return createTextRun(segment.substring(2, segment.length - 2), {
+        bold: true,
+        textSize: 28,
       });
     }
     // Texte en italique
@@ -178,7 +140,7 @@ function processMarkdownElement(markdownText: string) {
         style: "Quote",
       });
     }
-  
+
     // Blocs de code
     else if (segment.startsWith("```")) {
       return new Paragraph({
@@ -225,33 +187,56 @@ function processMarkdownElement(markdownText: string) {
   });
 }
 
-export const downloadDocx = async (allContent: string, fileName: string) => {
-  let markdownContent = converter.makeMarkdown(allContent);
-  markdownContent = markdownContent.replace(/\\/g, "");
-  markdownContent = markdownContent.replace(/\\./g, "");
-  markdownContent = markdownContent.replace("<!-", "");
-  // Convertir le contenu Markdown en éléments DOCX
-  console.log(markdownContent);
-  const docElements = markdownContent.split("\n").map(processMarkdownElement);
-  console.log(docElements);
+export async function downloadDocx(markdownContent:string, filename:string) {
+  try {
+    const toMarkdown = converter.makeMarkdown(markdownContent);
+    // Préparer le corps de la requête
+    const requestBody = { markdown: toMarkdown };
 
-  // Filtrer les éléments undefined
-  const filteredDocElements = docElements.filter(
-    (element) => element !== undefined
-  ) as Paragraph[];
-
-  // Créer un nouveau document DOCX
-  const doc = new Document({
-    sections: [
-      {
-        properties: {},
-        children: filteredDocElements, // Utilisez le tableau filtré ici
+    // Appeler l'API de conversion
+    const response = await fetch('/api/convert', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    ],
-  });
+      body: JSON.stringify(requestBody),
+    });
 
-  // Générer et télécharger le document DOCX
-  Packer.toBlob(doc).then((blob) => {
-    saveAs(blob, `${fileName}.docx`);
-  });
-};
+    if (!response.ok) {
+      throw new Error(`Erreur: ${response.statusText}`);
+    }
+
+    // Obtenir le Blob du fichier DOCX à partir de la réponse
+    const blob = await response.blob();
+
+    // Créer un lien pour télécharger le fichier
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.docx`;
+
+    // Simuler un clic pour déclencher le téléchargement
+    document.body.appendChild(link);
+    link.click();
+
+    // Nettoyer
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error("Erreur lors du téléchargement:", error);
+  }
+}
+export const downloadToTxt = (text: string, filename: string) => {
+  // Créer un élément d'ancrage
+  const element = document.createElement("a");
+  // Créer un fichier Blob avec le contenu Markdown
+  const file = new Blob([text], { type: "text" });
+  // Créer un URL pour le Blob
+  element.href = URL.createObjectURL(file);
+  // Définir l'attribut de téléchargement avec le nom de fichier souhaité
+  element.download = `${filename}.txt`;
+  // Ajouter l'élément au document et cliquer dessus pour déclencher le téléchargement
+  document.body.appendChild(element); // Required for this to work in FireFox
+  element.click();
+  // Nettoyer en supprimant l'élément d'ancrage
+  document.body.removeChild(element);
+}
