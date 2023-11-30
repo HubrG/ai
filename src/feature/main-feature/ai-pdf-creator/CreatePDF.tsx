@@ -71,8 +71,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PopoverClose } from "@radix-ui/react-popover";
 import ReusableWysiwyg from "../components/Wysiwyg";
-import { ToastAction } from "@/components/ui/toast"
-import { useToast } from "@/components/ui/use-toast"
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
 // FIX: ajouter la notion de durée sur tous les loaders.
 // TYPES
 interface Plan {
@@ -222,7 +222,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
-    
   };
   const setGeneratePlanButtonState = (newState: boolean) => {
     // Vérifier si l'utilisateur a assez de jetons pour générer un plan
@@ -338,7 +337,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     setWhatInProgress("");
     router.refresh();
   };
-  
+
   const regeneratePlan = async () => {
     handleCancel();
     await deletePlan(pdfId);
@@ -905,20 +904,21 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
       if (done) {
         updateContextTokenRemaining();
         setWhatInProgress("");
-        setHelpToolTipWhenContentGenerated(true)
+        setHelpToolTipWhenContentGenerated(true);
 
         // Vérifier si l'utilisateur a assez de jetons pour générer un plan
         const authorize = isAuthorized(tokenRequired, user, "pdf-content");
         if (!authorize) {
           Toastify({
-            value: "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
+            value:
+              "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
             type: "info",
             position: "bottom-right",
-            autoClose : false
-            
+            autoClose: false,
           });
           return Toastify({
-            value: "You can edit the content directly on the generated content, otherwise on the following icon.",
+            value:
+              "You can edit the content directly on the generated content, otherwise on the following icon.",
             type: "error",
           });
         }
@@ -1074,11 +1074,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
           setGeneratePlanDone(false);
           setRegenerate(true);
           Toastify({
-            value: "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
+            value:
+              "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
             type: "info",
             position: "bottom-right",
-            autoClose : false
-            
+            autoClose: false,
           });
         })
         .catch((error) => {
@@ -1105,8 +1105,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     contentsWithAllVersions,
   ]);
 
-
-
   // SECTION --> Return
   return (
     <>
@@ -1127,7 +1125,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             )}
             <div
               data-tooltip-id="PDFForbidden"
-              className={`md:w-3/12 sticky md:top-24  top-32  border  w-full h-auto mt-5 py-5 p-3 rounded-lg z-0`}>
+              className={`md:w-3/12   border  w-full h-auto mt-5 py-5 p-3 rounded-lg z-0`}>
               <div
                 className={`flex flex-col  items-center gap-5 flex-wrap h-auto ${
                   Object.keys(chapterContent).length > 0 && whatInProgress == ""
@@ -1227,7 +1225,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                     disabled={loading}
                   />
                 </div>
-                <div className="flex items-center justify-between w-full mb-2 space-x-2">
+                <div className="flex flex-row items-center justify-center mx-auto mb-2">
                   <Switch
                     disabled={loading || createdPlans.length > 0 ? true : false}
                     id="activeGenerateContent"
@@ -1283,9 +1281,13 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             <div className="md:w-9/12 w-full bg-background z-30">
               <div className="rounded-xl transition grid relative grid-cols-1 gap-x-2 items-start mb-10">
                 <div className="rounded-t-xl pb-5 mb-2 md:shadow-none shadow-t-lg sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
-                <div className="absolute w-full z-10 h-20 -left-8  md:hidden block bg-background">&nbsp;</div>
-                <div className="absolute w-full z-10 h-20 -right-8 md:hidden block bg-background">&nbsp;</div>
-                <div className="flex flex-row gap-2 justify-between w-full z-20">
+                  <div className="absolute w-full z-10 h-20 -left-8  md:hidden block bg-background">
+                    &nbsp;
+                  </div>
+                  <div className="absolute w-full z-10 h-20 -right-8 md:hidden block bg-background">
+                    &nbsp;
+                  </div>
+                  <div className="flex flex-row gap-2 justify-between w-full z-20">
                     <div className="flex flex-row gap-2">
                       <DownloadButton
                         allContent={allContent}
@@ -1581,9 +1583,9 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                       )
                                       .toString()
                                       .trim() && (
-                                  <Button 
-                                  className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
-                                  onClick={() =>
+                                    <Button
+                                      className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
+                                      onClick={() =>
                                         handleSaveTitle(planKey, plan.id)
                                       }>
                                       Save changes
@@ -1810,8 +1812,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                         .toString()
                                         .trim() && (
                                       <Button
-                                      className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
-                                      onClick={() =>
+                                        className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
+                                        onClick={() =>
                                           handleSaveContent(
                                             contentKey,
                                             activeContent.id

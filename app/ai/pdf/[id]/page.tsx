@@ -29,12 +29,12 @@ export default async function GeneratePdfId({
     return "You are not authorized to view this page.";
   }
 
-  
-
   return (
     <>
       <div className="flex flex-col gap-y-5 w-full">
-        <div className="flex justify-between items-center" aria-label="Breadcrumb">
+        <div
+          className="flex justify-between items-center"
+          aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
             <li className="inline-flex items-center">
               <Link
@@ -53,26 +53,40 @@ export default async function GeneratePdfId({
                   icon={faArrowRight}
                   className="rtl:rotate-180 w-3 h-3  mx-1"
                 />
-                <Link
-                  href="/ai/pdf"
-                  className="ms-1 text-sm font-medium ">
+                <Link href="/ai/pdf" className="ms-1 text-sm font-medium ">
                   PDF Projects
                 </Link>
               </div>
             </li>
-            <li aria-current="page">
+            <li aria-current="page" className="max-sm:hidden">
               <div className="flex items-center">
                 <FontAwesomeIcon
                   icon={faArrowRight}
                   className="rtl:rotate-180 w-3 h-3  mx-1"
                 />
                 <span className="ms-1 text-sm font-medium md:ms-2 ">
-                  {pdf.title !== "" ? pdf.title : "Untitled project"}
+                  <span className="lg:block md:hidden  hidden">
+                    {pdf.title.length > 100
+                      ? pdf.title.slice(0, 100) + "..."
+                      : pdf.title}
+                  </span>
+                  <span className="lg:hidden md:block sm:hidden hidden">
+                    {pdf.title.length > 54
+                      ? pdf.title.slice(0, 54) + "..."
+                      : pdf.title}
+                  </span>
+                  <span className="lg:hidden md:hidden sm:block hidden">
+                    {pdf.title.length > 40
+                      ? pdf.title.slice(0, 40) + "..."
+                      : pdf.title}
+                  </span>
                 </span>
               </div>
             </li>
           </ol>
-          <CreateNewPdfButton user={user} />
+        </div>
+        <div className="block sm:hidden ms-1 text-sm font-medium md:ms-2 text-left -mt-5">
+          {pdf.title.length > 54 ? pdf.title.slice(0, 54) + "..." : pdf.title}
         </div>
         <div>
           <Separator className="" />

@@ -24,9 +24,10 @@ import { Tooltip } from "react-tooltip";
 
 interface MenuProps {
   userInfo: User;
+  className?: string;
 }
 
-export const UserProfile = ({ userInfo }: MenuProps) => {
+export const UserProfile = ({ userInfo, className }: MenuProps) => {
   const { user, setUser } = useGlobalContext();
   const [tokenRemaining, setTokenRemaining] = useState<number>(
     userInfo?.tokenRemaining ?? user?.tokenRemaining
@@ -51,13 +52,18 @@ export const UserProfile = ({ userInfo }: MenuProps) => {
     tokenRemaining,
     tokenByMonth
   );
-const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
+  const tokenRemainingDisplay =
+    user?.tokenRemaining ?? userInfo?.tokenRemaining;
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild className="flex flex-row w-full">
+      <DropdownMenuTrigger asChild className={`flex flex-row w-full`}>
         <Button
           variant="ghost"
-          className="flex flex-row items-center gap-2 justify-center w-32 pr-5">
+          className={`${
+            className
+              ? "flex flex-row " + className
+              : "flex flex-row items-center gap-2 justify-center w-32 pr-5"
+          }`}>
           <div className="w-10 h-10 p-0 userNavbarDiv">
             <div className="relative rounded-full w-full border-[3px] border-app-300 dark:border-app-950  p-0">
               {user?.image && (
@@ -73,7 +79,13 @@ const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
           <div className="w-full userNavbarDiv">
             <div className="relative w-full" data-tooltip-id="remainingTooltip">
               <div
-                className={`${tokenPercentage <= 0 ? "progressTokenVoid" : tokenPercentage < 10  ? "progressToken bg-red-500" : "progressToken" }`}
+                className={`${
+                  tokenPercentage <= 0
+                    ? "progressTokenVoid"
+                    : tokenPercentage < 10
+                      ? "progressToken bg-red-500"
+                      : "progressToken"
+                }`}
                 style={{
                   width: `${tokenPercentage}%`,
                 }}>
@@ -81,17 +93,28 @@ const tokenRemainingDisplay = user?.tokenRemaining ?? userInfo?.tokenRemaining;
               </div>
               <div className="progressTokenVoid"></div>
             </div>
-            <Tooltip id="remainingTooltip" opacity={1} classNameArrow="hidden" variant="dark" className="tooltip flex flex-col">
-              <span className="font-bold">Remaining credits : {tokenPercentage <= 0 ? 0 : tokenPercentage.toFixed(1)}%</span>
+            <Tooltip
+              id="remainingTooltip"
+              opacity={1}
+              classNameArrow="hidden"
+              variant="dark"
+              className="tooltip flex flex-col">
+              <span className="font-bold">
+                Remaining credits :{" "}
+                {tokenPercentage <= 0 ? 0 : tokenPercentage.toFixed(1)}%
+              </span>
               <small>
                 {tokenRemainingDisplay <= 0 ? 0 : tokenRemainingDisplay}
                 &nbsp;/&nbsp;
                 {user ? user.tokenByMonth : userInfo?.tokenByMonth}
               </small>
             </Tooltip>
-
-           
           </div>
+          {className && (
+            <div className="ml-5">
+             {tokenPercentage.toFixed(2)}%
+            </div>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">

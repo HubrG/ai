@@ -9,6 +9,7 @@ import BurgerMenu from "@/src/feature/header/BurgerMenu";
 import { ThemeToggle } from "../theme/ThemeToggle";
 import { faCube } from "@fortawesome/pro-duotone-svg-icons";
 import { getUserLog } from "@/src/query/user.query";
+import { CreateNewPdfButton } from "./main-feature/ai-pdf-creator/components/CreateNewPdfButton";
 
 export const Navbar = async () => {
   const user = await getUserLog();
@@ -39,23 +40,29 @@ export const Navbar = async () => {
               <sup className="mt-1 ml-2 text-sm text-secondary/60">ai</sup>
             </span>
           </Link>
-          <div className="flex gap-x-2 md:order-2 items-center lg:text-base">
+          <div className="flex gap-x-2 lg:order-2 items-center lg:text-base">
             <div className="flex items-center gap-x-2">
-              <Link href="/raconter-ses-memoires/tarifs" className=" md:block hidden">
-                <Button
-                  className="px-4 font-bold text-base"
-                  variant="ghost"
-                  size={"lg"}>
-                  <FontAwesomeIcon
-                    icon={faCube}
-                    beat
-                    className="mr-2  text-secondary/80"
-                  />
-                  Try us for free !
-                </Button>
-              </Link>
-              <div className="md:block hidden">
-                  {user ? <UserProfile userInfo={user} /> : <LoginButton />}
+              {user ? (
+                <CreateNewPdfButton className="sm:block hidden" user={user} />
+              ) : (
+                <Link
+                  href="/raconter-ses-memoires/tarifs"
+                  className="sm:block hidden">
+                  <Button
+                    className="px-4 font-bold text-base"
+                    variant="ghost"
+                    size={"lg"}>
+                    <FontAwesomeIcon
+                      icon={faCube}
+                      beat
+                      className="mr-2  text-secondary/80"
+                    />
+                    Try us for free !
+                  </Button>
+                </Link>
+              )}
+              <div className="sm:block hidden">
+                {user ? <UserProfile userInfo={user} /> : <LoginButton />}
               </div>
               <ThemeToggle />
             </div>{" "}

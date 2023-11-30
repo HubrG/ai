@@ -7,18 +7,17 @@ import { useRouter } from "next/navigation";
 
 type Props = {
   user: User;
+  className?: string;
 };
-export const CreateNewPdfButton = ({ user }: Props) => {
+export const CreateNewPdfButton = ({ user, className }: Props) => {
   const router = useRouter();
   const handleCreatePdf = async () => {
     const create = await createPdf({ lang: "en", subject: "", user: user });
     if (create) router.push(`/ai/pdf/${create.id}`);
   };
   return (
-    <form>
-      <Button type="button" variant={"outline"} onClick={handleCreatePdf}>
-        Create a new PDF
-      </Button>
-    </form>
+    <Button className={className} type="button" variant={"outline"} onClick={handleCreatePdf}>
+      Create a new PDF
+    </Button>
   );
 };

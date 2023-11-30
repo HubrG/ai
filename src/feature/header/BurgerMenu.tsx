@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { LoginButton } from "@/src/feature/header/auth/LoginButton";
 import { UserProfile } from "@/src/feature/header/auth/UserProfile";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/pro-solid-svg-icons";
+import { CreateNewPdfButton } from "../main-feature/ai-pdf-creator/components/CreateNewPdfButton";
 
 interface Link {
   url: string;
@@ -33,14 +33,14 @@ export default function BurgerMenu(props: MenuProps) {
         }}
         type="button"
         size="sm"
-        className="inline-flex md:hidden">
+        className="inline-flex lg:hidden">
         <span className="sr-only">Ouvrir le menu principal</span>
         <FontAwesomeIcon icon={faBars} />
       </Button>
-      <div className={`${display ? "md:absolute" : "hidden"} burger-menu`}>
+      <div className={`xl:block ${display ? "" : "hidden"} burger-menu`}>
         <ul>
           {links.map((link, index) => (
-            <li key={index} className="md:hidden">
+            <li key={index} className="">
               <Link
                 onClick={() => {
                   setDisplay(false);
@@ -54,12 +54,22 @@ export default function BurgerMenu(props: MenuProps) {
             </li>
           ))}
           <li
+            className="sm:hidden flex w-full justify-center "
             onClick={() => {
               setDisplay(false);
             }}>
-            <Suspense fallback={<FontAwesomeIcon icon={faSpinner} />}>
-              {user ? <UserProfile userInfo={user} /> : <LoginButton />}
-            </Suspense>
+            {user ? (
+              <UserProfile className="w-full" userInfo={user} />
+            ) : (
+              <LoginButton />
+            )}
+          </li>
+          <li
+            className="sm:hidden flex w-full justify-center "
+            onClick={() => {
+              setDisplay(false);
+            }}>
+            <CreateNewPdfButton className="w-full" user={user} />
           </li>
         </ul>
       </div>
