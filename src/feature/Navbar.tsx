@@ -41,7 +41,7 @@ export const Navbar = async () => {
           </Link>
           <div className="flex gap-x-2 md:order-2 items-center lg:text-base">
             <div className="flex items-center gap-x-2">
-              <Link href="/raconter-ses-memoires/tarifs">
+              <Link href="/raconter-ses-memoires/tarifs" className=" md:block hidden">
                 <Button
                   className="px-4 font-bold text-base"
                   variant="ghost"

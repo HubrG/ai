@@ -315,7 +315,6 @@ label {
   @apply text-left text-xs opacity-70;
 }
 
-/*  */
 button {
   @apply focus:ring-0 !important;
 }
@@ -333,4 +332,38 @@ a.pdf-navigation {
 .rdw-editor-main {
   @apply p-0 m-0 !important;
   overflow: unset !important;
+}
+/* SECTION --> Toastify */
+
+.Toastify__toast-container {
+  @apply rounded-sm z-[99999] !important;
+}
+.Toastify__toast {
+  @apply rounded-xl !important;
+}
+.Toastify__toast--rtl {
+  @apply rounded-xl !important;
+}
+.Toastify__toast-body {
+  @apply rounded-xl !important;
+}
+.Toastify__toast-theme--dark {
+  @apply bg-primary;
+}
+/* .Toastify__toast-theme--light {
+} */
+.Toastify__toast-theme--colored.Toastify__toast--default {
+  @apply bg-primary rounded-md  border-border !important;
+}
+.Toastify__toast-theme--colored.Toastify__toast--info {
+  @apply bg-primary-foreground dark:bg-primary border-border rounded-md !important;
+}
+.Toastify__toast-theme--colored.Toastify__toast--success {
+  @apply bg-primary-foreground dark:bg-primary text-text-100 dark:text-text-900 rounded-sm !important;
+}
+.Toastify__toast-theme--colored.Toastify__toast--warning {
+  @apply bg-yellow-600 rounded-sm !important;
+}
+.Toastify__toast-theme--colored.Toastify__toast--error {
+  @apply bg-red-600 rounded-sm !important;
 }

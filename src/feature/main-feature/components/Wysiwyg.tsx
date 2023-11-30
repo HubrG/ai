@@ -21,6 +21,7 @@ const ReusableWysiwyg = ({
   const [editorState, setEditorState] = useState(() =>
     EditorState.createEmpty()
   );
+  const [timeoutId, setTimeoutId] = useState<any>(null); // Utiliser `any` ou `number` ici
 
   useEffect(() => {
     const blocksFromHtml = htmlToDraft(defaultValue);
@@ -31,15 +32,28 @@ const ReusableWysiwyg = ({
 
     setEditorState(newEditorState);
     //   handleEditorStateChange(newEditorState);
-  }, [defaultValue, setEditorState]);
+  }, [defaultValue]);
 
   const handleEditorStateChange = (editorState: any) => {
     setEditorState(editorState);
-    const raw = convertToRaw(editorState.getCurrentContent()); // get raw data from editor state
-    const rawHTML = draftToHtml(raw); // plain html from editor state
-    if (onContentChange) {
-      onContentChange(rawHTML);
+  
+    // Annule le timeout précédent si existant
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
+  
+    // Crée un nouveau timeout
+    const newTimeoutId = setTimeout(() => {
+      const raw = convertToRaw(editorState.getCurrentContent()); // Récupère les données brutes de l'état de l'éditeur
+      const rawHTML = draftToHtml(raw); // HTML brut depuis l'état de l'éditeur
+  
+      if (onContentChange) {
+        onContentChange(rawHTML);
+      }
+    }, 800); // 1 seconde d'attente
+  
+    // Stocke l'identifiant du nouveau timeout
+    setTimeoutId(newTimeoutId);
   };
 
   return (

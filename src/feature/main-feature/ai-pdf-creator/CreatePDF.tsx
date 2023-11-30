@@ -73,6 +73,7 @@ import { PopoverClose } from "@radix-ui/react-popover";
 import ReusableWysiwyg from "../components/Wysiwyg";
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+// FIX: ajouter la notion de durée sur tous les loaders.
 // TYPES
 interface Plan {
   id: string;
@@ -155,8 +156,8 @@ type PdfCreatorProps = {
 
 const PdfCreator = ({ params }: PdfCreatorProps) => {
   // SECTION --> States
+  // NOTE --> Max tokens
   const maxTokens = 1000;
-  const { toast } = useToast()
   const counter = new Counting();
   const pdfId = params.id;
   const router = useRouter();
@@ -221,6 +222,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+    
   };
   const setGeneratePlanButtonState = (newState: boolean) => {
     // Vérifier si l'utilisateur a assez de jetons pour générer un plan
@@ -509,6 +511,150 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     }));
 
     //
+  };
+  const [loadingRefreshPart, setLoadingRefreshPart] = useState<{
+    loading: boolean;
+    type: string;
+    id: string;
+  }>({
+    loading: false,
+    type: "",
+    id: "",
+  });
+
+  const handleLoadingRefreshPart = (
+    loading: boolean,
+    type: string,
+    id: string
+  ) => {
+    setLoadingRefreshPart({ loading, type, id });
+  };
+
+  //
+  const handleSaveContent = (contentKey: string, id: string) => {
+    const newContent = currentContent[contentKey];
+    const activeVersionIndex = contentsWithAllVersions[
+      contentKey
+    ].allVersions.findIndex((v) => v.isSelected);
+
+    const updatedVersions = contentsWithAllVersions[contentKey].allVersions.map(
+      (version, index) => {
+        if (index === activeVersionIndex) {
+          return { ...version, planContent: newContent };
+        }
+        return version;
+      }
+    );
+
+    const updatedContents = {
+      ...contentsWithAllVersions,
+      [contentKey]: {
+        ...contentsWithAllVersions[contentKey],
+        allVersions: updatedVersions,
+        activeVersion: {
+          ...contentsWithAllVersions[contentKey].activeVersion,
+          planContent: newContent,
+        },
+      },
+    };
+
+    setContentsWithAllVersions(updatedContents as ContentsWithAllVersionsState);
+    setContentModifications((prev) => ({
+      ...prev,
+      [contentKey]: { ...prev[contentKey], isModified: false },
+    }));
+    handleUpdateContent(id, newContent);
+  };
+
+  const debouncedHandleContentChange = (
+    newContent: string,
+    contentKey: string
+  ) => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      handleContentChange(newContent, contentKey);
+    }, 0); // 2 secondes
+
+    setTypingTimeout(newTimeout);
+  };
+
+  const handleContentChange = (newContent: string, contentKey: string) => {
+    setCurrentContent((prev) => ({ ...prev, [contentKey]: newContent }));
+    if (newContent !== contentModifications[contentKey].originalContent) {
+      setContentModifications((prev) => ({
+        ...prev,
+        [contentKey]: {
+          ...prev[contentKey],
+          isModified: true,
+          originalContent: newContent,
+        },
+      }));
+    }
+  };
+
+  const handleTitleChange = (newContent: string, contentKey: string) => {
+    setCurrentTitle((prev) => ({ ...prev, [contentKey]: newContent }));
+    if (newContent !== contentModifications[contentKey].originalContent) {
+      setTitleModifications((prev) => ({
+        ...prev,
+        [contentKey]: {
+          ...prev[contentKey],
+          isModified: true,
+          originalContent: newContent,
+        },
+      }));
+    }
+  };
+
+  const debouncedHandleTitleChange = (
+    newContent: string,
+    contentKey: string
+  ) => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      handleTitleChange(newContent, contentKey);
+    }, 0); // 2 secondes
+
+    setTypingTimeout(newTimeout);
+  };
+
+  const handleSaveTitle = async (contentKey: string, id: string) => {
+    const newContent = currentTitle[contentKey];
+    const activeVersionIndex = plansWithAllVersions[
+      contentKey
+    ].allVersions.findIndex((v) => v.isSelected);
+    const updatedVersions = plansWithAllVersions[contentKey].allVersions.map(
+      (version, index) => {
+        if (index === activeVersionIndex) {
+          return { ...version, planTitle: newContent };
+        }
+        return version;
+      }
+    );
+
+    const updatedTitles = {
+      ...plansWithAllVersions,
+      [contentKey]: {
+        ...plansWithAllVersions[contentKey],
+        allVersions: updatedVersions,
+        activeVersion: {
+          ...plansWithAllVersions[contentKey].activeVersion,
+          planTitle: newContent,
+        },
+      },
+    };
+    setPlansWithAllVersions(updatedTitles as PlansWithAllVersionsState);
+    setTitleModifications((prev) => ({
+      ...prev,
+      [contentKey]: { ...prev[contentKey], isModified: false },
+    }));
+    handleUpdatePlanTitle(id, newContent);
   };
   // IMPORTANT --> FetchPDF
   const fetchPdf = useCallback(async () => {
@@ -959,150 +1105,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     contentsWithAllVersions,
   ]);
 
-  const [loadingRefreshPart, setLoadingRefreshPart] = useState<{
-    loading: boolean;
-    type: string;
-    id: string;
-  }>({
-    loading: false,
-    type: "",
-    id: "",
-  });
 
-  const handleLoadingRefreshPart = (
-    loading: boolean,
-    type: string,
-    id: string
-  ) => {
-    setLoadingRefreshPart({ loading, type, id });
-  };
-
-  //
-  const handleSaveContent = (contentKey: string, id: string) => {
-    const newContent = currentContent[contentKey];
-    const activeVersionIndex = contentsWithAllVersions[
-      contentKey
-    ].allVersions.findIndex((v) => v.isSelected);
-
-    const updatedVersions = contentsWithAllVersions[contentKey].allVersions.map(
-      (version, index) => {
-        if (index === activeVersionIndex) {
-          return { ...version, planContent: newContent };
-        }
-        return version;
-      }
-    );
-
-    const updatedContents = {
-      ...contentsWithAllVersions,
-      [contentKey]: {
-        ...contentsWithAllVersions[contentKey],
-        allVersions: updatedVersions,
-        activeVersion: {
-          ...contentsWithAllVersions[contentKey].activeVersion,
-          planContent: newContent,
-        },
-      },
-    };
-
-    setContentsWithAllVersions(updatedContents as ContentsWithAllVersionsState);
-    setContentModifications((prev) => ({
-      ...prev,
-      [contentKey]: { ...prev[contentKey], isModified: false },
-    }));
-    handleUpdateContent(id, newContent);
-  };
-
-  const debouncedHandleContentChange = (
-    newContent: string,
-    contentKey: string
-  ) => {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-
-    const newTimeout = setTimeout(() => {
-      handleContentChange(newContent, contentKey);
-    }, 200); // 2 secondes
-
-    setTypingTimeout(newTimeout);
-  };
-
-  const handleContentChange = (newContent: string, contentKey: string) => {
-    setCurrentContent((prev) => ({ ...prev, [contentKey]: newContent }));
-    if (newContent !== contentModifications[contentKey].originalContent) {
-      setContentModifications((prev) => ({
-        ...prev,
-        [contentKey]: {
-          ...prev[contentKey],
-          isModified: true,
-          originalContent: newContent,
-        },
-      }));
-    }
-  };
-
-  const handleTitleChange = (newContent: string, contentKey: string) => {
-    setCurrentTitle((prev) => ({ ...prev, [contentKey]: newContent }));
-    if (newContent !== contentModifications[contentKey].originalContent) {
-      setTitleModifications((prev) => ({
-        ...prev,
-        [contentKey]: {
-          ...prev[contentKey],
-          isModified: true,
-          originalContent: newContent,
-        },
-      }));
-    }
-  };
-
-  const debouncedHandleTitleChange = (
-    newContent: string,
-    contentKey: string
-  ) => {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-
-    const newTimeout = setTimeout(() => {
-      handleTitleChange(newContent, contentKey);
-    }, 200); // 2 secondes
-
-    setTypingTimeout(newTimeout);
-  };
-
-  const handleSaveTitle = async (contentKey: string, id: string) => {
-    const newContent = currentTitle[contentKey];
-    const activeVersionIndex = plansWithAllVersions[
-      contentKey
-    ].allVersions.findIndex((v) => v.isSelected);
-    const updatedVersions = plansWithAllVersions[contentKey].allVersions.map(
-      (version, index) => {
-        if (index === activeVersionIndex) {
-          return { ...version, planTitle: newContent };
-        }
-        return version;
-      }
-    );
-
-    const updatedTitles = {
-      ...plansWithAllVersions,
-      [contentKey]: {
-        ...plansWithAllVersions[contentKey],
-        allVersions: updatedVersions,
-        activeVersion: {
-          ...plansWithAllVersions[contentKey].activeVersion,
-          planTitle: newContent,
-        },
-      },
-    };
-    setPlansWithAllVersions(updatedTitles as PlansWithAllVersionsState);
-    setTitleModifications((prev) => ({
-      ...prev,
-      [contentKey]: { ...prev[contentKey], isModified: false },
-    }));
-    handleUpdatePlanTitle(id, newContent);
-  };
 
   // SECTION --> Return
   return (
@@ -1128,7 +1131,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
               <div
                 className={`flex flex-col  items-center gap-5 flex-wrap h-auto ${
                   Object.keys(chapterContent).length > 0 && whatInProgress == ""
-                    ? "opacity-70 pointer-events-none"
+                    ? "opacity-50 border-opacity-50 pointer-events-none"
                     : ""
                 }`}>
                 <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -1278,9 +1281,11 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             </div>
             {/* ELEMENT --> Text window */}
             <div className="md:w-9/12 w-full bg-background z-30">
-              <div className="rounded-xl transition grid grid-cols-1 gap-x-2 items-start mb-10">
-                <div className="rounded-t-xl pb-5 mb-2 md:shadow-none sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
-                  <div className="flex flex-row gap-2 justify-between w-full">
+              <div className="rounded-xl transition grid relative grid-cols-1 gap-x-2 items-start mb-10">
+                <div className="rounded-t-xl pb-5 mb-2 md:shadow-none shadow-t-lg sticky bg-background top-[4.8rem] pt-5 flex flex-row justify-between gap-x-2  items-center border-b-2 z-50 ">
+                <div className="absolute w-full z-10 h-20 -left-8  md:hidden block bg-background">&nbsp;</div>
+                <div className="absolute w-full z-10 h-20 -right-8 md:hidden block bg-background">&nbsp;</div>
+                <div className="flex flex-row gap-2 justify-between w-full z-20">
                     <div className="flex flex-row gap-2">
                       <DownloadButton
                         allContent={allContent}
@@ -1476,12 +1481,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                           credits spent for generation
                         </Tooltip>
                       </div>
-                      <div>
+                      {/* <div>
                         {tokenSpentForThisProject
                           ? tokenSpentForThisProject.totalCost.toFixed(3)
                           : 0}
                         €
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
