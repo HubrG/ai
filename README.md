@@ -1,6 +1,6 @@
 ## Video demo
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/WgAJeZR4RHQ?si=JU-I46j5vJ-_LNTm" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+[![Fastuff - demo](https://res.cloudinary.com/djaro8nwk/image/upload/v1701528722/Untitled_c0c7sj.webp)](https://www.youtube.com/watch?v=WgAJeZR4RHQ)
 
 ## Features
 
