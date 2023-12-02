@@ -8,6 +8,7 @@ import spendTokens from "@/src/function/ai/spendTokens";
 import tokenCount from "@/src/function/ai/tokenCount";
 import { getUserLog } from "@/src/query/user.query";
 import { GPTModels } from "@/src/@types/ai-options/GPTModel";
+import { tokenRequired } from "@/src/function/ai/tokenRequired";
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("Missing env var from OpenAI");
@@ -43,6 +44,19 @@ export async function POST(req: Request): Promise<Response> {
     pdfId: string;
   };
   //
+
+  // SECTION --> Token required
+  const tokenReqPlan = await tokenRequired("pdf-plan");
+  if (!tokenReqPlan) {
+    return new Response("Token required", { status: 402 });
+  }
+  if (typeof tokenReqPlan !== "number") {
+    return new Response("Error retrieving token requirements", { status: 500 });
+  }
+  if (tokenReqPlan >= user.tokenRemaining) {
+    return new Response("Not enough tokens", { status: 402 });
+  }
+  // SECTION // End
   let promptSystem = "";
   let promptUser = "";
   const language = languageString(lang ? lang : "en");
@@ -53,33 +67,33 @@ export async function POST(req: Request): Promise<Response> {
 
   if (type === "plan") {
     if (model === "gpt-4-1106-preview") {
-//       promptSystem = `**Role and Goal**: As a specialist in PDF creation with a focus on sales and marketing, my aim is to educate beginners. My teaching style is clear, simple, engaging, and fun, with an emphasis on delivering actionable knowledge in the field of PDF creation.
+      //       promptSystem = `**Role and Goal**: As a specialist in PDF creation with a focus on sales and marketing, my aim is to educate beginners. My teaching style is clear, simple, engaging, and fun, with an emphasis on delivering actionable knowledge in the field of PDF creation.
 
-// **Personality**: I am adopting the personality of ${personality}, which will inform the style and approach of my responses.
+      // **Personality**: I am adopting the personality of ${personality}, which will inform the style and approach of my responses.
 
-// **Guidelines**:
-// - My responses, influenced by the personality of ${personality}, are based on factual information, yet delivered with a ${tone} tone.
-// - Titles are crafted to be captivating, using phrases that align with the ${personality} style, engaging readers with the promise of exceptional, unique knowledge.
-// - Clarity and proper structure are paramount. I start with an H1 heading for the title of the document and follow with H2, H3, and so on for subsequent sections and sub-sections.
-// - When necessary, I will ask for clarifications on unclear requests to ensure accuracy, always with the confidence and expertise expected from ${personality}.
+      // **Guidelines**:
+      // - My responses, influenced by the personality of ${personality}, are based on factual information, yet delivered with a ${tone} tone.
+      // - Titles are crafted to be captivating, using phrases that align with the ${personality} style, engaging readers with the promise of exceptional, unique knowledge.
+      // - Clarity and proper structure are paramount. I start with an H1 heading for the title of the document and follow with H2, H3, and so on for subsequent sections and sub-sections.
+      // - When necessary, I will ask for clarifications on unclear requests to ensure accuracy, always with the confidence and expertise expected from ${personality}.
 
-// **Format**:
-// - I strictly adhere to the raw Markdown format. Responses are structured in a hierarchy of titles and subtitles that mirror the ${personality}'s characteristic style.
-// - The document must begin with an H1 heading, followed by H2 headings for major sections, and H3 for sub-sections, without skipping levels or adding extra hash marks after the title text.
-// - My responses are direct and to the point, embodying the ${tone} and ${personality} of my chosen approach.
+      // **Format**:
+      // - I strictly adhere to the raw Markdown format. Responses are structured in a hierarchy of titles and subtitles that mirror the ${personality}'s characteristic style.
+      // - The document must begin with an H1 heading, followed by H2 headings for major sections, and H3 for sub-sections, without skipping levels or adding extra hash marks after the title text.
+      // - My responses are direct and to the point, embodying the ${tone} and ${personality} of my chosen approach.
 
-// **Length**:
-// - The plan should be ${length}. A 'short' plan may include 3 main sections, a 'medium' plan 3-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
+      // **Length**:
+      // - The plan should be ${length}. A 'short' plan may include 3 main sections, a 'medium' plan 3-10 sections, and a 'long' plan more than 10 sections. Adjust the complexity and depth of content accordingly.
 
-// **Personalization**:
-// - My tone is didactic yet ${tone}, tailored to engage and energize beginners in PDF creation and marketing in the manner of a ${personality}.
-// - I present myself as a confident expert, unafraid to challenge norms and push boundaries in the style of ${personality}.
+      // **Personalization**:
+      // - My tone is didactic yet ${tone}, tailored to engage and energize beginners in PDF creation and marketing in the manner of a ${personality}.
+      // - I present myself as a confident expert, unafraid to challenge norms and push boundaries in the style of ${personality}.
 
-// **Important Constraints**:
-// - My content strictly adheres to the Markdown format, starting with an H1 heading for the title. This is non-negotiable as it is critical for both SEO and readability.
-// - The structure of titles and subtitles must be progressive for SEO effectiveness, and each title should grab attention and reflect the ${personality} and ${tone} tone.
-// - The first title of any document or section is always an H1 heading to establish the topic clearly.`;
-//     } else {
+      // **Important Constraints**:
+      // - My content strictly adheres to the Markdown format, starting with an H1 heading for the title. This is non-negotiable as it is critical for both SEO and readability.
+      // - The structure of titles and subtitles must be progressive for SEO effectiveness, and each title should grab attention and reflect the ${personality} and ${tone} tone.
+      // - The first title of any document or section is always an H1 heading to establish the topic clearly.`;
+      //     } else {
       promptSystem = `**Role and Goal**: As a specialist in ${language} PDF creation with a focus on sales and marketing, I aim to educate beginners with a clear, simple, engaging, and fun teaching style, emphasizing actionable knowledge in the field of PDF creation.
 \n\n**Personality**: Adopting the personality of ${personality} informs the style and approach of my responses, making them resonate with the audience in a unique way.
 \n\n**Guidelines**:
@@ -129,7 +143,6 @@ export async function POST(req: Request): Promise<Response> {
     max_tokens: maxTokens,
     stream: true,
     n: 1,
-  
   };
 
   // Affichage des tokens et de leur nombre

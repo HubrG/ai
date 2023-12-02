@@ -101,6 +101,7 @@
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
     "unified": "^11.0.4",
+    "uuid": "^9.0.1",
     "validator": "^13.11.0",
     "zod": "^3.22.4"
   },
@@ -122,6 +123,7 @@
     "@types/react-draft-wysiwyg": "^1.13.7",
     "@types/react-lottie": "^1.2.10",
     "@types/showdown": "^2.0.5",
+    "@types/uuid": "^9.0.7",
     "@types/validator": "^13.11.7",
     "autoprefixer": "^10.4.16",
     "copy-webpack-plugin": "^11.0.0",

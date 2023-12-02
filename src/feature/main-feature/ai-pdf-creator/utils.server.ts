@@ -143,8 +143,26 @@ export const updatePlan = async (id: string, title: string) => {
     },
     data: {
       planTitle: title,
+      updatedAt: new Date(),
     },
   });
+  if (!titleToUpdate) {
+    throw new Error(
+      "Plan not found or user does not have permission to update this content."
+    );
+  }
+  // On modifie l'update du pdfCreator
+  const pdfUpdate = await prisma.pdfCreator.update({
+    where: {
+      id: titleToUpdate.pdfId,
+    },
+    data: {
+      updatedAt: new Date(),
+    },
+  });
+  if (!pdfUpdate) {
+    throw new Error("Pdf not found");
+  }
   if (titleToUpdate) {
     return titleToUpdate;
   } else {
@@ -173,8 +191,29 @@ export const updateContent = async (id: string, content: string) => {
     },
     data: {
       planContent: content,
+      updatedAt: new Date(),
+    },
+    include: {
+      pdfCreatorPlan: true,
     },
   });
+  if (!contentToUpdate) {
+    throw new Error(
+      "Content not found or user does not have permission to update this content."
+    );
+  }
+  // On modifie l'update du pdfCreator
+  const pdfUpdate = await prisma.pdfCreator.update({
+    where: {
+      id: contentToUpdate.pdfCreatorPlan.pdfId,
+    },
+    data: {
+      updatedAt: new Date(),
+    },
+  });
+  if (!pdfUpdate) {
+    throw new Error("Pdf not found");
+  }
   if (contentToUpdate) {
     return contentToUpdate;
   } else {

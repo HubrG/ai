@@ -11,6 +11,7 @@ export const DropdownMenuItemLogout = () => {
   const [isPending, startTransition] = useTransition();
   return (
     <DropdownMenuItem
+      className=' text-left cursor-pointer  font-medium'
       onClick={() => {
         startTransition(() => signOut());
       }}
@@ -20,7 +21,7 @@ export const DropdownMenuItemLogout = () => {
       ) : (
         <LogOut className="mr-2 h-4 w-4" />
       )}
-      Déconnexion
+      Logout
     </DropdownMenuItem>
   );
 };

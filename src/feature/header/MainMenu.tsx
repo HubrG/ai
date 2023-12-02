@@ -22,7 +22,7 @@ export default function MainMenu(props:MenuProps) {
       id="navbar-sticky">
       <ul className="main-menu">
         {links.map((link, index) => (
-          <li key={index}>
+          <li key={link.url}>
             <Link
               href={link.url}
               className={`${

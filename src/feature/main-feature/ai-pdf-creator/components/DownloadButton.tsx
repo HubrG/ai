@@ -35,28 +35,17 @@ export default function DownloadButton({
   disabled?: boolean;
 }) {
   return (
-    <Popover>
-      <PopoverTrigger
-        disabled={disabled ? true : false}
-        data-tooltip-id="downloadButtonTooltip">
-        <>
+    <>
+      <Popover>
+        <PopoverTrigger
+          disabled={disabled ? true : false}
+          data-tooltip-id="downloadButtonTooltip" asChild>
           <Button disabled={disabled} variant={"default"}>
             <FontAwesomeIcon icon={faDownload} />
           </Button>
-          <Tooltip
-            id="downloadButtonTooltip"
-            className="tooltip"
-            opacity={1}
-            place="bottom">
-            <strong>Download</strong>
-            <span className="block">
-              Download your PDF in Docx, HTML or Markdown format.
-            </span>
-          </Tooltip>
-        </>
-      </PopoverTrigger>
-      <PopoverContent>
-        {/* <div
+        </PopoverTrigger>
+        <PopoverContent>
+          {/* <div
           className={`downloadPdfButton `}
           onClick={() => downloadPdf(allContent, "Fastuff-" + subject)}>
           <FontAwesomeIcon icon={faFilePdf} />
@@ -64,7 +53,7 @@ export default function DownloadButton({
             Download in <strong>PDF</strong>
           </span>
         </div> */}
-        {/* <div
+          {/* <div
           className="downloadPdfButton"
           onClick={() => downloadDocx(allContent, "Fastuff-" + subject)}>
           <FontAwesomeIcon icon={faFileDoc} />
@@ -72,42 +61,53 @@ export default function DownloadButton({
             Download in <strong>Docx</strong>
           </span>
         </div> */}
-        <div
-          className="downloadPdfButton"
-          onClick={() => downloadHtml(allContent, "Fastuff-" + subject)}>
-          <FontAwesomeIcon icon={faFileCode} />
-          <span>
-            Download in <strong>HTML</strong>
-          </span>
-        </div>
-        <div
-          className="downloadPdfButton"
-          onClick={() => {
-            downloadMarkdown(
-              converter.makeMarkdown(allContent),
-              "Fastuff-" + subject
-            );
-          }}>
-          <FontAwesomeIcon icon={faMarkdown} />
-          <div>
-            Download in <strong>Markdown</strong>
+          <div
+            className="downloadPdfButton"
+            onClick={() => downloadHtml(allContent, "Fastuff-" + subject)}>
+            <FontAwesomeIcon icon={faFileCode} />
+            <span>
+              Download in <strong>HTML</strong>
+            </span>
           </div>
-        </div>
+          <div
+            className="downloadPdfButton"
+            onClick={() => {
+              downloadMarkdown(
+                converter.makeMarkdown(allContent),
+                "Fastuff-" + subject
+              );
+            }}>
+            <FontAwesomeIcon icon={faMarkdown} />
+            <div>
+              Download in <strong>Markdown</strong>
+            </div>
+          </div>
 
-        <div
-          className="downloadPdfButton"
-          onClick={() => {
-            downloadToTxt(
-              converter.makeMarkdown(allContent).replace(/\\/g, ""),
-              "Fastuff-" + subject
-            );
-          }}>
-          <FontAwesomeIcon icon={faText} />
-          <div>
-            Download in <strong>TXT</strong> (markdown)
+          <div
+            className="downloadPdfButton"
+            onClick={() => {
+              downloadToTxt(
+                converter.makeMarkdown(allContent).replace(/\\/g, ""),
+                "Fastuff-" + subject
+              );
+            }}>
+            <FontAwesomeIcon icon={faText} />
+            <div>
+              Download in <strong>TXT</strong> (markdown)
+            </div>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      <Tooltip
+        id="downloadButtonTooltip"
+        className="tooltip"
+        opacity={1}
+        place="bottom">
+        <strong>Download</strong>
+        <span className="block">
+          Download your PDF in Docx, HTML or Markdown format.
+        </span>
+      </Tooltip>
+    </>
   );
 }

@@ -29,6 +29,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCircleChevronLeft,
   faCircleChevronRight,
+  faFloppyDisk,
   faLanguage,
 } from "@fortawesome/pro-solid-svg-icons";
 import {
@@ -71,8 +72,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PopoverClose } from "@radix-ui/react-popover";
 import ReusableWysiwyg from "../components/Wysiwyg";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
+import { v4 as uuidv4 } from 'uuid';
+
 // FIX: ajouter la notion de durée sur tous les loaders.
 // TYPES
 interface Plan {
@@ -180,6 +181,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
   const [abortControllers, setAbortControllers] = useState<AbortController[]>(
     []
   );
+  const [toastContentShown, setToastContentShown] = useState(false);
   const { user, setUser } = useGlobalContext();
   const [subject, setSubject] = useState("");
   const [generatePlanDone, setGeneratePlanDone] = useState<boolean>(false);
@@ -596,7 +598,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
   const handleTitleChange = (newContent: string, contentKey: string) => {
     setCurrentTitle((prev) => ({ ...prev, [contentKey]: newContent }));
-    if (newContent !== contentModifications[contentKey].originalContent) {
+    if (newContent !== titleModifications[contentKey].originalContent) {
       setTitleModifications((prev) => ({
         ...prev,
         [contentKey]: {
@@ -710,6 +712,19 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
         setInit(false);
         // Initialisation des contenus (peut-être dans useEffect ou lors du chargement des données)
         //
+
+        Object.keys(plansWithAllVersions).forEach((key) => {
+          const activeVersion = plansWithAllVersions[key].activeVersion;
+          if (activeVersion) {
+            setTitleModifications((prev) => ({
+              ...prev,
+              [key]: {
+                isModified: false,
+                originalContent: converter.makeHtml(activeVersion.planTitle),
+              },
+            }));
+          }
+        });
         Object.keys(contentsWithAllVersions).forEach((key) => {
           setContentModifications((prev) => ({
             ...prev,
@@ -721,21 +736,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             },
           }));
         });
-
-        if (Object.keys(plansWithAllVersions).length > 0) {
-          Object.keys(plansWithAllVersions).forEach((key) => {
-            const activeVersion = plansWithAllVersions[key].activeVersion;
-            if (activeVersion) {
-              setTitleModifications((prev) => ({
-                ...prev,
-                [key]: {
-                  isModified: false,
-                  originalContent: converter.makeHtml(activeVersion.planTitle),
-                },
-              }));
-            }
-          });
-        }
 
         // Transformer en tableau de Plan[] contenant seulement les versions actives
         const activePlans = Object.values(plansWithAllVersions)
@@ -908,18 +908,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
 
         // Vérifier si l'utilisateur a assez de jetons pour générer un plan
         const authorize = isAuthorized(tokenRequired, user, "pdf-content");
-        if (!authorize) {
-          Toastify({
-            value:
-              "You can modify the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
-            type: "info",
-            position: "bottom-right",
-            autoClose: false,
-          });
+        if (!authorize && activateAutomaticContent) {
           return Toastify({
             value:
-              "You can edit the content directly on the generated content, otherwise on the following icon.",
-            type: "error",
+              "You don't have enough credits to generate all content. You can generate the content of each part directly on the content, or regenerate each point of the content on clicking to sparkles.",
+            type: "info",
+            autoClose: false,
           });
         }
         setGeneratePlanDone(true);
@@ -1091,6 +1085,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
     } else {
       router.refresh();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatePlanDone, generatePlanButton]);
 
   useEffect(() => {
@@ -1125,7 +1120,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
             )}
             <div
               data-tooltip-id="PDFForbidden"
-              className={`md:w-3/12   border  w-full h-auto mt-5 py-5 p-3 rounded-lg z-0`}>
+              className={`md:w-3/12 md:sticky top-24  border  w-full h-auto mt-5 py-5 p-3 rounded-lg z-0`}>
               <div
                 className={`flex flex-col  items-center gap-5 flex-wrap h-auto ${
                   Object.keys(chapterContent).length > 0 && whatInProgress == ""
@@ -1296,13 +1291,12 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                       />
                       <Popover>
                         <PopoverTrigger asChild>
-                          <div data-tooltip-id="navigateTooltip">
                             <Button
+                              data-tooltip-id="navigateTooltip"
                               disabled={createdPlans.length === 0}
                               variant="outline">
                               <FontAwesomeIcon icon={faCompass} />
                             </Button>
-                          </div>
                         </PopoverTrigger>
                         <PopoverContent
                           className={`w-80 ${
@@ -1311,7 +1305,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                           <ScrollArea className="max-h-96 w-full flex flex-col gap-3">
                             <div className="flex flex-col gap-2">
                               {createdPlans.map((plan) => (
-                                <>
+                                <React.Fragment key={uuidv4()+plan.id}>
                                   <a
                                     className="pdf-navigation"
                                     onClick={() => {
@@ -1329,7 +1323,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                         ),
                                       }}></span>
                                   </a>
-                                </>
+                                </React.Fragment>
                               ))}
                             </div>
                           </ScrollArea>
@@ -1527,8 +1521,8 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                         contentsWithAllVersions[contentKey]?.activeVersion;
 
                       return (
-                        <>
-                          <div key={plan.id} id={plan.id} className="space-y-4">
+                        <React.Fragment key={"plan"+plan.id}>
+                          <div id={plan.id} className="space-y-4">
                             <div className="relative">
                               <div
                                 className={`text-left ${
@@ -1539,24 +1533,57 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                 }`}>
                                 {/* NOTE Wysiwig */}
                                 {!loading ? (
-                                  <ReusableWysiwyg
-                                    showToolbar={false}
-                                    defaultValue={markdownToHtml(
-                                      plan.planLevel +
-                                        " " +
-                                        (plansWithAllVersions[planKey]
-                                          ?.activeVersion?.planTitle || "")
-                                    )}
-                                    onContentChange={(newContent) =>
-                                      debouncedHandleTitleChange(
-                                        newContent.replace(
-                                          /<h[1-7][^>]*>(.*?)<\/h[1-7]>/gi,
-                                          "$1"
-                                        ),
-                                        planKey
-                                      )
-                                    }
-                                  />
+                                  <>
+                                    <ReusableWysiwyg
+                                      showToolbar={false}
+                                      defaultValue={markdownToHtml(
+                                        plan.planLevel +
+                                          " " +
+                                          (plansWithAllVersions[
+                                            planKey
+                                          ]?.activeVersion?.planTitle
+                                            .toString()
+                                            .trim() || "")
+                                      )}
+                                      onContentChange={(newContent) =>
+                                        debouncedHandleTitleChange(
+                                          newContent.replace(
+                                            /<h[1-7][^>]*>(.*?)<\/h[1-7]>/gi,
+                                            "$1"
+                                          ),
+                                          planKey
+                                        )
+                                      }
+                                    />
+                                    {titleModifications[contentKey] &&
+                                      converter
+                                        .makeHtml(
+                                          titleModifications[contentKey]
+                                            .originalContent
+                                        )
+                                        .toString()
+                                        .trim() !==
+                                        converter
+                                          .makeHtml(
+                                            plansWithAllVersions[planKey]
+                                              .activeVersion?.planTitle ?? ""
+                                          )
+                                          .toString()
+                                          .trim() && (
+                                        <Button
+                                          data-tooltip-id="saveUpdatedTooltip"
+                                          size={"sm"}
+                                          className="-mt-8 w-8 h-8 absolute text-xs  md:-right-14 -right-11 rounded-full top-2 self-end flex "
+                                          onClick={() =>
+                                            handleSaveTitle(planKey, plan.id)
+                                          }>
+                                          <FontAwesomeIcon
+                                            beat
+                                            icon={faFloppyDisk}
+                                          />
+                                        </Button>
+                                      )}
+                                  </>
                                 ) : (
                                   <div
                                     className="text-left relative"
@@ -1567,31 +1594,14 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                     }}
                                   />
                                 )}
-
-                                {titleModifications[contentKey] &&
-                                  converter.makeHtml(
-                                    titleModifications[
-                                      contentKey
-                                    ].originalContent
-                                      .toString()
-                                      .trim()
-                                  ) !==
-                                    converter
-                                      .makeHtml(
-                                        plansWithAllVersions[planKey]
-                                          .activeVersion?.planTitle ?? ""
-                                      )
-                                      .toString()
-                                      .trim() && (
-                                    <Button
-                                      className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
-                                      onClick={() =>
-                                        handleSaveTitle(planKey, plan.id)
-                                      }>
-                                      Save changes
-                                    </Button>
-                                  )}
                               </div>
+                              <Tooltip
+                                id="saveUpdatedTooltip"
+                                className="tooltip"
+                                opacity={1}>
+                                <strong>Save</strong>
+                                <span className="block">Save your changes</span>
+                              </Tooltip>
                               <div
                                 className={`
                                   absolute top-[25%] left-[50%] transform -translate-x-1/2 -translate-y-1/2
@@ -1602,7 +1612,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                       ? "block"
                                       : "hidden"
                                   }`}>
-                                <Loader />
+                                <Loader />T
                               </div>
                               <div
                                 className={`${
@@ -1781,18 +1791,45 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                       "opacity-80  blur-sm select-none"
                                     }`}>
                                     {!loading ? (
-                                      <ReusableWysiwyg
-                                        showToolbar={false}
-                                        defaultValue={markdownToHtml(
-                                          activeContent.planContent
+                                      <>
+                                        <ReusableWysiwyg
+                                          showToolbar={false}
+                                          defaultValue={markdownToHtml(
+                                            activeContent.planContent
+                                          )}
+                                          onContentChange={(newContent) =>
+                                            debouncedHandleContentChange(
+                                              newContent,
+                                              contentKey
+                                            )
+                                          }
+                                        />
+                                        {contentModifications[
+                                          contentKey
+                                        ].originalContent
+                                          .toString()
+                                          .trim() !==
+                                          converter
+                                            .makeHtml(activeContent.planContent)
+                                            .toString()
+                                            .trim() && (
+                                          <Button
+                                            data-tooltip-id="saveUpdatedTooltip"
+                                            size={"sm"}
+                                            className="-mt-8 w-8 h-8 absolute text-xs  md:-right-14 -right-11 rounded-full top-[50%] self-end flex "
+                                            onClick={() =>
+                                              handleSaveContent(
+                                                contentKey,
+                                                activeContent.id
+                                              )
+                                            }>
+                                            <FontAwesomeIcon
+                                              beat
+                                              icon={faFloppyDisk}
+                                            />
+                                          </Button>
                                         )}
-                                        onContentChange={(newContent) =>
-                                          debouncedHandleContentChange(
-                                            newContent,
-                                            contentKey
-                                          )
-                                        }
-                                      />
+                                      </>
                                     ) : (
                                       <div
                                         dangerouslySetInnerHTML={{
@@ -1801,26 +1838,6 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                                           ),
                                         }}
                                       />
-                                    )}
-                                    {contentModifications[
-                                      contentKey
-                                    ].originalContent
-                                      .toString()
-                                      .trim() !==
-                                      converter
-                                        .makeHtml(activeContent.planContent)
-                                        .toString()
-                                        .trim() && (
-                                      <Button
-                                        className="fixed top-56 z-50 right-0 bg-yellow-500 opacity-90 hover:opacity-100 hover:bg-yellow-500 hover:text-yellow-950  text-yellow-950"
-                                        onClick={() =>
-                                          handleSaveContent(
-                                            contentKey,
-                                            activeContent.id
-                                          )
-                                        }>
-                                        Save changes
-                                      </Button>
                                     )}
                                   </div>
                                 )}
@@ -1938,7 +1955,7 @@ const PdfCreator = ({ params }: PdfCreatorProps) => {
                             )}
                           </div>
                           <Separator className={`dark:bg-border mt-5 mb-0`} />
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </article>

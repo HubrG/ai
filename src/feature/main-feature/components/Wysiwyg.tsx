@@ -15,8 +15,7 @@ interface ReusableWysiwygProps {
 const ReusableWysiwyg = ({
   showToolbar = true,
   defaultValue = "",
-  onContentChange,
-  planLevel,
+  onContentChange
 }: ReusableWysiwygProps) => {
   const [editorState, setEditorState] = useState(() =>
     EditorState.createEmpty()
@@ -32,7 +31,7 @@ const ReusableWysiwyg = ({
 
     setEditorState(newEditorState);
     //   handleEditorStateChange(newEditorState);
-  }, [defaultValue]);
+  }, [defaultValue, setEditorState]);
 
   const handleEditorStateChange = (editorState: any) => {
     setEditorState(editorState);

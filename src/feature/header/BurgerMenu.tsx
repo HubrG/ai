@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { faBars } from "@fortawesome/pro-solid-svg-icons";
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LoginButton } from "@/src/feature/header/auth/LoginButton";
@@ -37,10 +37,10 @@ export default function BurgerMenu(props: MenuProps) {
         <span className="sr-only">Ouvrir le menu principal</span>
         <FontAwesomeIcon icon={faBars} />
       </Button>
-      <div className={`xl:block ${display ? "" : "hidden"} burger-menu`}>
+      <div className={`lg:block ${display ? "" : "hidden"} burger-menu`}>
         <ul>
           {links.map((link, index) => (
-            <li key={index} className="">
+            <li key={"burger"+link.name} className="">
               <Link
                 onClick={() => {
                   setDisplay(false);

@@ -9,6 +9,7 @@ import languageString from "@/src/list/ai/languagesList";
 import { getModelId } from "@/src/query/gptModel.query";
 import { getUserLog } from "@/src/query/user.query";
 import { OpenAI } from "openai";
+import { tokenRequired } from "../../../../../src/function/ai/tokenRequired";
 
 const openai = new OpenAI({
   apiKey: process.env.API_KEY_GPT,
@@ -23,6 +24,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!user) {
     return new Response("User not logged in", { status: 401 });
   }
+
   const {
     type,
     value,
@@ -54,11 +56,24 @@ export async function POST(req: Request): Promise<Response> {
     idRef: string | undefined;
     maxTokens: number;
   };
+  // SECTION --> Token required
+  const tokenReqPlan = await tokenRequired("pdf-refresh-plan");
+  const tokenReqContent = await tokenRequired("pdf-refresh-content");
+  if (!tokenReqPlan || !tokenReqContent) {
+    return new Response("Token required", { status: 402 });
+  }
+  if (typeof tokenReqPlan !== "number" || typeof tokenReqContent !== "number") {
+    return new Response("Error retrieving token requirements", { status: 500 });
+  }
+  if (
+    (type == "plan" && tokenReqPlan >= user.tokenRemaining) ||
+    (type == "content" && tokenReqContent >= user.tokenRemaining)
+  ) {
+    return new Response("Not enough tokens", { status: 402 });
+  }
+  // SECTION // End
   const Gpt = await getModelId(gptModel);
 
-  if (type == "content") {
-    // On recherche le titre du contenu
-  }
 
   const language = languageString(lang ? lang : "en");
   let promptSystem;
@@ -82,9 +97,7 @@ export async function POST(req: Request): Promise<Response> {
     
     **Important Notes**:
     - My composition, in line with the ${personalityValue} style, consistently maintains a ${toneValue} tone, prioritizing substance.
-    - By directly addressing '${value}', I strive to present valuable perspectives and in-depth content that enhances the reader’s engagement.
-     
-`;
+    - By directly addressing '${value}', I strive to present valuable perspectives and in-depth content that enhances the reader’s engagement.`;
 
     promptUser = `
     Please revise the just this title, short title, just the title (no development) : « '${value}'», as it currently does not meet my expectations. The revised title should be strictly in ${language}, reflecting the ${toneValue} tone and ${personalityValue} style. Focus directly on the core subject, highlighting critical elements in *italics* and **bold**. Remember to avoid repeating the original title.'.
@@ -94,6 +107,9 @@ export async function POST(req: Request): Promise<Response> {
       where: {
         OR: [{ id: id }, { idRef: id }],
         isSelected: true,
+        pdf: {
+          userId: user.id,
+        },
       },
     });
     if (!planId) {
@@ -229,6 +245,9 @@ export async function POST(req: Request): Promise<Response> {
     const planId = await prisma.pdfCreatorPlan.findUnique({
       where: {
         id: id,
+        pdf: {
+          userId: user.id,
+        },
       },
       select: {
         idRef: true,

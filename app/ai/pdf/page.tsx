@@ -14,18 +14,16 @@ export default async function GeneratePDF() {
   return (
     <>
       <div className="flex flex-col gap-y-10 w-full">
-        <div className="flex flex-row gap-2 w-full">
-          <div className="my-5 mt-0 text-3xl text-left font-bold w-1/2">
+        <div className="flex flex-col gap-2 w-full">
+          <div className="my-5 mt-0 text-3xl text-center font-bold w-full sm:hidden block">
             {user && <CreateNewPdfButton user={user} />}
           </div>
           <div>
-            <ul className="text-left">
-              {pdfs && pdfs.length > 0 ? (
-                <PDFList pdfs={pdfs} />
-              ) : (
-                "No PDF created yet."
-              )}
-            </ul>
+            {pdfs && pdfs.length > 0 ? (
+              <PDFList pdfs={pdfs} />
+            ) : (
+              "No PDF created yet."
+            )}
           </div>
         </div>
       </div>

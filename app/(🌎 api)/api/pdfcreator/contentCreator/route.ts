@@ -9,6 +9,7 @@ import { personalitiesValues } from "@/src/@types/ai-options/personality";
 import { TonesValues } from "@/src/@types/ai-options/tone";
 import { GPTModels } from "@/src/@types/ai-options/GPTModel";
 import { getModelId } from "@/src/query/gptModel.query";
+import { tokenRequired } from "@/src/function/ai/tokenRequired";
 
 const openai = new OpenAI({
   apiKey: process.env.API_KEY_GPT,
@@ -22,6 +23,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 export async function POST(req: Request): Promise<Response> {
   const user = await getUserLog();
+
   if (!user) {
     return new Response("User not logged in", { status: 401 });
   }
@@ -47,6 +49,19 @@ export async function POST(req: Request): Promise<Response> {
     personality?: personalitiesValues;
   };
 
+
+    // SECTION --> Token required
+    const tokenReqContent = await tokenRequired("pdf-content");
+    if (!tokenReqContent) {
+      return new Response("Token required", { status: 402 });
+    }
+    if (typeof tokenReqContent !== "number") {
+      return new Response("Error retrieving token requirements", { status: 500 });
+    }
+    if (tokenReqContent >= user.tokenRemaining) {
+      return new Response("Not enough tokens", { status: 402 });
+    }
+    // SECTION // End
   // On récupère le planTitle de chaque item du plan et on le met dans une seule string
   const planTitle = plan.map((item) => item.planTitle).join("\n\n");
   //

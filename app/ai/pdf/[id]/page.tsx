@@ -1,14 +1,9 @@
 import NotFound from "@/app/not-found";
 import { Separator } from "@/components/ui/separator";
 import PdfCreator from "@/src/feature/main-feature/ai-pdf-creator/CreatePDF";
-import { CreateNewPdfButton } from "@/src/feature/main-feature/ai-pdf-creator/components/CreateNewPdfButton";
 import { getPdf } from "@/src/feature/main-feature/ai-pdf-creator/utils.server";
 import { getUserLog } from "@/src/query/user.query";
-import {
-  faArrowRight,
-  faFilePdf,
-  faHome,
-} from "@fortawesome/pro-solid-svg-icons";
+import { faArrowRight, faHome } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
@@ -65,6 +60,7 @@ export default async function GeneratePdfId({
                   className="rtl:rotate-180 w-3 h-3  mx-1"
                 />
                 <span className="ms-1 text-sm font-medium md:ms-2 ">
+                  {!pdf.title && "Untitled PDF"}
                   <span className="lg:block md:hidden  hidden">
                     {pdf.title.length > 100
                       ? pdf.title.slice(0, 100) + "..."

@@ -13,6 +13,10 @@ import {
   faTools,
   faUser,
   faBasketShopping,
+  faBarChart,
+  faChartBar,
+  faChartSimple,
+  faCreditCard,
 } from "@fortawesome/pro-solid-svg-icons";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@prisma/client";
@@ -21,6 +25,7 @@ import { useGlobalContext } from "@/app/Context/store";
 import { calculateTokenPercentage } from "@/src/function/tokenRemaining";
 import Image from "next/image";
 import { Tooltip } from "react-tooltip";
+import { faProjectDiagram } from "@fortawesome/pro-duotone-svg-icons";
 
 interface MenuProps {
   userInfo: User;
@@ -111,37 +116,43 @@ export const UserProfile = ({ userInfo, className }: MenuProps) => {
             </Tooltip>
           </div>
           {className && (
-            <div className="ml-5">
-             {tokenPercentage.toFixed(2)}%
-            </div>
+            <div className="ml-5">{tokenPercentage.toFixed(2)}%</div>
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
         <DropdownMenuItem className="w-full" asChild>
-          <Link href="/profil/mon-compte" className="nunderline">
-            <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
-            Mon compte
+          <Link
+            href="/profil/mon-compte"
+            className="nunderline bg-secondary hover:bg-secondary text-secondary-foreground text-left pr-10  cursor-pointer">
+            <FontAwesomeIcon icon={faCreditCard} className="mr-2 h-4 w-4" />
+            Buy credits
           </Link>
         </DropdownMenuItem>
-        <Separator className="my-2" />
+        <Separator className="my-1" />
         <DropdownMenuItem className="w-full" asChild>
-          <Link href="/profil/mes-commandes" className="nunderline">
-            <FontAwesomeIcon icon={faBasketShopping} className="mr-2 h-4 w-4" />
-            Mes commandes
+          <Link href="/ai/pdf" className="nunderline text-left cursor-pointer pr-10 ">
+            <FontAwesomeIcon icon={faProjectDiagram} className="mr-2 h-4 w-4" />
+            My projects
           </Link>
         </DropdownMenuItem>
-        <Separator className="my-2" />
-
+        <Separator className="my-1" />
+        <DropdownMenuItem className="w-full px-2" asChild>
+          <Link href="/profil/mon-compte" className="nunderline text-left pr-10  cursor-pointer">
+            <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4" />
+            My account
+          </Link>
+        </DropdownMenuItem>
+        <Separator className="my-1 h-0.5" />
         {userInfo?.role === "ADMIN" && (
           <>
             <DropdownMenuItem className="w-full" asChild>
-              <Link prefetch={false} href="/admin" className="nunderline">
+              <Link prefetch={false} href="/admin" className="nunderline pr-10 text-left cursor-pointer">
                 <FontAwesomeIcon icon={faTools} className="mr-2 h-4 w-4" />
                 Admin
               </Link>
             </DropdownMenuItem>
-            <Separator className="my-2" />
+            <Separator className="my-1" />
           </>
         )}
         <DropdownMenuItemLogout />
