@@ -4,7 +4,7 @@
 
 ## Features
 
-1) Create a single 50-page PDF in 5 minutes for $5.
+### Create a single 50-page PDF in 5 minutes for $5.
 - Plan generation
 - Content generation
 - Multiple levels of configuration: tone, personality, length and language.
